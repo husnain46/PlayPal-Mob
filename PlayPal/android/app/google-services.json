@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "951990633471",
+    "project_id": "playpal-daa86",
+    "storage_bucket": "playpal-daa86.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:951990633471:android:8db9e2d098d99f9259ddca",
+        "android_client_info": {
+          "package_name": "com.playpal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "951990633471-dq6t92h06tkb58qccfaog4pl7q7197e2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAzuEj8tzqFvaUr_5MqF8k8QJhfd9awGmU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "951990633471-dq6t92h06tkb58qccfaog4pl7q7197e2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
