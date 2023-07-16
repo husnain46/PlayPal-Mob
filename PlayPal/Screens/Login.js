@@ -16,11 +16,13 @@ import {
 
 
 
-const SignUp = ({ navigation }) => {
-
-    const loginScreen = () => {
-        navigation.navigate('Login');
+const Login = ({ navigation }) => {
+    
+    
+    const welcomeScreen = () => {
+        navigation.navigate('WelcomeScreen');
     };
+    
 
     return (
         <SafeAreaView style={styles.container}>
@@ -40,25 +42,18 @@ const SignUp = ({ navigation }) => {
                         <ScrollView>
                           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                             <View style={styles.inner}>
-                                
-                                <View style={styles.nameView}>
-                                    <TextInput placeholder="First Name" style={styles.textInput1} />
-                                    <TextInput placeholder="Last Name" style={styles.textInput2} />
-                                </View>
+                            
                                 <View style={styles.inputView}>
-                                    <TextInput placeholder="Email" style={styles.textInput3} />
-                                    <TextInput placeholder="Mobile no. (e.g. 03xxxxxxxxx)" style={styles.textInput3} />
-                                    <TextInput placeholder="Username" style={styles.textInput3} />
-                                    <TextInput placeholder="Password" style={styles.textInput3} />
+                                    <TextInput placeholder="Email" style={styles.textInput} />
+                                    <TextInput placeholder="Password" style={styles.textInput} />
                                 
                                 </View>
                                 <View style={styles.btnContainer}>
-                                    <Button title="Submit" onPress={() => null}/>
+                                    <Button title="Login" onPress={() => welcomeScreen()}/>
                                 </View>
 
                                 <View style={styles.footerView}>
-                                    <Text style={styles.ftText}>Already have an account?</Text>
-                                    <TouchableOpacity onPress={() => loginScreen()}><Text style={styles.loginText}>Login</Text></TouchableOpacity>
+                                    <TouchableOpacity><Text style={styles.loginText}>Forgot password</Text></TouchableOpacity>
                                 </View>
                                 
                             </View>
@@ -93,22 +88,16 @@ const styles = StyleSheet.create({
         alignItems:'center',
     },
     logoImg:{
-        marginTop: 20,
+        marginTop: 50,
 		alignSelf: 'center',
         width: 230, 
         height: 60,
     },
 	inner: {
 		flex: 1,
-        marginTop: 50,
+        marginTop: 100,
         justifyContent:'center',
         alignContent:'center'
-	},
-	nameView:{
-		width:300,
-		flexDirection:'row',
-		justifyContent:'center',
-		alignContent:'center'
 	},
     inputView:{
 		width:300,
@@ -116,22 +105,7 @@ const styles = StyleSheet.create({
 		justifyContent:'center',
 		alignContent:'center'
 	},
-	textInput1: {
-		height: 40,
-		width: 125,
-		borderColor: '#000000',
-		borderBottomWidth: 1,
-		fontSize: 17,
-		marginEnd:30
-	},
-	textInput2: {
-		height: 40,
-		width: 125,
-		borderColor: '#000000',
-		borderBottomWidth: 1,
-		fontSize: 17
-	},
-	textInput3: {
+	textInput: {
 		height: 40,
 		width: 280,
 		borderColor: '#000000',
@@ -151,9 +125,6 @@ const styles = StyleSheet.create({
         alignItems:"center",
         marginTop:50
     },
-    ftText: {
-        fontSize:17,
-    },
     loginText: {
         
         fontSize:18,
@@ -164,4 +135,4 @@ const styles = StyleSheet.create({
   
 
 
-export default SignUp;
+export default Login;
