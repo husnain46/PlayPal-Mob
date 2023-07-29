@@ -1,37 +1,33 @@
 import React from 'react';
-import { 
+import {
     SafeAreaView,
     View,
-    TouchableOpacity, 
+    TouchableOpacity,
     StyleSheet,
-    Text, 
-    ImageBackground, 
-    Dimensions 
+    Text,
+    ImageBackground,
+    Dimensions,
 } from 'react-native';
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-const GettingStarted = ({ navigation }) => {
-
-    const signupScreen = () => {
+const GettingStarted = ({navigation}) => {
+    const gotoSignup = () => {
         navigation.navigate('SignUp');
     };
-    
+
     return (
         <SafeAreaView style={styles.container}>
-            <ImageBackground 
+            <ImageBackground
                 source={require('../Assets/BGs/welcomePic1.png')}
                 style={styles.bgImage}
-                resizeMode='stretch'
-            >
+                resizeMode="stretch">
                 <View style={styles.btnView}>
-                    <TouchableOpacity onPress={()=> signupScreen()}>
+                    <TouchableOpacity onPress={() => gotoSignup()}>
                         <Text style={styles.btnText}>Get Started</Text>
                     </TouchableOpacity>
-                </View>    
+                </View>
             </ImageBackground>
-            
-        
         </SafeAreaView>
     );
 };
@@ -42,26 +38,25 @@ const styles = StyleSheet.create({
     },
     bgImage: {
         flex: 1,
-        width: width, 
-        height: height
+        width: width,
+        height: height,
     },
-    btnView:{
-        position:'relative',
+    btnView: {
+        position: 'relative',
         margin: 80,
         marginTop: 700,
-        width: 230, 
-        height: 60, 
-        borderRadius: 12, 
-        backgroundColor:'#442d65'
+        width: 230,
+        height: 60,
+        borderRadius: 12,
+        backgroundColor: '#442d65',
     },
     btnText: {
         textAlign: 'center',
         paddingTop: 14,
         color: 'white',
         fontWeight: 'bold',
-        fontSize: 22
+        fontSize: 22,
     },
-  });
-  
+});
 
 export default GettingStarted;
