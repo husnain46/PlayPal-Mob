@@ -5,6 +5,7 @@ import {
     TouchableOpacity,
     StyleSheet,
     Text,
+    Image,
     ImageBackground,
     Dimensions,
 } from 'react-native';
@@ -15,6 +16,9 @@ const GettingStarted = ({navigation}) => {
     const gotoSignup = () => {
         navigation.navigate('SignUp');
     };
+    const gotoLogin = () => {
+        navigation.navigate('Login');
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -22,9 +26,26 @@ const GettingStarted = ({navigation}) => {
                 source={require('../Assets/BGs/welcomePic1.png')}
                 style={styles.bgImage}
                 resizeMode="stretch">
+                <View style={styles.content}>
+                    <Image
+                        source={require('../Assets/Icons/Logo.png')}
+                        style={styles.logoImg}
+                    />
+                    <Text style={styles.mottoTxt}>
+                        "Ignite Your Passion for Sports"
+                    </Text>
+                </View>
                 <View style={styles.btnView}>
-                    <TouchableOpacity onPress={() => gotoSignup()}>
-                        <Text style={styles.btnText}>Get Started</Text>
+                    <TouchableOpacity
+                        style={styles.button1}
+                        onPress={() => gotoLogin()}>
+                        <Text style={styles.btnText}>Login</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={styles.button2}
+                        onPress={() => gotoSignup()}>
+                        <Text style={styles.btnText}>Sign up</Text>
                     </TouchableOpacity>
                 </View>
             </ImageBackground>
@@ -41,18 +62,50 @@ const styles = StyleSheet.create({
         width: width,
         height: height,
     },
-    btnView: {
-        position: 'relative',
-        margin: 80,
-        marginTop: 700,
+    content: {
+        flex: 0.95,
+        alignItems: 'center',
+    },
+    logoImg: {
+        marginTop: 80,
         width: 230,
         height: 60,
-        borderRadius: 12,
+    },
+    mottoTxt: {
+        fontSize: 24,
+        marginTop: 50,
+        fontWeight: 'bold',
+        fontStyle: 'italic',
+        color: '#442e65',
+    },
+    btnView: {
+        flexDirection: 'row',
+        height: 70,
+        top: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    button1: {
+        position: 'relative',
+        width: 140,
+        marginHorizontal: 15,
+        height: 55,
+        borderRadius: 15,
         backgroundColor: '#442d65',
+        elevation: 20,
+    },
+    button2: {
+        position: 'relative',
+        width: 140,
+        marginHorizontal: 15,
+        height: 55,
+        borderRadius: 15,
+        backgroundColor: '#16B271',
+        elevation: 20,
     },
     btnText: {
         textAlign: 'center',
-        paddingTop: 14,
+        paddingTop: 11,
         color: 'white',
         fontWeight: 'bold',
         fontSize: 22,

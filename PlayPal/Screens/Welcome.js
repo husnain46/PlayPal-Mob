@@ -5,30 +5,65 @@ import {
     TouchableOpacity,
     TextInput,
     Image,
-    StyleSheet,
     Text,
     Alert,
     ScrollView,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
-import DropDownPicker from 'react-native-dropdown-picker';
+import {Picker} from '@react-native-picker/picker';
+import cityData from '../Assets/cityData.json';
+import styles from '../Styles/welcomeStyles';
 
 const Welcome = ({navigation, route}) => {
     const [selectedSports, setSelectedSports] = useState([]);
     const [nextBool, setNextBool] = useState(false);
     const [imageSelected, setImageSelected] = useState('');
     const [skillLevel, setSkillLevel] = useState(null);
-    const [open, setOpen] = useState(false);
-    const [value, setValue] = useState(null);
+
+    const [selectedProvince, setSelectedProvince] = useState('');
+    const [cities, setCities] = useState([]);
+    const [selectedCity, setSelectedCity] = useState('');
+
+    const provinces = [
+        {label: 'Punjab', value: 'Punjab'},
+        {label: 'Sindh', value: 'Sindh'},
+        {
+            label: 'Islamabad Capital Territory',
+            value: 'Islamabad Capital Territory',
+        },
+        {label: 'Khyber Pakhtunkhwa', value: 'Khyber Pakhtunkhwa'},
+        {label: 'Balochistan', value: 'Balochistan'},
+        {label: 'Gilgit-Baltistan', value: 'Gilgit-Baltistan'},
+        {label: 'Azad Kashmir', value: 'Azad Kashmir'},
+    ];
+
+    const handleProvinceChange = itemValue => {
+        setSelectedProvince(itemValue);
+
+        const filteredCities = cityData.filter(
+            city => city.province === itemValue,
+        );
+        setCities(filteredCities);
+        setSelectedCity('');
+    };
+
+    const handleCityChange = itemValue => {
+        setSelectedCity(itemValue);
+    };
+
     const profileStatus = route.params;
+
     const skLvl = [
         {label: 'Beginner', value: 'lvl1'},
         {label: 'Amateur', value: 'lvl2'},
         {label: 'Professional', value: 'lvl3'},
     ];
 
+    const handleSkillChange = itemValue => {
+        setSkillLevel(itemValue);
+    };
+
     const gotoHome = () => {
-        navigation.setParams({profileStatus: true});
         navigation.navigate('BottomTab');
     };
 
@@ -113,7 +148,6 @@ const Welcome = ({navigation, route}) => {
                         />
                     </TouchableOpacity>
                 </View>
-
                 <Text style={styles.nameTxt}>Husnain Ahmed</Text>
                 <View style={styles.inputView}>
                     <Text style={styles.text1}>Enter your bio:</Text>
@@ -126,9 +160,73 @@ const Welcome = ({navigation, route}) => {
                     />
                 </View>
 
-                <Text style={styles.text2}>Select your sports interest:</Text>
+                <View style={styles.pickerView}>
+                    <Text style={styles.text3}>Your province:</Text>
+                    <View style={styles.pickerStyle}>
+                        <Picker
+                            style={{width: 290}}
+                            selectedValue={selectedProvince}
+                            onValueChange={handleProvinceChange}
+                            mode="dropdown"
+                            dropdownIconColor={'white'}
+                            dropdownIconRippleColor={'#11867F'}>
+                            <Picker.Item
+                                style={styles.pickerBox}
+                                label="Select your province"
+                                value=""
+                                enabled={false}
+                                color="#11867F"
+                            />
+                            {provinces.map((province, index) => (
+                                <Picker.Item
+                                    style={styles.pickerBox}
+                                    color="white"
+                                    key={index}
+                                    label={province.label}
+                                    value={province.value}
+                                />
+                            ))}
+                        </Picker>
+                    </View>
+                </View>
+
+                <View style={styles.pickerView}>
+                    <Text style={styles.text3}>Your city:</Text>
+                    <View style={styles.pickerStyle}>
+                        <Picker
+                            style={{width: 290}}
+                            selectedValue={selectedCity}
+                            onValueChange={handleCityChange}
+                            mode="dropdown"
+                            enabled={selectedProvince !== '' ? true : false}
+                            dropdownIconColor={'white'}
+                            dropdownIconRippleColor={'#11867F'}>
+                            <Picker.Item
+                                style={styles.pickerBox}
+                                label="Select your city"
+                                value=""
+                                enabled={false}
+                                color="#11867F"
+                            />
+                            {cities.map((city, index) => (
+                                <Picker.Item
+                                    key={index}
+                                    style={styles.pickerBox}
+                                    label={city.city}
+                                    value={city.city}
+                                    color={
+                                        city.id === null ? '#11867F' : 'white'
+                                    }
+                                />
+                            ))}
+                        </Picker>
+                    </View>
+                </View>
 
                 <View style={styles.container2}>
+                    <Text style={styles.text2}>
+                        Select your sports interest:
+                    </Text>
                     {sportsOptions.map(sport => (
                         <TouchableOpacity
                             key={sport.id}
@@ -149,28 +247,34 @@ const Welcome = ({navigation, route}) => {
                     ))}
                 </View>
 
-                <View style={styles.dropView}>
-                    <Text style={styles.text3}>Select your skill level:</Text>
-                    <DropDownPicker
-                        open={open}
-                        value={value}
-                        items={skLvl}
-                        setOpen={setOpen}
-                        setValue={setValue}
-                        placeholder="Select skill level"
-                        style={styles.dropBox}
-                        dropDownContainerStyle={{
-                            backgroundColor: '#143B63',
-                            borderBottomWidth: 1,
-                            borderTopWidth: 5,
-                            borderWidth: 0,
-                        }}
-                        onChangeItem={item => setSkillLevel(item.value)}
-                        listMode="SCROLLVIEW"
-                        textStyle={{color: 'white', fontSize: 16}}
-                        arrowIconStyle={{tintColor: 'white'}}
-                        tickIconStyle={{tintColor: 'white'}}
-                    />
+                <View style={styles.pickerView}>
+                    <Text style={styles.text3}>Your skills level:</Text>
+                    <View style={styles.pickerStyle}>
+                        <Picker
+                            style={{width: 290}}
+                            selectedValue={skillLevel}
+                            onValueChange={handleSkillChange}
+                            mode="dropdown"
+                            dropdownIconColor={'white'}
+                            dropdownIconRippleColor={'#11867F'}>
+                            <Picker.Item
+                                style={styles.pickerBox}
+                                label="Select skill level"
+                                value=""
+                                enabled={false}
+                                color="#11867F"
+                            />
+                            {skLvl.map((lvl, index) => (
+                                <Picker.Item
+                                    style={styles.pickerBox}
+                                    color="white"
+                                    key={index}
+                                    label={lvl.label}
+                                    value={lvl.value}
+                                />
+                            ))}
+                        </Picker>
+                    </View>
                 </View>
 
                 <View style={styles.btnView}>
@@ -211,149 +315,5 @@ const Welcome = ({navigation, route}) => {
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#041e38',
-    },
-    dpImage: {
-        width: 170,
-        height: 115,
-        alignSelf: 'center',
-        marginTop: 80,
-    },
-    dpView: {
-        width: 120,
-        alignSelf: 'center',
-        marginTop: 40,
-    },
-    dpImage2: {
-        width: 100,
-        height: 115,
-        borderRadius: 15,
-        alignSelf: 'center',
-    },
-    pencilImg: {
-        width: 30,
-        height: 40,
-        marginTop: -30,
-        alignSelf: 'flex-end',
-    },
-    nameTxt: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        color: 'white',
-        marginTop: 20,
-        textTransform: 'capitalize',
-        letterSpacing: 1,
-    },
-    profileTxt: {
-        fontSize: 22,
-        textAlign: 'center',
-        color: 'white',
-        marginTop: 60,
-    },
-    inputView: {
-        width: 280,
-        marginTop: 40,
-        justifyContent: 'center',
-        alignContent: 'center',
-        alignSelf: 'center',
-    },
-    textInput: {
-        height: 60,
-        width: 280,
-        borderBottomColor: 'white',
-        marginTop: 10,
-        borderBottomWidth: 1,
-        alignSelf: 'center',
-        fontSize: 17,
-        backgroundColor: '#143B63',
-    },
-    text1: {
-        height: 30,
-        alignSelf: 'flex-start',
-        fontSize: 18,
-        color: 'white',
-    },
-    text2: {
-        height: 40,
-        fontSize: 18,
-        marginTop: 30,
-        marginLeft: 55,
-        color: 'white',
-    },
-    text3: {
-        height: 30,
-        alignSelf: 'flex-start',
-        fontSize: 18,
-        color: 'white',
-        margin: 2,
-    },
-    container2: {
-        width: 300,
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        alignSelf: 'center',
-    },
-    option: {
-        padding: 10,
-        paddingHorizontal: 15,
-        marginBottom: 10,
-        backgroundColor: '#143B63',
-        marginHorizontal: 5,
-        borderRadius: 15,
-    },
-    optionSelected: {
-        backgroundColor: '#11867F',
-    },
-    optionText: {
-        fontSize: 16,
-        color: 'white',
-    },
-    optionTextSelected: {
-        color: 'white',
-    },
-    arrowView: {
-        alignItems: 'center',
-        marginTop: 80,
-    },
-    arrowImg: {
-        width: 100,
-        height: 100,
-    },
-    dropView: {
-        alignSelf: 'center',
-        marginTop: 20,
-        width: 290,
-    },
-    dropBox: {
-        backgroundColor: '#143B63',
-        borderWidth: 0,
-        marginTop: 5,
-    },
-    btnView: {
-        marginTop: 30,
-        width: 140,
-        height: 50,
-        borderRadius: 12,
-        borderWidth: 4,
-        borderColor: '#143B63',
-        backgroundColor: '#0c1833',
-        alignSelf: 'center',
-        marginBottom: 50,
-    },
-    btnText: {
-        textAlign: 'center',
-        padding: 8,
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 20,
-        letterSpacing: 1,
-    },
-});
 
 export default Welcome;

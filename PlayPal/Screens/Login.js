@@ -15,15 +15,8 @@ import {
 } from 'react-native';
 
 const Login = ({navigation}) => {
-    const [profileStatus, setProfileStatus] = useState(false);
-
-    const gotoWelcome = () => {
-        navigation.navigate('Welcome', {
-            profileStatus: profileStatus,
-        });
-    };
     const gotoHome = () => {
-        navigation.navigate('Home');
+        navigation.navigate('BottomTab');
     };
 
     return (
@@ -58,11 +51,7 @@ const Login = ({navigation}) => {
                                     <View style={styles.btnContainer}>
                                         <Button
                                             title="Login"
-                                            onPress={() => {
-                                                !profileStatus
-                                                    ? gotoWelcome()
-                                                    : gotoHome();
-                                            }}
+                                            onPress={() => gotoHome()}
                                         />
                                     </View>
 

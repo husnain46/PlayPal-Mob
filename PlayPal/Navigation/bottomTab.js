@@ -6,6 +6,7 @@ import Team from '../Screens/Team';
 import Tournament from '../Screens/Tournament';
 import FindArena from '../Screens/FindArena';
 import {View, Image, Text, StyleSheet} from 'react-native';
+import Header from './header';
 
 const Tab = createBottomTabNavigator();
 
@@ -13,20 +14,20 @@ const BottomTab = () => {
     return (
         <Tab.Navigator
             screenOptions={{
+                headerTitle: () => <Header />,
+                tabBarHideOnKeyboard: true,
+                headerStyle: {height: 65},
                 tabBarShowLabel: false,
+
                 tabBarStyle: {
                     position: 'absolute',
                     bottom: 18,
                     left: 20,
                     right: 20,
-                    elevation: 6,
+                    elevation: 5,
                     backgroundColor: '#ffffff',
                     borderRadius: 15,
                     height: 75,
-                    shadowColor: '#7F5Df0',
-                    shadowOffset: {height: 10, width: 0},
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.5,
                 },
             }}>
             <Tab.Screen

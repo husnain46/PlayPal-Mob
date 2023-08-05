@@ -4,7 +4,11 @@ import {SafeAreaView, View, StyleSheet, Text} from 'react-native';
 const Home = ({navigation}) => {
     return (
         <SafeAreaView style={styles.container}>
-            <Text>Home Screen</Text>
+            <View>
+                <View>
+                    
+                </View>
+            </View>
         </SafeAreaView>
     );
 };
