@@ -23,19 +23,29 @@ const styles = StyleSheet.create({
         height: 25,
         top: 2,
     },
+    ageFilterView: {
+        alignSelf: 'center',
+        marginTop: 20,
+    },
+    agefilterLabel: {
+        fontSize: 16,
+        marginBottom: 5,
+        marginLeft: 10,
+        fontWeight: '600',
+        color: 'black',
+    },
     centeredView: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 22,
+        alignSelf: 'center',
     },
     modalView: {
         width: 300,
-        height: 300,
-        margin: 20,
+        height: 400,
         backgroundColor: 'white',
         borderRadius: 15,
-        padding: 35,
+        padding: 25,
         alignItems: 'center',
         elevation: 35,
         borderWidth: 3,
@@ -44,12 +54,13 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         padding: 10,
         elevation: 2,
+        marginEnd: 10,
     },
     buttonOpen: {
-        backgroundColor: '#F194FF',
+        backgroundColor: '#11867F',
     },
     buttonClose: {
-        backgroundColor: '#2196F3',
+        backgroundColor: 'red',
     },
     textStyle: {
         color: 'white',
@@ -59,6 +70,39 @@ const styles = StyleSheet.create({
     modalText: {
         marginBottom: 15,
         textAlign: 'center',
+    },
+    pickerView: {
+        alignSelf: 'center',
+    },
+    pickerBox: {
+        fontSize: 16,
+    },
+    pickerStyle: {
+        borderRadius: 10,
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: 'lightgrey',
+    },
+    filterLabel: {
+        fontSize: 16,
+        marginBottom: 10,
+        fontWeight: '600',
+        color: 'black',
+    },
+    filterBtnView: {
+        flexDirection: 'row',
+        marginTop: 35,
+        left: 10,
+    },
+    resetBtn: {
+        marginEnd: 65,
+        borderWidth: 1,
+        borderColor: 'grey',
+    },
+    safeContainerStyle: {
+        flex: 1,
+        margin: 20,
+        justifyContent: 'center',
     },
     listView: {
         top: 30,
@@ -92,7 +136,7 @@ const styles = StyleSheet.create({
         width: 70,
         right: 5,
         borderWidth: 2,
-        borderColor: 'grey',
+        borderColor: 'black',
         borderRadius: 15,
     },
     infoContainer: {

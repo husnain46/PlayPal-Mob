@@ -1,5 +1,12 @@
 import React from 'react';
-import {StyleSheet, Text, View, Image, TouchableOpacity} from 'react-native';
+import {
+    StyleSheet,
+    Text,
+    View,
+    Image,
+    TouchableOpacity,
+    SafeAreaView,
+} from 'react-native';
 
 export default function Header({title, navigation}) {
     const openMenu = () => {
@@ -7,7 +14,7 @@ export default function Header({title, navigation}) {
     };
 
     return (
-        <View style={styles.header}>
+        <SafeAreaView style={styles.header}>
             <View>
                 <Image
                     source={require('../Assets/Icons/logo4.png')}
@@ -34,7 +41,7 @@ export default function Header({title, navigation}) {
                     />
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
 

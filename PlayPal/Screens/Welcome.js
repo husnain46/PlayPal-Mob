@@ -54,9 +54,9 @@ const Welcome = ({navigation, route}) => {
     const profileStatus = route.params;
 
     const skLvl = [
-        {label: 'Beginner', value: 'lvl1'},
-        {label: 'Amateur', value: 'lvl2'},
-        {label: 'Professional', value: 'lvl3'},
+        {label: 'Beginner', value: 'Beginner'},
+        {label: 'Amateur', value: 'Amateur'},
+        {label: 'Pro', value: 'Pro'},
     ];
 
     const handleSkillChange = itemValue => {

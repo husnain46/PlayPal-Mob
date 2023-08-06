@@ -1,17 +1,24 @@
 import styles from '../Styles/findplayersStyles';
 import React, {useState} from 'react';
 import {FlatList} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
+import {ButtonGroup} from '@rneui/themed';
+
 import {
     Image,
     Modal,
-    Pressable,
-    StyleSheet,
+    TouchableOpacity,
     SafeAreaView,
     View,
     Text,
-    TouchableOpacity,
 } from 'react-native';
-import {Button, Card, TextInput, Title} from 'react-native-paper';
+import {
+    Button,
+    Card,
+    SegmentedButtons,
+    TextInput,
+    Title,
+} from 'react-native-paper';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import locationIcon from '../Assets/Icons/location.png';
 import levelIcon from '../Assets/Icons/level.png';
@@ -20,12 +27,9 @@ import sportsIcon from '../Assets/Icons/sports.png';
 const FindPlayers = ({navigation}) => {
     const [username, setUsername] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
-
-    const [selectedGender, setSelectedGender] = useState(null);
-    const [selectedCity, setSelectedCity] = useState(null);
-    const [selectedAge, setSelectedAge] = useState(null);
-    const [selectedSports, setSelectedSports] = useState([]);
-    const [selectedSkillLevel, setSelectedSkillLevel] = useState(null);
+    const [ageFilter, setAgeFilter] = useState(null);
+    const [sportsFilter, setSportsFilter] = useState(null);
+    const [levelFilter, setLevelFilter] = useState(null);
 
     const gotoViewProfile = () => {
         navigation.navigate('ViewProfile');
@@ -43,7 +47,8 @@ const FindPlayers = ({navigation}) => {
             city: 'New York',
             area: 'Manhattan',
             preferredSports: ['Basketball', 'Tennis'],
-            skillLevel: 'Intermediate',
+            skillLevel: 'Amateur',
+            bio: 'sadasd',
         },
         {
             profilePic:
@@ -69,7 +74,7 @@ const FindPlayers = ({navigation}) => {
             city: 'Chicago',
             area: 'Downtown',
             preferredSports: ['Football', 'Cycling'],
-            skillLevel: 'Advanced',
+            skillLevel: 'Pro',
         },
         {
             profilePic:
@@ -82,7 +87,7 @@ const FindPlayers = ({navigation}) => {
             city: 'San Francisco',
             area: 'Bay Area',
             preferredSports: ['Yoga', 'Pilates'],
-            skillLevel: 'Intermediate',
+            skillLevel: 'Amateur',
         },
         {
             profilePic:
@@ -108,9 +113,46 @@ const FindPlayers = ({navigation}) => {
             city: 'Berlin',
             area: 'Mitte',
             preferredSports: ['Dancing', 'Hiking'],
-            skillLevel: 'Advanced',
+            skillLevel: 'Pro',
         },
     ];
+
+    const sportsList = [
+        {value: 'Football', name: 'Football'},
+        {value: 'Cricket', name: 'Cricket'},
+        {value: 'Tennis', name: 'Tennis'},
+        {value: 'Basketball', name: 'Basketball'},
+        {value: 'Table Tennis', name: 'Table Tennis'},
+        {value: 'Hockey', name: 'Hockey'},
+        {value: 'Bedminton', name: 'Bedminton'},
+        {value: 'Volleyball', name: 'Volleyball'},
+    ];
+
+    const ageRange = [
+        {value: 20, label: 'Under 20'},
+        {value: 30, label: 'Under 30'},
+        {value: 40, label: 'Under 40'},
+    ];
+
+    const handleAgeFilterButton = selectedIndex => {
+        setAgeFilter(ageRange[selectedIndex].value);
+    };
+
+    const skLvl = [
+        {label: 'Beginner', value: 'Beginner'},
+        {label: 'Amateur', value: 'Amateur'},
+        {label: 'Pro', value: 'Pro'},
+    ];
+
+    const handleSkillFilterButton = selectedIndex => {
+        setLevelFilter(skLvl[selectedIndex].value);
+    };
+
+    const resetFilters = () => {
+        setSportsFilter(null);
+        setAgeFilter(null);
+        setLevelFilter(null);
+    };
 
     const getAge = dateString => {
         const today = new Date();
@@ -125,6 +167,25 @@ const FindPlayers = ({navigation}) => {
             age--;
         }
         return age;
+    };
+
+    const [filteredUsers, setFilteredUsers] = useState(dummyUsers);
+
+    const applyFilters = () => {
+        const filtered = dummyUsers.filter(user => {
+            const isSportsMatched =
+                !sportsFilter || user.preferredSports.includes(sportsFilter);
+            const isAgeMatched =
+                !ageFilter ||
+                (getAge(user.DOB) <= ageFilter &&
+                    getAge(user.DOB) > ageFilter - 10);
+
+            const isLevelMatched =
+                !levelFilter || user.skillLevel === levelFilter;
+            return isSportsMatched && isAgeMatched && isLevelMatched;
+        });
+        setFilteredUsers(filtered);
+        setModalVisible(!modalVisible);
     };
 
     const renderItem = ({item}) => (
@@ -232,24 +293,105 @@ const FindPlayers = ({navigation}) => {
                 transparent={true}
                 visible={modalVisible}
                 onRequestClose={() => {
-                    Alert.alert('Modal has been closed.');
                     setModalVisible(!modalVisible);
                 }}>
                 <View style={styles.centeredView}>
                     <View style={styles.modalView}>
-                        <Text style={styles.modalText}>Hello World!</Text>
-                        <Pressable
-                            style={[styles.button, styles.buttonClose]}
-                            onPress={() => setModalVisible(!modalVisible)}>
-                            <Text style={styles.textStyle}>Hide Modal</Text>
-                        </Pressable>
+                        <View style={styles.pickerView}>
+                            <Text style={styles.filterLabel}>
+                                Sports preference:
+                            </Text>
+                            <View style={styles.pickerStyle}>
+                                <Picker
+                                    style={{width: 180}}
+                                    selectedValue={sportsFilter}
+                                    onValueChange={setSportsFilter}
+                                    mode="dropdown"
+                                    dropdownIconColor={'#143B63'}
+                                    dropdownIconRippleColor={'#11867F'}>
+                                    <Picker.Item
+                                        style={styles.pickerBox}
+                                        label="Select sports"
+                                        value=""
+                                        enabled={false}
+                                        color="#11867F"
+                                    />
+                                    {sportsList.map((sport, index) => (
+                                        <Picker.Item
+                                            key={index}
+                                            style={styles.pickerBox}
+                                            label={sport.name}
+                                            value={sport.value}
+                                            color="black"
+                                        />
+                                    ))}
+                                </Picker>
+                            </View>
+                        </View>
+
+                        <View style={styles.ageFilterView}>
+                            <Text style={styles.agefilterLabel}>
+                                Age preference:
+                            </Text>
+                            <View style={{width: 240}}>
+                                <ButtonGroup
+                                    buttons={ageRange.map(item => item.label)}
+                                    selectedIndex={ageRange.findIndex(
+                                        item => item.value === ageFilter,
+                                    )}
+                                    onPress={handleAgeFilterButton}
+                                    containerStyle={{
+                                        height: 40,
+                                    }}
+                                    selectedTextStyle={{color: 'white'}}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.ageFilterView}>
+                            <Text style={styles.agefilterLabel}>
+                                Skills preference:
+                            </Text>
+                            <View style={{width: 240}}>
+                                <ButtonGroup
+                                    buttons={skLvl.map(item => item.label)}
+                                    selectedIndex={skLvl.findIndex(
+                                        item => item.value === levelFilter,
+                                    )}
+                                    onPress={handleSkillFilterButton}
+                                    containerStyle={{
+                                        height: 40,
+                                    }}
+                                    selectedTextStyle={{color: 'white'}}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.filterBtnView}>
+                            <Button
+                                style={styles.resetBtn}
+                                onPress={() => resetFilters()}>
+                                Reset
+                            </Button>
+
+                            <TouchableOpacity
+                                style={[styles.button, styles.buttonClose]}
+                                onPress={() => setModalVisible(!modalVisible)}>
+                                <Text style={styles.textStyle}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.button, styles.buttonOpen]}
+                                onPress={() => applyFilters()}>
+                                <Text style={styles.textStyle}>Apply</Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
             </Modal>
 
             <View style={styles.listView}>
                 <FlatList
-                    data={dummyUsers}
+                    data={filteredUsers}
                     renderItem={renderItem}
                     keyExtractor={item => item.username}
                     contentContainerStyle={{paddingBottom: 180}}

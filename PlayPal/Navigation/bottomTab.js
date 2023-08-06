@@ -5,7 +5,7 @@ import FindPlayers from '../Screens/FindPlayers';
 import Team from '../Screens/Team';
 import Tournament from '../Screens/Tournament';
 import FindArena from '../Screens/FindArena';
-import {View, Image, Text, StyleSheet} from 'react-native';
+import {View, Image, Text, StyleSheet, SafeAreaView} from 'react-native';
 import Header from './header';
 
 const Tab = createBottomTabNavigator();
@@ -35,7 +35,7 @@ const BottomTab = () => {
                 component={Home}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <View>
+                        <SafeAreaView>
                             <View
                                 style={{
                                     width: 43,
@@ -67,7 +67,7 @@ const BottomTab = () => {
                                 }}>
                                 Home
                             </Text>
-                        </View>
+                        </SafeAreaView>
                     ),
                 }}
             />
@@ -76,7 +76,7 @@ const BottomTab = () => {
                 component={FindPlayers}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <View style={{right: 3}}>
+                        <SafeAreaView style={{right: 3}}>
                             <View
                                 style={{
                                     width: 43,
@@ -108,7 +108,7 @@ const BottomTab = () => {
                                 }}>
                                 Players
                             </Text>
-                        </View>
+                        </SafeAreaView>
                     ),
                 }}
             />
@@ -117,7 +117,7 @@ const BottomTab = () => {
                 component={Team}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <View style={{right: 8}}>
+                        <SafeAreaView style={{right: 8}}>
                             <View
                                 style={{
                                     width: 43,
@@ -149,7 +149,7 @@ const BottomTab = () => {
                                 }}>
                                 Team
                             </Text>
-                        </View>
+                        </SafeAreaView>
                     ),
                 }}
             />
@@ -158,7 +158,7 @@ const BottomTab = () => {
                 component={Tournament}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <View
+                        <SafeAreaView
                             style={{
                                 width: 80,
                                 alignItems: 'center',
@@ -196,7 +196,7 @@ const BottomTab = () => {
                                 }}>
                                 Tournament
                             </Text>
-                        </View>
+                        </SafeAreaView>
                     ),
                 }}
             />
@@ -205,7 +205,7 @@ const BottomTab = () => {
                 component={FindArena}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <View>
+                        <SafeAreaView>
                             <View
                                 style={{
                                     width: 43,
@@ -237,7 +237,7 @@ const BottomTab = () => {
                                 }}>
                                 Arenas
                             </Text>
-                        </View>
+                        </SafeAreaView>
                     ),
                 }}
             />

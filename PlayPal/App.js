@@ -8,7 +8,7 @@ import GettingStarted from './Screens/GettingStarted';
 import SignUp from './Screens/SignUp';
 import Login from './Screens/Login';
 import Welcome from './Screens/Welcome';
-import ViewProfile from './Screens/viewProfile';
+import ViewProfile from './Screens/ViewProfile';
 
 const Stack = createStackNavigator();
 
