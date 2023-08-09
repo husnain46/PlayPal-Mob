@@ -3,6 +3,7 @@ import {StyleSheet} from 'react-native';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#EDEDED',
     },
     searchView: {
         flexDirection: 'row',
@@ -16,7 +17,11 @@ const styles = StyleSheet.create({
         width: 270,
         height: 50,
         marginEnd: 30,
+        justifyContent: 'center',
         backgroundColor: 'white',
+        elevation: 10,
+        borderRadius: 10,
+        borderWidth: 1,
     },
     filter: {
         width: 25,
@@ -112,7 +117,7 @@ const styles = StyleSheet.create({
         width: 350,
         height: 310,
         marginBottom: 20,
-        backgroundColor: '#D6E6F2',
+        backgroundColor: 'white',
         borderRadius: 15,
     },
     cardName: {
@@ -136,7 +141,7 @@ const styles = StyleSheet.create({
         width: 70,
         right: 5,
         borderWidth: 2,
-        borderColor: 'black',
+        borderColor: '#143B63',
         borderRadius: 15,
     },
     infoContainer: {

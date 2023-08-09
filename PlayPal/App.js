@@ -9,6 +9,9 @@ import SignUp from './Screens/SignUp';
 import Login from './Screens/Login';
 import Welcome from './Screens/Welcome';
 import ViewProfile from './Screens/ViewProfile';
+import ChatScreen from './Screens/ChatScreen';
+import CreateTeam from './Screens/CreateTeam';
+import JoinTeam from './Screens/JoinTeam';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +32,9 @@ export default function App() {
                 <Stack.Screen name="Welcome" component={Welcome} />
                 <Stack.Screen name="BottomTab" component={BottomTab} />
                 <Stack.Screen name="ViewProfile" component={ViewProfile} />
+                <Stack.Screen name="ChatScreen" component={ChatScreen} />
+                <Stack.Screen name="CreateTeam" component={CreateTeam} />
+                <Stack.Screen name="JoinTeam" component={JoinTeam} />
             </Stack.Navigator>
         </NavigationContainer>
     );
