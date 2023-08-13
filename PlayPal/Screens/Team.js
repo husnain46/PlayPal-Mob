@@ -3,7 +3,6 @@ import React from 'react';
 import {ScrollView} from 'react-native';
 import {SafeAreaView, View, StyleSheet, Text, Image} from 'react-native';
 import {Divider} from 'react-native-paper';
-import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const Team = ({navigation}) => {
     const gotoCreateTeam = () => {
@@ -23,7 +22,7 @@ const Team = ({navigation}) => {
                 }}
                 style={{width: '100%'}}>
                 <View style={styles.yourTeamView}>
-                    <Text style={styles.text1}>Your teams</Text>
+                    <Text style={styles.text1}>My teams</Text>
                     <Divider style={{marginTop: 5, width: '100%', height: 3}} />
                     <Text style={styles.text2}>You are not in a team yet</Text>
                 </View>

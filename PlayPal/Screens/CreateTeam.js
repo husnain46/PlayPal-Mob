@@ -8,7 +8,7 @@ import {
     StyleSheet,
     Alert,
 } from 'react-native';
-import {Text, Input, Button, ButtonGroup} from '@rneui/themed';
+import {Text, Button, ButtonGroup} from '@rneui/themed';
 import {RadioButton, TextInput} from 'react-native-paper';
 import {Picker} from '@react-native-picker/picker';
 import ImagePicker from 'react-native-image-crop-picker';

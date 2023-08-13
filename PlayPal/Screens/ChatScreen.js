@@ -62,15 +62,16 @@ const ChatScreen = ({navigation, route}) => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.headerContainer}>
-                <Image
-                    source={{uri: user.profilePic}}
-                    style={styles.profilePicture}
-                />
-                <Text style={styles.username}>
-                    {`${user.firstName} ${user.lastName}`}
-                </Text>
+                <View style={{flexDirection: 'row'}}>
+                    <Image
+                        source={{uri: user.profilePic}}
+                        style={styles.profilePicture}
+                    />
+                    <Text style={styles.username}>
+                        {`${user.firstName} ${user.lastName}`}
+                    </Text>
+                </View>
                 <Icon
-                    style={{marginLeft: 200}}
                     name="delete"
                     color={'#B95252'}
                     size={30}
@@ -136,6 +137,7 @@ const styles = StyleSheet.create({
     },
     headerContainer: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
         paddingVertical: 10,
         paddingHorizontal: 15,
@@ -145,7 +147,6 @@ const styles = StyleSheet.create({
     profilePicture: {
         width: 45,
         height: 45,
-
         borderRadius: 30,
         marginRight: 10,
     },
@@ -153,6 +154,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         textAlign: 'left',
+        textAlignVertical: 'center',
     },
     flex1: {
         flex: 1,

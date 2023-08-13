@@ -10,9 +10,11 @@ import {
 import {Avatar, Text, ListItem, Divider, Button} from '@rneui/themed';
 import getAge from '../Functions/getAge';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
+import getSportsByIds from '../Functions/getSportsByIds';
 
 const ViewProfile = ({navigation, route}) => {
-    const {user, sportName} = route.params;
+    const {user} = route.params;
+    const sportName = getSportsByIds(user.preferredSports);
     const [requestSent, setRequestSent] = useState(false);
     const [isFriend, setIsFriend] = useState(true);
 

@@ -1,6 +1,4 @@
-import styles from '../Styles/findplayersStyles';
 import React, {useState} from 'react';
-import {FlatList} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, SearchBar} from '@rneui/themed';
 
@@ -10,18 +8,17 @@ import {
     TouchableOpacity,
     SafeAreaView,
     View,
-    Text,
+    StyleSheet,
+    FlatList,
 } from 'react-native';
-import {Button, Card, Title} from 'react-native-paper';
-import locationIcon from '../Assets/Icons/location.png';
-import levelIcon from '../Assets/Icons/level.png';
-import sportsIcon from '../Assets/Icons/sports.png';
+import {Button, Card, Title, Text, Divider} from 'react-native-paper';
 import getAge from '../Functions/getAge';
 import userData from '../Assets/userData.json';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
+import tournamentData from '../Assets/tournamentData.json';
 
-const FindPlayers = ({navigation}) => {
+const ExploreTournament = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [ageFilter, setAgeFilter] = useState(null);
     const [sportsFilter, setSportsFilter] = useState(null);
@@ -30,6 +27,37 @@ const FindPlayers = ({navigation}) => {
 
     const gotoViewProfile = user => {
         navigation.navigate('ViewProfile', {user});
+    };
+
+    const getTournamentDates = tournament => {
+        const matches = tournament.matches;
+        if (matches.length === 0) {
+            return {startDate: null, lastDate: null};
+        }
+
+        const sortedMatches = matches.sort((a, b) => {
+            return a.date.localeCompare(b.date);
+        });
+
+        const startDate = sortedMatches[0].date;
+        const lastDate = sortedMatches[sortedMatches.length - 1].date;
+
+        return {
+            startDate: startDate,
+            endDate: lastDate,
+        };
+    };
+
+    const sportIcons = {
+        Cricket: require('../Assets/Icons/cricket.png'),
+        Football: require('../Assets/Icons/football.png'),
+        Hockey: require('../Assets/Icons/hockey.png'),
+        Basketball: require('../Assets/Icons/basketball.png'),
+        Volleyball: require('../Assets/Icons/volleyball.png'),
+        Badminton: require('../Assets/Icons/badminton.png'),
+        Tennis: require('../Assets/Icons/tennis.png'),
+        'Table Tennis': require('../Assets/Icons/tableTennis.png'),
+        default: require('../Assets/Icons/no image.png'),
     };
 
     const ageRange = [
@@ -61,13 +89,13 @@ const FindPlayers = ({navigation}) => {
     const handleSearch = text => {
         setSearchQuery(text);
 
-        const searchFilteredUsers = Object.keys(userData).map(
+        const searchFilteredData = Object.keys(userData).map(
             key => userData[key],
         );
 
         const searchWords = text.trim().toLowerCase().split(/\s+/);
 
-        const filtered = searchFilteredUsers.filter(user => {
+        const filtered = searchFilteredData.filter(user => {
             const isNameMatched = searchWords.every(
                 word =>
                     user.firstName.toLowerCase().includes(word) ||
@@ -92,19 +120,19 @@ const FindPlayers = ({navigation}) => {
             );
         });
 
-        setFilteredUsers(filtered);
+        setFilteredData(filtered);
     };
 
-    const [filteredUsers, setFilteredUsers] = useState(
-        Object.keys(userData).map(key => userData[key]),
+    const [filteredData, setFilteredData] = useState(
+        Object.keys(tournamentData).map(key => tournamentData[key]),
     );
 
     const applyFilters = () => {
-        const searchFilteredUsers = Object.keys(userData).map(
+        const searchFilteredData = Object.keys(userData).map(
             key => userData[key],
         );
 
-        const filtered = searchFilteredUsers.filter(user => {
+        const filtered = searchFilteredData.filter(user => {
             const isNameMatched =
                 user.firstName
                     .toLowerCase()
@@ -130,88 +158,47 @@ const FindPlayers = ({navigation}) => {
             );
         });
 
-        setFilteredUsers(filtered);
+        setFilteredData(filtered);
         setModalVisible(false);
     };
 
     const renderItem = ({item}) => {
-        const sportName = getSportsByIds(item.preferredSports);
-        return (
-            <Card key={item.userId} style={styles.card} mode="elevated">
-                <Card.Title
-                    title={`${item.firstName} ${item.lastName}`}
-                    titleStyle={styles.cardName}
-                    subtitleStyle={styles.cardUsername}
-                    subtitle={`@${item.username}`}
-                    style={styles.cardHeader}
-                    left={() => (
-                        <View>
-                            <Image
-                                style={styles.dpImage}
-                                source={{uri: item.profilePic}}
-                                resizeMode="contain"
-                            />
-                        </View>
-                    )}
-                    right={() => (
-                        <View style={styles.cardAgeView}>
-                            <Text
-                                style={{
-                                    fontSize: 15,
-                                    marginBottom: 8,
-                                    color:
-                                        item.gender === 'Male'
-                                            ? 'blue'
-                                            : '#CA0079',
-                                }}>
-                                {`(${item.gender}`}
-                            </Text>
+        const {startDate, endDate} = getTournamentDates(item);
+        const sportName = getSportsByIds([item.sport]);
 
-                            <Text style={styles.ageText}>{` - ${getAge(
-                                item.DOB,
-                            )} years)`}</Text>
-                        </View>
-                    )}
-                />
-                <Card.Content>
-                    <View style={styles.infoContainer}>
-                        <View style={styles.cardInfoView}>
+        const iconPath = sportIcons[sportName] || sportIcons.default;
+
+        return (
+            <Card style={styles.card}>
+                <Card.Content
+                    style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                    }}>
+                    <View style={{flexWrap: 'wrap'}}>
+                        <Title style={styles.title}>{item.name}</Title>
+                        <Text style={styles.subtitle}> {sportName} </Text>
+                        <Divider style={styles.divider} />
+
+                        <View style={{flexDirection: 'row'}}>
                             <Image
-                                source={sportsIcon}
-                                style={styles.infoIcons}
+                                style={styles.icon}
+                                source={require('../Assets/Icons/location.png')}
                             />
-                            <Title style={styles.cardSportsText}>
-                                {`${sportName.join(', ')}`}
-                            </Title>
+                            <Text style={styles.cityText}>{item.city}</Text>
                         </View>
-                        <View style={styles.cardInfoView}>
-                            <Image
-                                source={levelIcon}
-                                style={styles.infoIcons}
-                            />
-                            <Text style={styles.userInfo}>
-                                {`${item.skillLevel}`}
-                            </Text>
+                        <View
+                            style={{flexDirection: 'row', paddingVertical: 10}}>
+                            <Text style={styles.dateText}>Start date: </Text>
+                            <Text style={styles.info1}>{startDate} </Text>
                         </View>
-                        <View style={styles.cardInfoView}>
-                            <Image
-                                source={locationIcon}
-                                style={styles.infoIcons}
-                            />
-                            <Text style={styles.userInfo}>
-                                {`${item.area}, ${item.city}`}
-                            </Text>
+                        <View style={{flexDirection: 'row'}}>
+                            <Text>End date: </Text>
+                            <Text style={styles.info2}>{endDate} </Text>
                         </View>
-                        <Button
-                            style={{
-                                top: 15,
-                                width: 130,
-                                alignSelf: 'center',
-                            }}
-                            mode="outlined"
-                            onPress={() => gotoViewProfile(item)}>
-                            View Profile
-                        </Button>
+                    </View>
+                    <View style={styles.sportIconView}>
+                        <Image style={styles.sportsIcon} source={iconPath} />
                     </View>
                 </Card.Content>
             </Card>
@@ -220,6 +207,7 @@ const FindPlayers = ({navigation}) => {
 
     return (
         <SafeAreaView style={styles.container}>
+            <Title style={styles.topTitle}>Explore Tournaments</Title>
             <View style={styles.searchView}>
                 <SearchBar
                     placeholder="Search name"
@@ -346,9 +334,9 @@ const FindPlayers = ({navigation}) => {
             <View style={styles.listView}>
                 <FlatList
                     showsVerticalScrollIndicator={false}
-                    data={filteredUsers}
+                    data={filteredData}
                     renderItem={renderItem}
-                    keyExtractor={item => item.username}
+                    keyExtractor={filteredData.tournamentId}
                     contentContainerStyle={{paddingBottom: 180}}
                 />
             </View>
@@ -356,4 +344,174 @@ const FindPlayers = ({navigation}) => {
     );
 };
 
-export default FindPlayers;
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#EDEDED',
+    },
+    topTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#4A5B96',
+        textAlign: 'center',
+        marginVertical: 20,
+    },
+    searchView: {
+        flexDirection: 'row',
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignContent: 'center',
+        marginTop: 10,
+    },
+    searchBar: {
+        width: 290,
+        height: 50,
+        marginEnd: 30,
+        justifyContent: 'center',
+        backgroundColor: 'white',
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: 'darkgrey',
+    },
+    filter: {
+        width: 25,
+        height: 25,
+        top: 2,
+    },
+    ageFilterView: {
+        alignSelf: 'center',
+        marginTop: 20,
+    },
+    agefilterLabel: {
+        fontSize: 16,
+        marginBottom: 5,
+        marginLeft: 10,
+        fontWeight: '600',
+        color: 'black',
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+    },
+    modalView: {
+        width: 300,
+        height: 400,
+        backgroundColor: 'white',
+        borderRadius: 15,
+        padding: 25,
+        alignItems: 'center',
+        elevation: 35,
+        borderWidth: 3,
+    },
+    button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+        marginEnd: 10,
+    },
+    buttonOpen: {
+        backgroundColor: '#11867F',
+    },
+    buttonClose: {
+        backgroundColor: 'red',
+    },
+    textStyle: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
+    },
+    pickerView: {
+        alignSelf: 'center',
+    },
+    pickerBox: {
+        fontSize: 16,
+    },
+    pickerStyle: {
+        borderRadius: 10,
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: 'lightgrey',
+    },
+    filterLabel: {
+        fontSize: 16,
+        marginBottom: 10,
+        fontWeight: '600',
+        color: 'black',
+    },
+    filterBtnView: {
+        flexDirection: 'row',
+        marginTop: 35,
+        left: 10,
+    },
+    resetBtn: {
+        marginEnd: 65,
+        borderWidth: 1,
+        borderColor: 'grey',
+    },
+    safeContainerStyle: {
+        flex: 1,
+        margin: 20,
+        justifyContent: 'center',
+    },
+    listView: {
+        marginTop: 30,
+    },
+    card: {
+        marginVertical: 10,
+        width: '85%',
+        borderRadius: 15,
+        elevation: 10,
+        backgroundColor: 'white',
+        alignSelf: 'center',
+    },
+    title: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginLeft: 2,
+    },
+    subtitle: {
+        fontSize: 17,
+    },
+    divider: {
+        marginTop: 10,
+        width: '101%',
+        height: 3,
+        marginBottom: 10,
+    },
+    dateText: {
+        fontSize: 14,
+    },
+    info1: {
+        fontSize: 14,
+        color: 'green',
+    },
+    info2: {
+        fontSize: 14,
+        color: '#fc3003',
+    },
+    icon: {
+        width: 20,
+        height: 20,
+        marginRight: 15,
+    },
+    cityText: {
+        fontSize: 16,
+    },
+    sportIconView: {
+        justifyContent: 'center',
+        marginEnd: 10,
+    },
+    sportsIcon: {
+        width: 60,
+        height: 60,
+    },
+});
+
+export default ExploreTournament;

@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, SearchBar} from '@rneui/themed';
-
+import styles from '../Styles/joinTeamStyles';
 import {
     Image,
     Modal,
@@ -10,50 +10,35 @@ import {
     View,
     Text,
     FlatList,
-    StyleSheet,
 } from 'react-native';
-import {Button, Card, Title, Paragraph, Divider} from 'react-native-paper';
-
-import getAge from '../Functions/getAge';
+import {Button, Card, Title, Divider} from 'react-native-paper';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
 import teamsData from '../Assets/teamsData.json';
 
 const JoinTeam = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
-    const [ageFilter, setAgeFilter] = useState(null);
     const [sportsFilter, setSportsFilter] = useState('');
-    const [levelFilter, setLevelFilter] = useState(null);
+    const [rankFilter, setRankFilter] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const gotoViewProfile = user => {
-        navigation.navigate('ViewProfile', {user});
+    const gotoViewTeam = (team, sportName) => {
+        navigation.navigate('ViewTeam', {team, sportName});
     };
 
-    const ageRange = [
-        {value: 20, label: 'Under 20'},
-        {value: 30, label: 'Under 30'},
-        {value: 40, label: 'Under 40'},
+    const rankLvl = [
+        {label: 'Freshies', value: 'Freshies'},
+        {label: 'Emerging', value: 'Emerging'},
+        {label: 'Champions', value: 'Champions'},
     ];
 
-    const handleAgeFilterButton = selectedIndex => {
-        setAgeFilter(ageRange[selectedIndex].value);
-    };
-
-    const skLvl = [
-        {label: 'Beginner', value: 'Beginner'},
-        {label: 'Amateur', value: 'Amateur'},
-        {label: 'Pro', value: 'Pro'},
-    ];
-
-    const handleSkillFilterButton = selectedIndex => {
-        setLevelFilter(skLvl[selectedIndex].value);
+    const handleRankFilterButton = selectedIndex => {
+        setRankFilter(rankLvl[selectedIndex].value);
     };
 
     const resetFilters = () => {
         setSportsFilter(null);
-        setAgeFilter(null);
-        setLevelFilter(null);
+        setRankFilter(null);
     };
 
     const handleSearch = text => {
@@ -63,27 +48,17 @@ const JoinTeam = ({navigation}) => {
             key => teamsData[key],
         );
 
-        const filtered = searchFilteredTeams.filter(user => {
-            const isNameMatched =
-                user.firstName.toLowerCase().includes(text.toLowerCase()) ||
-                user.lastName.toLowerCase().includes(text.toLowerCase());
+        const filtered = searchFilteredTeams.filter(team => {
+            const isNameMatched = team.name
+                .toLowerCase()
+                .includes(text.toLowerCase());
 
             const isSportsMatched =
-                !sportsFilter || user.preferredSports.includes(sportsFilter);
-            const isAgeMatched =
-                !ageFilter ||
-                (getAge(user.DOB) <= ageFilter &&
-                    getAge(user.DOB) > ageFilter - 10);
+                !sportsFilter || team.sportId.includes(sportsFilter);
 
-            const isLevelMatched =
-                !levelFilter || user.skillLevel === levelFilter;
+            const isRankMatched = !rankFilter || team.rank === rankFilter;
 
-            return (
-                isNameMatched &&
-                isSportsMatched &&
-                isAgeMatched &&
-                isLevelMatched
-            );
+            return isNameMatched && isSportsMatched && isRankMatched;
         });
 
         setFilteredTeams(filtered);
@@ -96,31 +71,16 @@ const JoinTeam = ({navigation}) => {
     const applyFilters = () => {
         const filtered = Object.keys(teamsData)
             .map(key => teamsData[key])
-            .filter(user => {
-                const isNameMatched =
-                    user.firstName
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase()) ||
-                    user.lastName
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase());
+            .filter(team => {
+                const isNameMatched = team.name
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase());
 
                 const isSportsMatched =
-                    !sportsFilter ||
-                    user.preferredSports.includes(sportsFilter);
-                const isAgeMatched =
-                    !ageFilter ||
-                    (getAge(user.DOB) <= ageFilter &&
-                        getAge(user.DOB) > ageFilter - 10);
-                const isLevelMatched =
-                    !levelFilter || user.skillLevel === levelFilter;
+                    !sportsFilter || team.sportId.includes(sportsFilter);
 
-                return (
-                    isNameMatched &&
-                    isSportsMatched &&
-                    isAgeMatched &&
-                    isLevelMatched
-                );
+                const isRankMatched = !rankFilter || team.rank === rankFilter;
+                return isNameMatched && isSportsMatched && isRankMatched;
             });
 
         setFilteredTeams(filtered);
@@ -130,38 +90,43 @@ const JoinTeam = ({navigation}) => {
     const renderItem = ({item}) => {
         const sportName = getSportsByIds([item.sportId], sportsList);
         return (
-            <Card style={styles.card}>
-                <Card.Cover
-                    style={styles.cardImage}
-                    source={{uri: item.teamPic}}
-                />
-                <Card.Content style={styles.content}>
-                    <Title style={styles.title}>{item.name}</Title>
-                    <Divider style={{height: 3}} />
-                    <View style={styles.cardDetailView}>
-                        <Text style={styles.cardLabel}>Sport:</Text>
-                        <Text style={styles.cardText}>{sportName}</Text>
-                    </View>
-                    <View style={styles.cardDetailView}>
-                        <Text style={styles.cardLabel}>No. of players:</Text>
-                        <Text style={styles.cardText}>{item.size}</Text>
-                    </View>
-                    <View style={styles.cardDetailView}>
-                        <Text style={styles.cardLabel}>Rank:</Text>
-                        <Text style={styles.cardText}>{item.rank}</Text>
-                    </View>
-                </Card.Content>
-            </Card>
+            <TouchableOpacity onPress={() => gotoViewTeam(item, sportName)}>
+                <Card style={styles.card}>
+                    <Card.Cover
+                        style={styles.cardImage}
+                        source={{uri: item.teamPic}}
+                        resizeMode="contain"
+                    />
+                    <Card.Content style={styles.content}>
+                        <Title style={styles.cardTitle}>{item.name}</Title>
+                        <Divider style={{height: 3}} />
+                        <View style={styles.cardDetailView}>
+                            <Text style={styles.cardLabel}>Sport:</Text>
+                            <Text style={styles.cardText}>{sportName}</Text>
+                        </View>
+                        <View style={styles.cardDetailView}>
+                            <Text style={styles.cardLabel}>
+                                No. of players:
+                            </Text>
+                            <Text style={styles.cardText}>{item.size}</Text>
+                        </View>
+                        <View style={styles.cardDetailView}>
+                            <Text style={styles.cardLabel}>Rank:</Text>
+                            <Text style={styles.cardText}>{item.rank}</Text>
+                        </View>
+                    </Card.Content>
+                </Card>
+            </TouchableOpacity>
         );
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Title style={styles.topTitle}>Search Teams</Title>
+            <Title style={styles.topTitle}>Explore Teams</Title>
 
             <View style={styles.searchView}>
                 <SearchBar
-                    placeholder="Search name"
+                    placeholder="Search team"
                     onChangeText={handleSearch}
                     value={searchQuery}
                     containerStyle={styles.searchBar}
@@ -194,7 +159,7 @@ const JoinTeam = ({navigation}) => {
                             </Text>
                             <View style={styles.pickerStyle}>
                                 <Picker
-                                    style={{width: 180}}
+                                    style={{width: 200}}
                                     selectedValue={sportsFilter}
                                     onValueChange={itemValue =>
                                         setSportsFilter(itemValue)
@@ -226,36 +191,18 @@ const JoinTeam = ({navigation}) => {
 
                         <View style={styles.ageFilterView}>
                             <Text style={styles.agefilterLabel}>
-                                Age preference:
+                                Team's rank:
                             </Text>
-                            <View style={{width: 240}}>
+                            <View style={{width: 270, alignItems: 'center'}}>
                                 <ButtonGroup
-                                    buttons={ageRange.map(item => item.label)}
-                                    selectedIndex={ageRange.findIndex(
-                                        item => item.value === ageFilter,
+                                    buttons={rankLvl.map(item => item.label)}
+                                    selectedIndex={rankLvl.findIndex(
+                                        item => item.value === rankFilter,
                                     )}
-                                    onPress={handleAgeFilterButton}
+                                    onPress={handleRankFilterButton}
                                     containerStyle={{
                                         height: 40,
-                                    }}
-                                    selectedTextStyle={{color: 'white'}}
-                                />
-                            </View>
-                        </View>
-
-                        <View style={styles.ageFilterView}>
-                            <Text style={styles.agefilterLabel}>
-                                Skills preference:
-                            </Text>
-                            <View style={{width: 240}}>
-                                <ButtonGroup
-                                    buttons={skLvl.map(item => item.label)}
-                                    selectedIndex={skLvl.findIndex(
-                                        item => item.value === levelFilter,
-                                    )}
-                                    onPress={handleSkillFilterButton}
-                                    containerStyle={{
-                                        height: 40,
+                                        width: 270,
                                     }}
                                     selectedTextStyle={{color: 'white'}}
                                 />
@@ -297,201 +244,5 @@ const JoinTeam = ({navigation}) => {
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#EDEDED',
-    },
-    topTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginVertical: 20,
-    },
-    searchView: {
-        flexDirection: 'row',
-        alignSelf: 'center',
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignContent: 'center',
-        marginTop: 10,
-    },
-    searchBar: {
-        width: 270,
-        height: 50,
-        marginEnd: 30,
-        justifyContent: 'center',
-        backgroundColor: 'white',
-        elevation: 10,
-        borderRadius: 10,
-        borderWidth: 1,
-    },
-    filter: {
-        width: 25,
-        height: 25,
-        top: 2,
-    },
-    ageFilterView: {
-        alignSelf: 'center',
-        marginTop: 20,
-    },
-    agefilterLabel: {
-        fontSize: 16,
-        marginBottom: 5,
-        marginLeft: 10,
-        fontWeight: '600',
-        color: 'black',
-    },
-    centeredView: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        alignSelf: 'center',
-    },
-    modalView: {
-        width: 300,
-        height: 400,
-        backgroundColor: 'white',
-        borderRadius: 15,
-        padding: 25,
-        alignItems: 'center',
-        elevation: 35,
-        borderWidth: 3,
-    },
-    button: {
-        borderRadius: 20,
-        padding: 10,
-        elevation: 2,
-        marginEnd: 10,
-    },
-    buttonOpen: {
-        backgroundColor: '#11867F',
-    },
-    buttonClose: {
-        backgroundColor: 'red',
-    },
-    textStyle: {
-        color: 'white',
-        fontWeight: 'bold',
-        textAlign: 'center',
-    },
-    modalText: {
-        marginBottom: 15,
-        textAlign: 'center',
-    },
-    pickerView: {
-        alignSelf: 'center',
-    },
-    pickerBox: {
-        fontSize: 16,
-    },
-    pickerStyle: {
-        borderRadius: 10,
-        overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: 'lightgrey',
-    },
-    filterLabel: {
-        fontSize: 16,
-        marginBottom: 10,
-        fontWeight: '600',
-        color: 'black',
-    },
-    filterBtnView: {
-        flexDirection: 'row',
-        marginTop: 35,
-        left: 10,
-    },
-    resetBtn: {
-        marginEnd: 65,
-        borderWidth: 1,
-        borderColor: 'grey',
-    },
-    safeContainerStyle: {
-        flex: 1,
-        margin: 20,
-        justifyContent: 'center',
-    },
-    listView: {
-        top: 30,
-        alignItems: 'center',
-    },
-    card: {
-        margin: 10,
-        borderRadius: 10,
-        elevation: 3,
-        width: 180,
-    },
-    cardImage: {
-        height: 150,
-    },
-    cardDetailView: {
-        flexDirection: 'row',
-        marginTop: 10,
-    },
-    cardLabel: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: 'black',
-        marginEnd: 10,
-    },
-    cardText: {
-        fontSize: 16,
-        fontWeight: '700',
-    },
-    content: {
-        padding: 16,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    description: {
-        marginBottom: 12,
-    },
-    info: {
-        marginBottom: 6,
-        color: '#616161',
-    },
-
-    dpImage: {
-        height: 70,
-        width: 70,
-        right: 5,
-        borderWidth: 2,
-        borderColor: '#143B63',
-        borderRadius: 15,
-    },
-    infoContainer: {
-        padding: 10,
-    },
-    cardSportsText: {
-        fontSize: 18,
-        left: 20,
-    },
-    userInfo: {
-        fontSize: 17,
-        marginBottom: 8,
-        left: 20,
-    },
-    infoIcons: {
-        width: 28,
-        height: 28,
-    },
-    cardInfoView: {
-        flexDirection: 'row',
-        marginTop: 10,
-    },
-    cardAgeView: {
-        flexDirection: 'row',
-        top: 35,
-        right: 10,
-    },
-    ageText: {
-        fontSize: 15,
-    },
-});
 
 export default JoinTeam;

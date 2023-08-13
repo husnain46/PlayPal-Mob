@@ -13,7 +13,7 @@ const Tab = createBottomTabNavigator();
 const BottomTab = () => {
     return (
         <Tab.Navigator
-            initialRouteName="Team"
+            initialRouteName="Tournament"
             screenOptions={{
                 headerTitle: () => <Header />,
                 tabBarHideOnKeyboard: true,
@@ -131,7 +131,7 @@ const BottomTab = () => {
                                     justifyContent: 'center',
                                 }}>
                                 <Image
-                                    source={require('../Assets/Icons/team.png')}
+                                    source={require('../Assets/Icons/jersey2.png')}
                                     resizeMode="contain"
                                     style={{
                                         width: 25,

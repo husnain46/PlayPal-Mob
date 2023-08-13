@@ -12,6 +12,9 @@ import ViewProfile from './Screens/ViewProfile';
 import ChatScreen from './Screens/ChatScreen';
 import CreateTeam from './Screens/CreateTeam';
 import JoinTeam from './Screens/JoinTeam';
+import ViewTeam from './Screens/ViewTeam';
+import OrganizeTournament from './Screens/OrganizeTournament';
+import ExploreTournament from './Screens/ExploreTournament';
 
 const Stack = createStackNavigator();
 
@@ -35,6 +38,15 @@ export default function App() {
                 <Stack.Screen name="ChatScreen" component={ChatScreen} />
                 <Stack.Screen name="CreateTeam" component={CreateTeam} />
                 <Stack.Screen name="JoinTeam" component={JoinTeam} />
+                <Stack.Screen name="ViewTeam" component={ViewTeam} />
+                <Stack.Screen
+                    name="OrganizeTournament"
+                    component={OrganizeTournament}
+                />
+                <Stack.Screen
+                    name="ExploreTournament"
+                    component={ExploreTournament}
+                />
             </Stack.Navigator>
         </NavigationContainer>
     );
