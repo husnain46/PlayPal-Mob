@@ -15,6 +15,8 @@ import JoinTeam from './Screens/JoinTeam';
 import ViewTeam from './Screens/ViewTeam';
 import OrganizeTournament from './Screens/OrganizeTournament';
 import ExploreTournament from './Screens/ExploreTournament';
+import ViewTournament from './Screens/ViewTournament';
+import Matches from './Screens/Matches';
 
 const Stack = createStackNavigator();
 
@@ -47,6 +49,11 @@ export default function App() {
                     name="ExploreTournament"
                     component={ExploreTournament}
                 />
+                <Stack.Screen
+                    name="ViewTournament"
+                    component={ViewTournament}
+                />
+                <Stack.Screen name="Matches" component={Matches} />
             </Stack.Navigator>
         </NavigationContainer>
     );

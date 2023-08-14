@@ -10,7 +10,7 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import React from 'react';
-import {Divider, ListItem} from '@rneui/themed';
+import {Divider} from '@rneui/themed';
 import {Card, Paragraph} from 'react-native-paper';
 import getPlayerName from '../Functions/getPlayerName';
 import userData from '../Assets/userData.json';
@@ -157,7 +157,6 @@ const ViewTeam = ({navigation, route}) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        alignItems: 'center',
     },
     mainImage: {
         width: Dimensions.get('window').width,
@@ -188,6 +187,7 @@ const styles = StyleSheet.create({
     detailView: {
         width: '90%',
         flexDirection: 'row',
+        justifyContent: 'space-between',
         marginTop: 20,
         borderRadius: 10,
         backgroundColor: 'white',
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     subView: {
         flexDirection: 'row',
         margin: 12,
-        marginEnd: 70,
+        marginHorizontal: 15,
     },
     detailLabel: {
         fontSize: 17,

@@ -2,9 +2,10 @@
     "tournament1": {
         "name": "Summer Soccer Cup",
         "sport": "sport1",
-        "city": "New York",
-        "organizer": "teamA",
-        "teamId": ["teamA", "teamB", "teamC"],
+        "city": "Lahore",
+        "detail": "Regional football league of Pakistan",
+        "organizer": "team2",
+        "teamId": ["team2", "team3", "team4"],
         "matches": [
             {
                 "matchId": "match1",
@@ -13,12 +14,12 @@
                 "venue": "Central Park Stadium",
                 "time": "14:00",
                 "teams": {
-                    "team1": "teamA",
-                    "team2": "teamB"
+                    "team1": "team2",
+                    "team2": "team4"
                 },
                 "result": {
-                    "scoreTeam1": null,
-                    "scoreTeam2": null
+                    "scoreTeam1": 2,
+                    "scoreTeam2": 0
                 }
             },
             {
@@ -28,8 +29,8 @@
                 "venue": "City Stadium",
                 "time": "18:30",
                 "teams": {
-                    "team1": "teamC",
-                    "team2": "teamB"
+                    "team1": "team3",
+                    "team2": "team4"
                 },
                 "result": {
                     "scoreTeam1": null,
@@ -42,8 +43,9 @@
         "name": "Basketball Showdown",
         "sport": "sport5",
         "city": "Los Angeles",
-        "organizer": "teamX",
-        "teamId": ["teamX", "teamY", "teamZ"],
+        "detail": "basketBall tournament of departmental league",
+        "organizer": "team1",
+        "teamId": ["team1", "team2", "team3"],
         "matches": [
             {
                 "matchId": "match1",
@@ -52,8 +54,8 @@
                 "venue": "Downtown Arena",
                 "time": "19:00",
                 "teams": {
-                    "team1": "teamX",
-                    "team2": "teamY"
+                    "team1": "team1",
+                    "team2": "team2"
                 },
                 "result": {
                     "scoreTeam1": null,
@@ -62,13 +64,28 @@
             },
             {
                 "matchId": "match2",
+                "title": "Opening Game",
+                "date": "05/09/2023",
+                "venue": "Downtown Arena",
+                "time": "19:00",
+                "teams": {
+                    "team1": "team1",
+                    "team2": "team3"
+                },
+                "result": {
+                    "scoreTeam1": null,
+                    "scoreTeam2": null
+                }
+            },
+            {
+                "matchId": "match3",
                 "title": "Final",
                 "date": "12/09/2023",
                 "venue": "Stadium Center",
                 "time": "20:15",
                 "teams": {
-                    "team1": "teamY",
-                    "team2": "teamZ"
+                    "team1": "team2",
+                    "team2": "team3"
                 },
                 "result": {
                     "scoreTeam1": null,
@@ -81,8 +98,9 @@
         "name": "Tennis Championship",
         "sport": "sport4",
         "city": "London",
-        "organizer": "teamM",
-        "teamId": ["teamM", "teamN", "teamP"],
+        "detail": "duo tournament of national level",
+        "organizer": "team4",
+        "teamId": ["team4", "team5", "team6"],
         "matches": [
             {
                 "matchId": "match1",
@@ -91,8 +109,8 @@
                 "venue": "Wimbledon",
                 "time": "11:00",
                 "teams": {
-                    "team1": "teamM",
-                    "team2": "teamN"
+                    "team1": "team4",
+                    "team2": "team5"
                 },
                 "result": {
                     "scoreTeam1": null,
@@ -106,8 +124,8 @@
                 "venue": "Wimbledon",
                 "time": "14:30",
                 "teams": {
-                    "team1": "teamN",
-                    "team2": "teamP"
+                    "team1": "team4",
+                    "team2": "team6"
                 },
                 "result": {
                     "scoreTeam1": null,

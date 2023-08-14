@@ -2,7 +2,7 @@ import styles from '../Styles/findplayersStyles';
 import React, {useState} from 'react';
 import {FlatList} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {ButtonGroup, SearchBar} from '@rneui/themed';
+import {ButtonGroup, Divider, SearchBar} from '@rneui/themed';
 
 import {
     Image,
@@ -158,7 +158,6 @@ const FindPlayers = ({navigation}) => {
                             <Text
                                 style={{
                                     fontSize: 15,
-                                    marginBottom: 8,
                                     color:
                                         item.gender === 'Male'
                                             ? 'blue'
@@ -174,6 +173,11 @@ const FindPlayers = ({navigation}) => {
                     )}
                 />
                 <Card.Content>
+                    <Divider
+                        style={styles.divider}
+                        width={2}
+                        color="lightgrey"
+                    />
                     <View style={styles.infoContainer}>
                         <View style={styles.cardInfoView}>
                             <Image
@@ -204,7 +208,7 @@ const FindPlayers = ({navigation}) => {
                         </View>
                         <Button
                             style={{
-                                top: 15,
+                                top: 10,
                                 width: 130,
                                 alignSelf: 'center',
                             }}

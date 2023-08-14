@@ -51,8 +51,6 @@ const Welcome = ({navigation, route}) => {
         setSelectedCity(itemValue);
     };
 
-    const profileStatus = route.params;
-
     const skLvl = [
         {label: 'Beginner', value: 'Beginner'},
         {label: 'Amateur', value: 'Amateur'},

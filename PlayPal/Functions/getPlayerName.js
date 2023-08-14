@@ -6,7 +6,7 @@ const getPlayerName = userId => {
     if (user) {
         return `${user.firstName} ${user.lastName}`;
     } else {
-        return 'User not found';
+        return null;
     }
 };
 

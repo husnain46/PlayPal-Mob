@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
     },
     card: {
         width: 350,
-        height: 310,
         marginBottom: 20,
         backgroundColor: 'white',
         borderRadius: 15,
@@ -123,23 +122,28 @@ const styles = StyleSheet.create({
     cardName: {
         width: '150%',
         fontSize: 18,
-        left: 20,
+        marginLeft: 25,
         bottom: 8,
     },
     cardUsername: {
         fontSize: 15,
-        left: 20,
+        marginLeft: 25,
         bottom: 8,
         width: '150%',
     },
     cardHeader: {
-        borderBottomWidth: 0.9,
         height: 90,
     },
+    divider: {
+        alignSelf: 'center',
+        width: '105%',
+        marginTop: 10,
+    },
     dpImage: {
-        height: 70,
-        width: 70,
+        height: 75,
+        width: 75,
         right: 5,
+        marginTop: 5,
         borderWidth: 2,
         borderColor: '#143B63',
         borderRadius: 15,
@@ -166,7 +170,7 @@ const styles = StyleSheet.create({
     },
     cardAgeView: {
         flexDirection: 'row',
-        top: 35,
+        top: 38,
         right: 10,
     },
     ageText: {

@@ -12,21 +12,34 @@ import {
     FlatList,
 } from 'react-native';
 import {Button, Card, Title, Text, Divider} from 'react-native-paper';
-import getAge from '../Functions/getAge';
-import userData from '../Assets/userData.json';
+import DropDownPicker from 'react-native-dropdown-picker';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
 import tournamentData from '../Assets/tournamentData.json';
+import cityData from '../Assets/cityData.json';
 
 const ExploreTournament = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
-    const [ageFilter, setAgeFilter] = useState(null);
     const [sportsFilter, setSportsFilter] = useState(null);
-    const [levelFilter, setLevelFilter] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCity, setSelectedCity] = useState('');
+    const [open, setOpen] = useState(false);
+    const [items, setItems] = useState(cityData);
 
-    const gotoViewProfile = user => {
-        navigation.navigate('ViewProfile', {user});
+    const searchCity = query => {
+        const filteredItems = items.filter(item =>
+            item.label.toLowerCase().includes(query.toLowerCase()),
+        );
+        return filteredItems;
+    };
+
+    const gotoViewTournament = (data, sportName, startDate, endDate) => {
+        navigation.navigate('ViewTournament', {
+            data,
+            sportName,
+            startDate,
+            endDate,
+        });
     };
 
     const getTournamentDates = tournament => {
@@ -60,64 +73,31 @@ const ExploreTournament = ({navigation}) => {
         default: require('../Assets/Icons/no image.png'),
     };
 
-    const ageRange = [
-        {value: 20, label: 'Under 20'},
-        {value: 30, label: 'Under 30'},
-        {value: 40, label: 'Under 40'},
-    ];
-
-    const handleAgeFilterButton = selectedIndex => {
-        setAgeFilter(ageRange[selectedIndex].value);
-    };
-
-    const skLvl = [
-        {label: 'Beginner', value: 'Beginner'},
-        {label: 'Amateur', value: 'Amateur'},
-        {label: 'Pro', value: 'Pro'},
-    ];
-
-    const handleSkillFilterButton = selectedIndex => {
-        setLevelFilter(skLvl[selectedIndex].value);
-    };
-
     const resetFilters = () => {
         setSportsFilter(null);
-        setAgeFilter(null);
-        setLevelFilter(null);
+        setSelectedCity('');
+        setSelectedProvince('');
     };
 
     const handleSearch = text => {
         setSearchQuery(text);
 
-        const searchFilteredData = Object.keys(userData).map(
-            key => userData[key],
+        const searchFilteredData = Object.keys(tournamentData).map(
+            key => tournamentData[key],
         );
 
-        const searchWords = text.trim().toLowerCase().split(/\s+/);
-
-        const filtered = searchFilteredData.filter(user => {
-            const isNameMatched = searchWords.every(
-                word =>
-                    user.firstName.toLowerCase().includes(word) ||
-                    user.lastName.toLowerCase().includes(word),
-            );
+        const filtered = searchFilteredData.filter(data => {
+            const isNameMatched = data.name
+                .toLowerCase()
+                .includes(text.toLowerCase());
 
             const isSportsMatched =
-                !sportsFilter || user.preferredSports.includes(sportsFilter);
-            const isAgeMatched =
-                !ageFilter ||
-                (getAge(user.DOB) <= ageFilter &&
-                    getAge(user.DOB) > ageFilter - 10);
+                !sportsFilter || data.sport.includes(sportsFilter);
 
-            const isLevelMatched =
-                !levelFilter || user.skillLevel === levelFilter;
+            const isCityMatched =
+                !selectedCity || data.city.includes(selectedCity);
 
-            return (
-                isNameMatched &&
-                isSportsMatched &&
-                isAgeMatched &&
-                isLevelMatched
-            );
+            return isNameMatched && isSportsMatched && isCityMatched;
         });
 
         setFilteredData(filtered);
@@ -128,34 +108,22 @@ const ExploreTournament = ({navigation}) => {
     );
 
     const applyFilters = () => {
-        const searchFilteredData = Object.keys(userData).map(
-            key => userData[key],
+        const searchFilteredData = Object.keys(tournamentData).map(
+            key => tournamentData[key],
         );
 
-        const filtered = searchFilteredData.filter(user => {
-            const isNameMatched =
-                user.firstName
-                    .toLowerCase()
-                    .includes(searchQuery.trim().toLowerCase()) ||
-                user.lastName
-                    .toLowerCase()
-                    .includes(searchQuery.trim().toLowerCase());
+        const filtered = searchFilteredData.filter(data => {
+            const isNameMatched = data.name
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase());
 
             const isSportsMatched =
-                !sportsFilter || user.preferredSports.includes(sportsFilter);
-            const isAgeMatched =
-                !ageFilter ||
-                (getAge(user.DOB) <= ageFilter &&
-                    getAge(user.DOB) > ageFilter - 10);
-            const isLevelMatched =
-                !levelFilter || user.skillLevel === levelFilter;
+                !sportsFilter || data.sport.includes(sportsFilter);
 
-            return (
-                isNameMatched &&
-                isSportsMatched &&
-                isAgeMatched &&
-                isLevelMatched
-            );
+            const isCityMatched =
+                !selectedCity || data.city.includes(selectedCity);
+
+            return isNameMatched && isSportsMatched && isCityMatched;
         });
 
         setFilteredData(filtered);
@@ -169,39 +137,53 @@ const ExploreTournament = ({navigation}) => {
         const iconPath = sportIcons[sportName] || sportIcons.default;
 
         return (
-            <Card style={styles.card}>
-                <Card.Content
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                    }}>
-                    <View style={{flexWrap: 'wrap'}}>
-                        <Title style={styles.title}>{item.name}</Title>
-                        <Text style={styles.subtitle}> {sportName} </Text>
-                        <Divider style={styles.divider} />
+            <TouchableOpacity
+                style={styles.cardView}
+                onPress={() =>
+                    gotoViewTournament(item, sportName, startDate, endDate)
+                }>
+                <Card style={styles.card}>
+                    <Card.Content
+                        style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                        }}>
+                        <View style={{flexWrap: 'wrap'}}>
+                            <Title style={styles.title}>{item.name}</Title>
+                            <Text style={styles.subtitle}> {sportName} </Text>
+                            <Divider style={styles.divider} />
 
-                        <View style={{flexDirection: 'row'}}>
+                            <View style={{flexDirection: 'row'}}>
+                                <Image
+                                    style={styles.icon}
+                                    source={require('../Assets/Icons/location.png')}
+                                />
+                                <Text style={styles.cityText}>{item.city}</Text>
+                            </View>
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    paddingVertical: 10,
+                                }}>
+                                <Text style={styles.dateText}>
+                                    Start date:{' '}
+                                </Text>
+                                <Text style={styles.info1}>{startDate} </Text>
+                            </View>
+                            <View style={{flexDirection: 'row'}}>
+                                <Text>End date: </Text>
+                                <Text style={styles.info2}>{endDate} </Text>
+                            </View>
+                        </View>
+                        <View style={styles.sportIconView}>
                             <Image
-                                style={styles.icon}
-                                source={require('../Assets/Icons/location.png')}
+                                style={styles.sportsIcon}
+                                source={iconPath}
                             />
-                            <Text style={styles.cityText}>{item.city}</Text>
                         </View>
-                        <View
-                            style={{flexDirection: 'row', paddingVertical: 10}}>
-                            <Text style={styles.dateText}>Start date: </Text>
-                            <Text style={styles.info1}>{startDate} </Text>
-                        </View>
-                        <View style={{flexDirection: 'row'}}>
-                            <Text>End date: </Text>
-                            <Text style={styles.info2}>{endDate} </Text>
-                        </View>
-                    </View>
-                    <View style={styles.sportIconView}>
-                        <Image style={styles.sportsIcon} source={iconPath} />
-                    </View>
-                </Card.Content>
-            </Card>
+                    </Card.Content>
+                </Card>
+            </TouchableOpacity>
         );
     };
 
@@ -237,13 +219,43 @@ const ExploreTournament = ({navigation}) => {
                 }}>
                 <View style={styles.centeredView}>
                     <View style={styles.modalView}>
+                        <View style={styles.pickerView2}>
+                            <Text style={styles.filterLabel}>
+                                Tournament city:
+                            </Text>
+                            <DropDownPicker
+                                style={styles.dropDown}
+                                open={open}
+                                value={selectedCity}
+                                items={items.map(item => ({
+                                    label: item.city,
+                                    value: item.city,
+                                }))}
+                                textStyle={{fontSize: 15, fontWeight: '500'}}
+                                setOpen={setOpen}
+                                setValue={setSelectedCity}
+                                searchable={true}
+                                searchPlaceholder="Type city name"
+                                placeholder="Select city"
+                                placeholderStyle={{color: '#11867F'}}
+                                searchablePlaceholderTextColor="gray"
+                                searchableError={() => (
+                                    <Text>City not found</Text>
+                                )}
+                                searchContainerStyle={{paddingVertical: 10}}
+                                dropDownContainerStyle={{width: 200}}
+                                onChangeSearch={query => searchCity(query)}
+                                onClose={() => setOpen(false)}
+                            />
+                        </View>
+
                         <View style={styles.pickerView}>
                             <Text style={styles.filterLabel}>
                                 Sports preference:
                             </Text>
                             <View style={styles.pickerStyle}>
                                 <Picker
-                                    style={{width: 180}}
+                                    style={{width: 200}}
                                     selectedValue={sportsFilter}
                                     onValueChange={setSportsFilter}
                                     mode="dropdown"
@@ -268,44 +280,6 @@ const ExploreTournament = ({navigation}) => {
                                         ),
                                     )}
                                 </Picker>
-                            </View>
-                        </View>
-
-                        <View style={styles.ageFilterView}>
-                            <Text style={styles.agefilterLabel}>
-                                Age preference:
-                            </Text>
-                            <View style={{width: 240}}>
-                                <ButtonGroup
-                                    buttons={ageRange.map(item => item.label)}
-                                    selectedIndex={ageRange.findIndex(
-                                        item => item.value === ageFilter,
-                                    )}
-                                    onPress={handleAgeFilterButton}
-                                    containerStyle={{
-                                        height: 40,
-                                    }}
-                                    selectedTextStyle={{color: 'white'}}
-                                />
-                            </View>
-                        </View>
-
-                        <View style={styles.ageFilterView}>
-                            <Text style={styles.agefilterLabel}>
-                                Skills preference:
-                            </Text>
-                            <View style={{width: 240}}>
-                                <ButtonGroup
-                                    buttons={skLvl.map(item => item.label)}
-                                    selectedIndex={skLvl.findIndex(
-                                        item => item.value === levelFilter,
-                                    )}
-                                    onPress={handleSkillFilterButton}
-                                    containerStyle={{
-                                        height: 40,
-                                    }}
-                                    selectedTextStyle={{color: 'white'}}
-                                />
                             </View>
                         </View>
 
@@ -398,7 +372,7 @@ const styles = StyleSheet.create({
     },
     modalView: {
         width: 300,
-        height: 400,
+        height: 360,
         backgroundColor: 'white',
         borderRadius: 15,
         padding: 25,
@@ -429,6 +403,19 @@ const styles = StyleSheet.create({
     },
     pickerView: {
         alignSelf: 'center',
+        marginTop: 15,
+        marginBottom: 10,
+    },
+    pickerView2: {
+        zIndex: 2,
+        alignSelf: 'center',
+        marginBottom: 10,
+    },
+    dropDown: {
+        width: 200,
+        height: 57,
+        borderColor: 'lightgrey',
+        borderWidth: 2,
     },
     pickerBox: {
         fontSize: 16,
@@ -440,14 +427,14 @@ const styles = StyleSheet.create({
         borderColor: 'lightgrey',
     },
     filterLabel: {
-        fontSize: 16,
+        fontSize: 17,
         marginBottom: 10,
-        fontWeight: '600',
+        fontWeight: '700',
         color: 'black',
     },
     filterBtnView: {
         flexDirection: 'row',
-        marginTop: 35,
+        marginTop: 60,
         left: 10,
     },
     resetBtn: {
@@ -463,13 +450,15 @@ const styles = StyleSheet.create({
     listView: {
         marginTop: 30,
     },
+    cardView: {
+        width: '85%',
+        alignSelf: 'center',
+    },
     card: {
         marginVertical: 10,
-        width: '85%',
         borderRadius: 15,
         elevation: 10,
         backgroundColor: 'white',
-        alignSelf: 'center',
     },
     title: {
         fontSize: 20,
