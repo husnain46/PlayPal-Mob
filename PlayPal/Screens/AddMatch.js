@@ -72,13 +72,7 @@ const AddMatch = ({navigation, route}) => {
                     mode="contained-tonal"
                     style={styles.dateBox}
                     buttonColor="#cfdfe8"
-                    onPress={() => setShowPicker1(true)}>
-                    {selectedDate ? (
-                        <Text style={styles.dateText}>{selectedDate}</Text>
-                    ) : (
-                        <Text style={styles.datePlaceholder}>Select date</Text>
-                    )}
-                </Button>
+                    onPress={() => setShowPicker1(true)}></Button>
                 {showPicker1 && (
                     <DateTimePicker
                         value={nextDay}

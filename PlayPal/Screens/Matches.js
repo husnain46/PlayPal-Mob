@@ -8,13 +8,19 @@ import {
     FlatList,
     TouchableOpacity,
 } from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import {Button, Card, Divider, Icon} from '@rneui/themed';
 import getTeamData from '../Functions/getTeamData';
 
 const Matches = ({navigation, route}) => {
+    // import {format} from 'date-fns';
+
+    // const timestamp = new Date('2023-08-20T12:34:56');
+    // const formattedTimestamp = format(timestamp, 'MMMM dd, yyyy - HH:mm');
+
     const {data} = route.params;
     const matches = data.matches;
+    const [matchStatus, setMatchStatus] = useState('Upcoming');
 
     const gotoAddMatch = () => {
         navigation.navigate('AddMatch', {data});
@@ -27,7 +33,10 @@ const Matches = ({navigation, route}) => {
         });
     };
 
-    const gotoStartMatch = () => {};
+    const gotoStartMatch = match => {
+        setMatchStatus('Started');
+        navigation.navigate('StartMatch', {match});
+    };
 
     const renderItem = ({item, index}) => {
         const team1 = getTeamData(item.teams.team1);
@@ -90,12 +99,10 @@ const Matches = ({navigation, route}) => {
                         <Text style={styles.detailText}>Time: {item.time}</Text>
                     </View>
                     <View style={styles.matchDetails}>
-                        <Text style={styles.detailText2}>
-                            Venue: {item.venue}
-                        </Text>
+                        <Text style={styles.detailText2}>{matchStatus}</Text>
                         <TouchableOpacity
                             style={styles.startBtn}
-                            onPress={() => gotoStartMatch()}>
+                            onPress={() => gotoStartMatch(item)}>
                             <Text style={styles.startText}>Start</Text>
                         </TouchableOpacity>
                     </View>
@@ -106,7 +113,7 @@ const Matches = ({navigation, route}) => {
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Matches</Text>
-            <Divider style={styles.divider} width={3} color="lightgrey" />
+            <Divider style={styles.divider} width={2} color="grey" />
             <Button
                 onPress={() => gotoAddMatch()}
                 containerStyle={styles.matchBtn}
@@ -137,8 +144,10 @@ const styles = StyleSheet.create({
         marginTop: 30,
     },
     divider: {
+        alignSelf: 'center',
         width: '90%',
         marginTop: 10,
+        marginBottom: 10,
     },
 
     matchBtn: {
@@ -212,9 +221,7 @@ const styles = StyleSheet.create({
     },
     matchTitleView: {
         marginVertical: 10,
-        paddingLeft: 10,
-        flexDirection: 'row',
-        justifyContent: 'center',
+        alignItems: 'center',
     },
     matchTitle: {
         fontSize: 17,
