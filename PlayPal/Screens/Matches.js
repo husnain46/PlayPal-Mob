@@ -6,21 +6,49 @@ import {
     Text,
     View,
     FlatList,
+    TouchableOpacity,
 } from 'react-native';
 import React from 'react';
-import {Card, Divider} from '@rneui/themed';
+import {Button, Card, Divider, Icon} from '@rneui/themed';
 import getTeamData from '../Functions/getTeamData';
 
-const Matches = ({route}) => {
-    const {matches} = route.params;
+const Matches = ({navigation, route}) => {
+    const {data} = route.params;
+    const matches = data.matches;
+
+    const gotoAddMatch = () => {
+        navigation.navigate('AddMatch', {data});
+    };
+
+    const gotoEditMatch = match => {
+        navigation.navigate('EditMatch', {
+            match,
+            teamIds: data.teamIds,
+        });
+    };
+
+    const gotoStartMatch = () => {};
 
     const renderItem = ({item, index}) => {
         const team1 = getTeamData(item.teams.team1);
         const team2 = getTeamData(item.teams.team2);
         let matchNum = index + 1;
         return (
-            <View>
-                <Text style={styles.matchText}>Match {matchNum}:</Text>
+            <View style={{marginTop: 35}}>
+                <View style={styles.matchHeader}>
+                    <Text style={styles.matchText}>Match {matchNum}:</Text>
+                    <Icon
+                        name="edit"
+                        color={'#4a5a96'}
+                        size={25}
+                        type="Icons"
+                        containerStyle={{
+                            borderWidth: 1,
+                            top: 2,
+                        }}
+                        onPress={() => gotoEditMatch(item)}
+                    />
+                </View>
                 <Card containerStyle={styles.cardContainer}>
                     <View style={styles.teamsContainer}>
                         <View style={styles.team1View}>
@@ -50,17 +78,26 @@ const Matches = ({route}) => {
                         </View>
                     </View>
                     <Divider style={styles.cardDivider} width={1} />
-                    <View style={styles.matchTitleView}>
-                        <Text style={styles.matchTitle}>{item.title}</Text>
-                    </View>
+                    {!item.title ? (
+                        <View style={{marginVertical: 5}}></View>
+                    ) : (
+                        <View style={styles.matchTitleView}>
+                            <Text style={styles.matchTitle}>{item.title}</Text>
+                        </View>
+                    )}
                     <View style={styles.matchDetails}>
                         <Text style={styles.detailText}>Date: {item.date}</Text>
                         <Text style={styles.detailText}>Time: {item.time}</Text>
                     </View>
                     <View style={styles.matchDetails}>
-                        <Text style={styles.detailText}>
+                        <Text style={styles.detailText2}>
                             Venue: {item.venue}
                         </Text>
+                        <TouchableOpacity
+                            style={styles.startBtn}
+                            onPress={() => gotoStartMatch()}>
+                            <Text style={styles.startText}>Start</Text>
+                        </TouchableOpacity>
                     </View>
                 </Card>
             </View>
@@ -70,6 +107,13 @@ const Matches = ({route}) => {
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Matches</Text>
             <Divider style={styles.divider} width={3} color="lightgrey" />
+            <Button
+                onPress={() => gotoAddMatch()}
+                containerStyle={styles.matchBtn}
+                color={'#23a889'}
+                title={'Add match'}
+                titleStyle={styles.btnText}
+            />
 
             <FlatList
                 contentContainerStyle={{paddingBottom: 30}}
@@ -87,7 +131,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleText: {
-        fontSize: 28,
+        fontSize: 26,
         color: '#4a5a96',
         fontWeight: '700',
         marginTop: 30,
@@ -96,17 +140,32 @@ const styles = StyleSheet.create({
         width: '90%',
         marginTop: 10,
     },
+
+    matchBtn: {
+        marginTop: 15,
+        borderRadius: 10,
+        width: 120,
+        marginHorizontal: 10,
+    },
+    btnText: {
+        fontSize: 16,
+        color: 'white',
+    },
+    matchHeader: {
+        flexDirection: 'row',
+        width: 380,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
     matchText: {
         fontSize: 20,
         fontWeight: '700',
-        textAlign: 'left',
         paddingHorizontal: 20,
-        marginTop: 30,
         color: 'black',
     },
     cardContainer: {
         borderRadius: 10,
-        elevation: 10,
+        elevation: 5,
         marginTop: 15,
         alignSelf: 'center',
         width: '92%',
@@ -134,7 +193,7 @@ const styles = StyleSheet.create({
     },
     scoreText: {
         fontWeight: 'bold',
-        fontSize: 16,
+        fontSize: 17,
         textAlign: 'center',
     },
     teamName: {
@@ -144,8 +203,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     vsText: {
-        fontSize: 15,
-        fontWeight: 'bold',
+        fontSize: 14,
         textAlign: 'center',
     },
     cardDivider: {
@@ -165,12 +223,31 @@ const styles = StyleSheet.create({
     },
     matchDetails: {
         marginVertical: 5,
-        paddingLeft: 10,
+        paddingHorizontal: 5,
         flexDirection: 'row',
         justifyContent: 'space-between',
     },
     detailText: {
         fontSize: 15,
+    },
+    detailText2: {
+        fontSize: 15,
+        width: 230,
+    },
+    startBtn: {
+        width: 80,
+        height: 30,
+        backgroundColor: '#0d9bb8',
+        justifyContent: 'center',
+        borderRadius: 5,
+    },
+    startText: {
+        fontSize: 14,
+        textAlign: 'center',
+        color: 'white',
+        letterSpacing: 1,
+        bottom: 1,
+        fontWeight: '600',
     },
 });
 export default Matches;

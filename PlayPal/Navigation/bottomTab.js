@@ -17,17 +17,21 @@ const BottomTab = () => {
             screenOptions={{
                 headerTitle: () => <Header />,
                 tabBarHideOnKeyboard: true,
-                headerStyle: {height: 65},
+                headerStyle: {height: 65, borderBottomWidth: 2},
                 tabBarShowLabel: false,
 
                 tabBarStyle: {
                     position: 'absolute',
-                    bottom: 18,
-                    left: 20,
-                    right: 20,
+                    bottom: 15,
+                    left: 15,
+                    right: 15,
                     elevation: 5,
                     backgroundColor: '#ffffff',
                     borderRadius: 15,
+                    borderWidth: 2,
+                    borderTopWidth: 2,
+                    borderTopColor: 'darkgrey',
+                    borderColor: 'darkgrey',
                     height: 75,
                 },
             }}>

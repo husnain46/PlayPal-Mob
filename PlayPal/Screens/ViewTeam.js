@@ -143,7 +143,7 @@ const ViewTeam = ({navigation, route}) => {
                 <Text style={styles.playerTitle}>Team players</Text>
                 <View style={styles.listView}>
                     <FlatList
-                        data={team.playersId} // Correct the data here
+                        data={team.playersId}
                         renderItem={renderItem}
                         keyExtractor={item => item}
                         scrollEnabled={false}

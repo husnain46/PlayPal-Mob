@@ -1,0 +1,132 @@
+{
+    "arena1": {
+        "name": "Sports Haven",
+        "city": "Lahore",
+        "ownerId": "owner1",
+        "address": "123 Main St",
+        "sports": ["sport1", "sport2"],
+        "location": "Latitude: 40.7128, Longitude: -74.0060",
+        "facilities": "Indoor courts, changing rooms",
+        "availability": "Mon-Sat, 9 AM - 10 PM",
+        "ratings": [
+            {
+                "userId": "user4",
+                "ratingValue": 4.5,
+                "review": "Great facilities and friendly staff."
+            },
+            {
+                "userId": "user6",
+                "ratingValue": 3.8,
+                "review": "Good place to play tennis."
+            }
+        ],
+        "slots": [
+            {
+                "slotId": "slot1",
+                "slotNum": 1,
+                "slotTime": "10:00 AM",
+                "duration": "1 hour"
+            },
+            {
+                "slotId": "slot2",
+                "slotNum": 2,
+                "slotTime": "11:00 AM",
+                "duration": "1 hour"
+            }
+        ]
+    },
+    "arena2": {
+        "name": "Fitness Arena",
+        "city": "Islamabad",
+        "ownerId": "owner2",
+        "address": "456 Elm St",
+        "sports": ["sport3", "sport4"],
+        "location": "Latitude: 34.0522, Longitude: -118.2437",
+        "facilities": "Fully equipped gym, yoga studio",
+        "availability": "Mon-Fri, 6 AM - 9 PM",
+        "ratings": [
+            {
+                "userId": "user1",
+                "ratingValue": 4.0,
+                "review": "Clean and well-maintained gym."
+            }
+        ],
+        "slots": [
+            {
+                "slotId": "slot3",
+                "slotNum": 1,
+                "slotTime": "7:00 AM",
+                "duration": "2 hours"
+            }
+        ]
+    },
+    "arena3": {
+        "name": "Soccer Arena",
+        "city": "Multan",
+        "ownerId": "owner3",
+        "address": "789 Oak St",
+        "sports": ["sport5"],
+        "location": "Latitude: 51.5074, Longitude: -0.1278",
+        "facilities": "Outdoor field, locker rooms",
+        "availability": "Mon-Sun, 8 AM - 8 PM",
+        "ratings": [],
+        "slots": [
+            {
+                "slotId": "slot4",
+                "slotNum": 1,
+                "slotTime": "4:00 PM",
+                "duration": "1.5 hours"
+            }
+        ]
+    },
+    "arena4": {
+        "name": "Racquet Club",
+        "city": "Karachi",
+        "ownerId": "owner4",
+        "address": "101 Palm Ave",
+        "sports": ["sport6", "sport7"],
+        "location": "Latitude: 25.7617, Longitude: -80.1918",
+        "facilities": "Tennis and squash courts, lounge",
+        "availability": "Tue-Sun, 10 AM - 9 PM",
+        "ratings": [
+            {
+                "userId": "user5",
+                "ratingValue": 4.8,
+                "review": "Love the tennis courts and atmosphere."
+            }
+        ],
+        "slots": [
+            {
+                "slotId": "slot5",
+                "slotNum": 1,
+                "slotTime": "2:00 PM",
+                "duration": "2 hours"
+            }
+        ]
+    },
+    "arena5": {
+        "name": "Basketball Paradise",
+        "city": "Faisalabad",
+        "ownerId": "owner5",
+        "address": "202 Maple St",
+        "sports": ["sport8"],
+        "location": "Latitude: 41.8781, Longitude: -87.6298",
+        "facilities": "Indoor and outdoor courts, pro shop",
+        "availability": "Mon-Sat, 8 AM - 11 PM",
+        "ratings": [
+            {
+                "userId": "user3",
+                "ratingValue": 4.2,
+                "review": "Nice courts for basketball enthusiasts."
+            }
+        ],
+        "slots": [
+            {
+                "slotId": "slot6",
+                "slotNum": 1,
+                "slotTime": "5:00 PM",
+                "duration": "1.5 hours"
+            }
+        ]
+    }
+}

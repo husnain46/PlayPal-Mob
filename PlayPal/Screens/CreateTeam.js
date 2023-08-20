@@ -22,7 +22,7 @@ const CreateTeam = () => {
     const [ageValue, setAgeValue] = useState();
     const [imageSelected, setImageSelected] = useState('');
 
-    const teamSizeOptions = [2, 4, 5, 6];
+    const teamSizeOptions = sportsList[sportValue].size;
 
     const ageRange = [
         {value: 20, label: 'Under 20'},
