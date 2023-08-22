@@ -89,30 +89,40 @@ const JoinTeam = ({navigation}) => {
 
     const renderItem = ({item}) => {
         const sportName = getSportsByIds([item.sportId], sportsList);
+        const playerCount = item.playersId.length;
+
         return (
             <TouchableOpacity onPress={() => gotoViewTeam(item, sportName)}>
                 <Card style={styles.card}>
                     <Card.Cover
                         style={styles.cardImage}
                         source={{uri: item.teamPic}}
-                        resizeMode="contain"
+                        resizeMode="stretch"
                     />
                     <Card.Content style={styles.content}>
                         <Title style={styles.cardTitle}>{item.name}</Title>
                         <Divider style={{height: 3}} />
-                        <View style={styles.cardDetailView}>
-                            <Text style={styles.cardLabel}>Sport:</Text>
-                            <Text style={styles.cardText}>{sportName}</Text>
+                        <View style={styles.cardSubView}>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardLabel}>Sport:</Text>
+                                <Text style={styles.cardText}>{sportName}</Text>
+                            </View>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardLabel}>Players:</Text>
+                                <Text style={styles.cardText}>
+                                    {`${playerCount}/${item.size}`}
+                                </Text>
+                            </View>
                         </View>
-                        <View style={styles.cardDetailView}>
-                            <Text style={styles.cardLabel}>
-                                No. of players:
-                            </Text>
-                            <Text style={styles.cardText}>{item.size}</Text>
-                        </View>
-                        <View style={styles.cardDetailView}>
-                            <Text style={styles.cardLabel}>Rank:</Text>
-                            <Text style={styles.cardText}>{item.rank}</Text>
+                        <View style={styles.cardSubView}>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardText}>{item.rank}</Text>
+                            </View>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardText}>
+                                    {item.ageCategory}
+                                </Text>
+                            </View>
                         </View>
                     </Card.Content>
                 </Card>
@@ -234,7 +244,6 @@ const JoinTeam = ({navigation}) => {
             <View style={styles.listView}>
                 <FlatList
                     showsVerticalScrollIndicator={false}
-                    numColumns={2}
                     data={filteredTeams}
                     renderItem={renderItem}
                     keyExtractor={filteredTeams.teamId}

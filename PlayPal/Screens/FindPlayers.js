@@ -137,7 +137,7 @@ const FindPlayers = ({navigation}) => {
     const renderItem = ({item}) => {
         const sportName = getSportsByIds(item.preferredSports);
         return (
-            <Card key={item.userId} style={styles.card} mode="elevated">
+            <Card style={styles.card} mode="elevated">
                 <Card.Title
                     title={`${item.firstName} ${item.lastName}`}
                     titleStyle={styles.cardName}
@@ -173,11 +173,7 @@ const FindPlayers = ({navigation}) => {
                     )}
                 />
                 <Card.Content>
-                    <Divider
-                        style={styles.divider}
-                        width={2}
-                        color="lightgrey"
-                    />
+                    <Divider style={styles.divider} width={1.2} color="grey" />
                     <View style={styles.infoContainer}>
                         <View style={styles.cardInfoView}>
                             <Image

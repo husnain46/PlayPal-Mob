@@ -1,13 +1,12 @@
 import userData from '../Assets/userData.json';
 
-const getPlayerName = userId => {
+const getPlayerData = userId => {
     const user = userData[userId];
-
     if (user) {
-        return `${user.firstName} ${user.lastName}`;
+        return user;
     } else {
         return null;
     }
 };
 
-export default getPlayerName;
+export default getPlayerData;

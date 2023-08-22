@@ -13,6 +13,7 @@ import {RadioButton, TextInput} from 'react-native-paper';
 import {Picker} from '@react-native-picker/picker';
 import ImagePicker from 'react-native-image-crop-picker';
 import sportsList from '../Assets/sportsList.json';
+import {Dropdown} from 'react-native-element-dropdown';
 
 const CreateTeam = () => {
     const [teamName, setTeamName] = useState('');
@@ -22,13 +23,21 @@ const CreateTeam = () => {
     const [ageValue, setAgeValue] = useState();
     const [imageSelected, setImageSelected] = useState('');
 
-    const teamSizeOptions = sportsList[sportValue].size;
-
-    const ageRange = [
-        {value: 20, label: 'Under 20'},
-        {value: 30, label: 'Under 30'},
-        {value: 40, label: 'Under 40'},
+    const ageData = [
+        {value: 'Under 20', label: 'Under 20'},
+        {value: 'Under 25', label: 'Under 25'},
+        {value: 'Under 30', label: 'Under 30'},
+        {value: 'Under 40', label: 'Under 40'},
     ];
+    const ageRange = ageData.map(item => ({
+        label: item.label,
+        value: item.value,
+    }));
+
+    const sportsData = Object.keys(sportsList).map(sportId => ({
+        label: sportsList[sportId].name,
+        value: sportId,
+    }));
 
     const openImagePicker = async () => {
         try {
@@ -71,10 +80,6 @@ const CreateTeam = () => {
         );
     };
 
-    const handleAge = selectedIndex => {
-        setAgeValue(ageRange[selectedIndex].value);
-    };
-
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false}>
@@ -104,73 +109,61 @@ const CreateTeam = () => {
                         style={{backgroundColor: 'white'}}
                     />
                 </View>
-                <View
-                    style={{alignSelf: 'center', marginTop: 20, width: '100%'}}>
-                    <Text style={styles.pickerLabel}>Select team sport:</Text>
-                    <View style={styles.pickerStyle}>
-                        <Picker
-                            selectedValue={sportValue}
-                            onValueChange={setSportValue}
-                            mode="dropdown"
-                            dropdownIconColor={'#143B63'}
-                            dropdownIconRippleColor={'#11867F'}>
-                            <Picker.Item
-                                label="Select sports"
-                                value=""
-                                enabled={false}
-                                color="#11867F"
-                            />
-                            {Object.keys(sportsList).map((sportId, index) => (
-                                <Picker.Item
-                                    key={index}
-                                    style={styles.pickerBox}
-                                    label={sportsList[sportId].name}
-                                    value={sportId}
-                                    color="black"
-                                />
-                            ))}
-                        </Picker>
+
+                <View style={styles.dropView}>
+                    <Text style={styles.dropLabel}>Team sport:</Text>
+                    <Dropdown
+                        style={styles.dropdown}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropContainer}
+                        iconStyle={styles.iconStyle}
+                        data={sportsData}
+                        maxHeight={300}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={'Select sports'}
+                        value={sportValue}
+                        onChange={item => setSportValue(item.value)}
+                    />
+                </View>
+
+                {sportValue ? (
+                    <View style={{width: 280}}>
+                        <Text style={styles.subtitle}>Default team size</Text>
+
+                        <RadioButton.Group
+                            onValueChange={newValue => setTeamSize(newValue)}
+                            value={teamSize}>
+                            <View style={styles.radioView}>
+                                {sportsList[sportValue].size.map(option => (
+                                    <View key={option} style={styles.radioView}>
+                                        <Text style={styles.radioText}>
+                                            {option} vs {option}
+                                        </Text>
+                                        <RadioButton value={option} />
+                                    </View>
+                                ))}
+                            </View>
+                        </RadioButton.Group>
                     </View>
-                </View>
+                ) : (
+                    <View style={{width: 280}}></View>
+                )}
 
-                <View style={{width: 280}}>
-                    <Text style={styles.subtitle}>Default team size</Text>
-
-                    <RadioButton.Group
-                        onValueChange={newValue => setTeamSize(newValue)}
-                        value={teamSize}>
-                        <View style={styles.radioView}>
-                            {teamSizeOptions.map(option => (
-                                <View key={option} style={styles.radioView}>
-                                    <Text style={styles.radioText}>
-                                        {option} vs {option}
-                                    </Text>
-                                    <RadioButton value={option} />
-                                </View>
-                            ))}
-                        </View>
-                    </RadioButton.Group>
-                </View>
-
-                <View
-                    style={{
-                        width: '100%',
-                        alignSelf: 'flex-start',
-                    }}>
-                    <Text style={styles.subtitle}>Age category</Text>
-                    <ButtonGroup
-                        buttons={ageRange.map(item => item.label)}
-                        selectedIndex={ageRange.findIndex(
-                            item => item.value === ageValue,
-                        )}
-                        onPress={handleAge}
-                        selectedButtonStyle={{backgroundColor: '#6750a4'}}
-                        containerStyle={{
-                            marginTop: 20,
-                            height: 40,
-                            borderRadius: 10,
-                        }}
-                        textStyle={{fontSize: 15}}
+                <View style={styles.dropView}>
+                    <Text style={styles.dropLabel}>Age category:</Text>
+                    <Dropdown
+                        style={styles.dropdown}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropContainer}
+                        iconStyle={styles.iconStyle}
+                        data={ageRange}
+                        maxHeight={300}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={'Select age category'}
+                        value={ageValue}
+                        onChange={item => setAgeValue(item.value)}
                     />
                 </View>
 
@@ -258,6 +251,40 @@ const styles = StyleSheet.create({
     pickerLabel: {
         fontSize: 18,
         fontWeight: '700',
+    },
+    dropView: {
+        width: 300,
+        marginTop: 20,
+    },
+    dropdown: {
+        height: 50,
+        width: 200,
+        borderColor: 'grey',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: 'white',
+    },
+    dropLabel: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: 'black',
+        marginBottom: 10,
+    },
+    dropContainer: {
+        borderBottomWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'grey',
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        color: '#11867F',
+    },
+    iconStyle: {
+        width: 25,
+        height: 25,
+        tintColor: 'black',
     },
     imageView: {
         width: 82,

@@ -128,9 +128,7 @@ const Tournament = ({navigation}) => {
                 style={{width: '100%'}}>
                 <View style={styles.yourTeamView}>
                     <Text style={styles.text1}>My tournaments</Text>
-                    <Divider
-                        style={{marginTop: 10, width: '100%', height: 3}}
-                    />
+                    <Divider style={styles.divider2} />
                     <View style={styles.listView}>
                         {myTournaments == '' ? (
                             <Text style={styles.emptyText}>
@@ -146,9 +144,7 @@ const Tournament = ({navigation}) => {
                             />
                         )}
                     </View>
-                    <Divider
-                        style={{marginTop: 25, width: '100%', height: 3}}
-                    />
+                    <Divider style={styles.divider2} />
                 </View>
                 <View style={styles.cardView2}>
                     <Card style={styles.card2}>
@@ -215,9 +211,16 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 40,
     },
+    divider2: {
+        marginTop: 10,
+        width: '100%',
+        height: 1.5,
+        backgroundColor: 'grey',
+    },
     listView: {
         width: '90%',
         marginTop: 20,
+        marginBottom: 10,
     },
     emptyText: {
         fontSize: 18,
@@ -230,8 +233,10 @@ const styles = StyleSheet.create({
     card1: {
         marginVertical: 10,
         borderRadius: 15,
-        elevation: 10,
+        elevation: 25,
         backgroundColor: 'white',
+        borderWidth: 2,
+        borderColor: 'lightgrey',
     },
     cardContent: {
         flexDirection: 'row',
@@ -248,7 +253,8 @@ const styles = StyleSheet.create({
     divider: {
         marginTop: 10,
         width: '101%',
-        height: 3,
+        height: 1.5,
+        backgroundColor: 'grey',
         marginBottom: 10,
     },
     dateText: {
@@ -269,6 +275,7 @@ const styles = StyleSheet.create({
     },
     cityText: {
         fontSize: 16,
+        color: 'darkblue',
     },
     sportIconView: {
         justifyContent: 'center',
@@ -288,6 +295,8 @@ const styles = StyleSheet.create({
         width: '44%',
         marginHorizontal: 8,
         backgroundColor: 'white',
+        borderWidth: 2,
+        borderColor: 'lightgrey',
     },
     header: {
         alignItems: 'center',
@@ -296,6 +305,7 @@ const styles = StyleSheet.create({
         fontSize: 15,
         marginTop: 20,
         marginBottom: 20,
+        width: 150,
         textAlign: 'center',
     },
     icon: {

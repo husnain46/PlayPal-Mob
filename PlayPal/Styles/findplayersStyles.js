@@ -11,7 +11,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         alignContent: 'center',
-        marginTop: 10,
+        marginTop: 20,
     },
     searchBar: {
         width: 270,
@@ -118,6 +118,8 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         backgroundColor: 'white',
         borderRadius: 15,
+        borderWidth: 2,
+        borderColor: 'lightgrey',
     },
     cardName: {
         width: '150%',

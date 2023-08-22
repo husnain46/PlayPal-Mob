@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     searchBar: {
-        width: 270,
+        width: 250,
         height: 50,
         marginEnd: 30,
         justifyContent: 'center',
@@ -116,18 +116,29 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     listView: {
-        top: 30,
+        marginTop: 30,
         alignItems: 'center',
     },
     card: {
         margin: 10,
-        height: 350,
+        height: 315,
         borderRadius: 10,
         elevation: 3,
-        width: 180,
+        width: 310,
+        borderWidth: 3,
+        borderColor: 'lightgrey',
+        backgroundColor: 'white',
     },
     cardImage: {
-        height: 150,
+        width: 280,
+        height: 170,
+        alignSelf: 'center',
+        marginTop: 10,
+        borderRadius: 10,
+    },
+    cardSubView: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
     },
     cardDetailView: {
         flexDirection: 'row',
@@ -144,7 +155,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     content: {
-        padding: 16,
+        padding: 15,
     },
     cardTitle: {
         fontSize: 19,

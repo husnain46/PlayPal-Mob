@@ -1,4 +1,3 @@
-import {Picker} from '@react-native-picker/picker';
 import React, {useState} from 'react';
 import {
     SafeAreaView,
@@ -10,12 +9,9 @@ import {
     Alert,
 } from 'react-native';
 import {Button, TextInput} from 'react-native-paper';
-import sportsList from '../Assets/sportsList.json';
 import DropDownPicker from 'react-native-dropdown-picker';
 import cityData from '../Assets/cityData.json';
-import getTeamByCaptainId from '../Functions/getTeamByCaptainId';
 import getTeamData from '../Functions/getTeamData';
-import teamsData from '../Assets/teamsData.json';
 import {Icon} from '@rneui/themed';
 
 const EditTournament = ({navigation, route}) => {

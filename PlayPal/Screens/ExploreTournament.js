@@ -165,9 +165,7 @@ const ExploreTournament = ({navigation}) => {
                                     flexDirection: 'row',
                                     paddingVertical: 10,
                                 }}>
-                                <Text style={styles.dateText}>
-                                    Start date:{' '}
-                                </Text>
+                                <Text style={styles.dateText}>Start date:</Text>
                                 <Text style={styles.info1}>{startDate} </Text>
                             </View>
                             <View style={{flexDirection: 'row'}}>
@@ -459,6 +457,8 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         elevation: 10,
         backgroundColor: 'white',
+        borderWidth: 2,
+        borderColor: 'lightgrey',
     },
     title: {
         fontSize: 20,
@@ -471,8 +471,9 @@ const styles = StyleSheet.create({
     divider: {
         marginTop: 10,
         width: '101%',
-        height: 3,
+        height: 1.5,
         marginBottom: 10,
+        backgroundColor: 'grey',
     },
     dateText: {
         fontSize: 14,
@@ -492,6 +493,7 @@ const styles = StyleSheet.create({
     },
     cityText: {
         fontSize: 16,
+        color: 'darkblue',
     },
     sportIconView: {
         justifyContent: 'center',

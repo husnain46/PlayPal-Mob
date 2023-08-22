@@ -9,7 +9,7 @@ import teamsData from '../Assets/teamsData.json';
 const AddMatch = ({navigation, route}) => {
     const {data} = route.params;
     const [matchTitle, setMatchTitle] = useState('');
-    const [selectedDate, setSelectedDate] = useState();
+    const [selectedDate, setSelectedDate] = useState(null);
     const [showPicker1, setShowPicker1] = useState(false);
     const [selectedTime, setSelectedTime] = useState(null);
     const [showPicker2, setShowPicker2] = useState(false);
@@ -72,7 +72,13 @@ const AddMatch = ({navigation, route}) => {
                     mode="contained-tonal"
                     style={styles.dateBox}
                     buttonColor="#cfdfe8"
-                    onPress={() => setShowPicker1(true)}></Button>
+                    onPress={() => setShowPicker1(true)}>
+                    {selectedDate !== null ? (
+                        <Text style={styles.dateText}>{selectedDate}</Text>
+                    ) : (
+                        <Text style={styles.datePlaceholder}>Select Date</Text>
+                    )}
+                </Button>
                 {showPicker1 && (
                     <DateTimePicker
                         value={nextDay}

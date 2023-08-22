@@ -10,18 +10,23 @@ import {
     TouchableOpacity,
 } from 'react-native';
 import React from 'react';
-import {Divider} from '@rneui/themed';
-import {Card, Paragraph} from 'react-native-paper';
-import getPlayerName from '../Functions/getPlayerName';
+import {Divider, Icon} from '@rneui/themed';
+import {Card, IconButton, Paragraph} from 'react-native-paper';
 import userData from '../Assets/userData.json';
 
 const ViewTeam = ({navigation, route}) => {
     const {team, sportName} = route.params;
     const playerCount = team.playersId.length;
-    const captainName = getPlayerName(team.captainId);
+    const captainName = `${userData[team.captainId].firstName} ${
+        userData[team.captainId].lastName
+    }`;
 
     const gotoViewProfile = user => {
         navigation.navigate('ViewProfile', {user});
+    };
+
+    const gotoEditTeam = () => {
+        navigation.navigate('EditTeam', {myTeam: team});
     };
 
     const renderItem = ({item, index}) => {
@@ -38,6 +43,19 @@ const ViewTeam = ({navigation, route}) => {
                         <Text style={styles.playerLabel}>
                             {`${num})  ${playerInfo.firstName} ${playerInfo.lastName}`}
                         </Text>
+                        {item === team.captainId ? (
+                            <Image
+                                source={require('../Assets/Icons/captain.png')}
+                                style={{
+                                    width: 25,
+                                    height: 25,
+                                    right: 55,
+                                }}
+                            />
+                        ) : (
+                            <></>
+                        )}
+
                         <View
                             style={{
                                 flexDirection: 'row',
@@ -69,13 +87,18 @@ const ViewTeam = ({navigation, route}) => {
                     />
                 </View>
 
-                <View style={styles.titleView}>
-                    <Text style={styles.teamTitle}>{team.name}</Text>
-                    <Paragraph style={styles.bio}>{team.description}</Paragraph>
-                </View>
+                <Text style={styles.teamTitle}>{team.name}</Text>
 
-                <Divider style={styles.divider} width={2} color="grey" />
+                <IconButton
+                    icon="square-edit-outline"
+                    iconColor={'black'}
+                    size={35}
+                    style={styles.editIcon}
+                    onPress={() => gotoEditTeam()}
+                />
+                <Divider style={styles.divider} width={1.5} color="grey" />
 
+                <Paragraph style={styles.bio}>{team.description}</Paragraph>
                 <View style={styles.detailView}>
                     <View style={styles.subView}>
                         <Text style={styles.detailLabel}>Sport:</Text>
@@ -86,7 +109,6 @@ const ViewTeam = ({navigation, route}) => {
                         <Text style={styles.detailText}>{team.rank}</Text>
                     </View>
                 </View>
-
                 <View style={styles.cardView}>
                     <Card style={styles.card}>
                         <Card.Content style={{marginTop: -5}}>
@@ -163,20 +185,26 @@ const styles = StyleSheet.create({
         height: 250,
         top: -2,
     },
-    titleView: {
-        paddingHorizontal: 25,
-    },
     teamTitle: {
         fontSize: 24,
         color: '#4a5a96',
         fontWeight: '900',
         textAlign: 'center',
         marginTop: 10,
+        width: 250,
+    },
+    editIcon: {
+        width: 40,
+        alignSelf: 'flex-end',
+        marginTop: -40,
+        marginBottom: -10,
+        right: 10,
     },
     bio: {
-        fontSize: 16,
-        textAlign: 'justify',
-        marginTop: 20,
+        fontSize: 16.5,
+        textAlign: 'center',
+        marginTop: 15,
+        width: 350,
     },
     divider: {
         alignSelf: 'center',

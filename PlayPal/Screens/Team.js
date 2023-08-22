@@ -1,16 +1,78 @@
-import {Button, Card} from '@rneui/themed';
 import React from 'react';
-import {ScrollView} from 'react-native';
-import {SafeAreaView, View, StyleSheet, Text, Image} from 'react-native';
-import {Divider} from 'react-native-paper';
+import {Button, Card} from '@rneui/themed';
+import {
+    SafeAreaView,
+    ScrollView,
+    View,
+    StyleSheet,
+    Text,
+    Image,
+    FlatList,
+    TouchableOpacity,
+} from 'react-native';
+import {Divider, Title} from 'react-native-paper';
+import getMyTeams from '../Functions/getMyTeams';
+import getSportsByIds from '../Functions/getSportsByIds';
+import getTeamData from '../Functions/getTeamData';
 
 const Team = ({navigation}) => {
+    const myTeamIds = getMyTeams('user2');
+
     const gotoCreateTeam = () => {
         navigation.navigate('CreateTeam');
     };
 
+    const gotoViewTeam = (team, sportName) => {
+        navigation.navigate('ViewTeam', {team, sportName});
+    };
     const gotoJoinTeam = () => {
         navigation.navigate('JoinTeam');
+    };
+
+    const renderItem = ({item}) => {
+        const myTeam = getTeamData(item);
+        const sportName = getSportsByIds([myTeam.sportId]);
+        const playerCount = myTeam.playersId.length;
+
+        return (
+            <TouchableOpacity onPress={() => gotoViewTeam(myTeam, sportName)}>
+                <Card containerStyle={styles.card}>
+                    <Card.Image
+                        style={styles.cardImage}
+                        source={{uri: myTeam.teamPic}}
+                        resizeMode="stretch"
+                    />
+                    <View style={styles.content}>
+                        <Title style={styles.cardTitle}>{myTeam.name}</Title>
+                        <Divider style={{height: 1, backgroundColor: 'grey'}} />
+                        <View style={styles.cardSubView}>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardLabel}>Sport:</Text>
+                                <Text style={styles.cardText}>{sportName}</Text>
+                            </View>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardLabel}>Players:</Text>
+                                <Text style={styles.cardText}>
+                                    {`${playerCount}/${myTeam.size}`}
+                                </Text>
+                            </View>
+                        </View>
+                        <View style={styles.cardSubView}>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardText}>
+                                    {myTeam.rank}
+                                </Text>
+                            </View>
+                            <View style={styles.cardDetailView}>
+                                <Text style={styles.cardText}>
+                                    {myTeam.ageCategory}
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </Card>
+            </TouchableOpacity>
+        );
     };
 
     return (
@@ -23,11 +85,27 @@ const Team = ({navigation}) => {
                 style={{width: '100%'}}>
                 <View style={styles.yourTeamView}>
                     <Text style={styles.text1}>My teams</Text>
-                    <Divider style={{marginTop: 5, width: '100%', height: 3}} />
-                    <Text style={styles.text2}>You are not in a team yet</Text>
+                    <Divider style={styles.divider} />
+                    <View style={styles.listView}>
+                        {myTeamIds == '' ? (
+                            <Text style={styles.text2}>
+                                You are not in a team yet
+                            </Text>
+                        ) : (
+                            <FlatList
+                                showsVerticalScrollIndicator={false}
+                                data={myTeamIds}
+                                renderItem={renderItem}
+                                keyExtractor={myTeamIds.teamId}
+                                contentContainerStyle={{paddingBottom: 10}}
+                                scrollEnabled={false}
+                            />
+                        )}
+                    </View>
+                    <Divider style={styles.divider} />
                 </View>
 
-                <Card containerStyle={styles.card}>
+                <Card containerStyle={styles.card2}>
                     <View style={styles.header}>
                         <Text style={styles.text1}>Create team</Text>
 
@@ -46,7 +124,7 @@ const Team = ({navigation}) => {
                     />
                 </Card>
 
-                <Card containerStyle={styles.card}>
+                <Card containerStyle={styles.card2}>
                     <View style={styles.header}>
                         <Text style={styles.text1}>Join a team</Text>
 
@@ -89,11 +167,68 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginTop: 40,
     },
+    divider: {
+        marginTop: 10,
+        width: '100%',
+        height: 1.5,
+        backgroundColor: 'grey',
+    },
+    listView: {
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
     card: {
+        borderRadius: 10,
+        elevation: 3,
+        width: 310,
+        margin: 9,
+        borderWidth: 2,
+        borderColor: 'lightgrey',
+        marginTop: 30,
+    },
+    cardImage: {
+        width: '100%',
+        height: 150,
+        borderRadius: 10,
+    },
+    cardSubView: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    cardDetailView: {
+        flexDirection: 'row',
+        marginTop: 10,
+    },
+    cardLabel: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: 'black',
+        marginEnd: 10,
+    },
+    cardText: {
+        fontSize: 16,
+        fontWeight: '700',
+    },
+    content: {
+        marginTop: 20,
+    },
+    cardTitle: {
+        fontSize: 19,
+        fontWeight: 'bold',
+        marginBottom: 8,
+        marginTop: -5,
+        color: '#4a5a96',
+        textAlign: 'center',
+    },
+    card2: {
         marginTop: 30,
         borderRadius: 10,
         elevation: 5,
         width: '80%',
+        borderWidth: 2,
+        borderColor: 'lightgrey',
+        marginTop: 30,
     },
     header: {
         alignItems: 'center',
