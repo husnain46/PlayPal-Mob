@@ -26,13 +26,15 @@
                 "slotId": "slot1",
                 "slotNumber": "Slot 1",
                 "startTime": "10:00 AM",
-                "endTime": "12:00 PM"
+                "endTime": "12:00 PM",
+                "price": 1000
             },
             {
                 "slotId": "slot2",
                 "slotNumber": "Slot 2",
                 "startTime": "3:00 PM",
-                "endTime": "5:00 PM"
+                "endTime": "5:00 PM",
+                "price": 1000
             }
         ],
         "rating": [
@@ -61,7 +63,7 @@
             "cnic": "98765-43210"
         },
         "address": "456 Elm St, Lahore, Pakistan",
-        "sports": ["sport1", "sport2"],
+        "sports": ["sport1", "sport2", "sport3", "sport4", "sport5"],
         "location": {
             "latitude": 31.5497,
             "longitude": 74.3436
@@ -72,13 +74,15 @@
                 "slotId": "slot3",
                 "slotNumber": "Slot 1",
                 "startTime": "9:00 AM",
-                "endTime": "11:00 AM"
+                "endTime": "11:00 AM",
+                "price": 1000
             },
             {
                 "slotId": "slot4",
                 "slotNumber": "Slot 2",
                 "startTime": "1:00 PM",
-                "endTime": "3:00 PM"
+                "endTime": "3:00 PM",
+                "price": 1000
             }
         ],
         "rating": [
@@ -107,7 +111,16 @@
             "cnic": "55555-67890"
         },
         "address": "789 Oak St, Islamabad, Pakistan",
-        "sports": ["sport1", "sport2"],
+        "sports": [
+            "sport1",
+            "sport2",
+            "sport3",
+            "sport4",
+            "sport5",
+            "sport6",
+            "sport7",
+            "sport8"
+        ],
         "location": {
             "latitude": 33.6844,
             "longitude": 73.0479
@@ -118,13 +131,15 @@
                 "slotId": "slot5",
                 "slotNumber": "Slot 1",
                 "startTime": "12:00 PM",
-                "endTime": "2:00 PM"
+                "endTime": "2:00 PM",
+                "price": 1000
             },
             {
                 "slotId": "slot6",
                 "slotNumber": "Slot 2",
                 "startTime": "6:00 PM",
-                "endTime": "8:00 PM"
+                "endTime": "8:00 PM",
+                "price": 1000
             }
         ],
         "rating": [
@@ -133,7 +148,8 @@
                 "userId": "user3",
                 "ratingValue": 4.5,
                 "review": "Friendly staff.",
-                "timestamp": "2023-08-22"
+                "timestamp": "2023-08-22",
+                "price": 1000
             }
         ]
     },
@@ -153,7 +169,7 @@
             "cnic": "11111-22222"
         },
         "address": "123 Palm Ave, Rawalpindi, Pakistan",
-        "sports": ["sport1", "sport2"],
+        "sports": ["sport1", "sport2", "sport3", "sport4"],
         "location": {
             "latitude": 33.6844,
             "longitude": 73.0479
@@ -164,13 +180,15 @@
                 "slotId": "slot7",
                 "slotNumber": "Slot 1",
                 "startTime": "7:00 AM",
-                "endTime": "9:00 AM"
+                "endTime": "9:00 AM",
+                "price": 1000
             },
             {
                 "slotId": "slot8",
                 "slotNumber": "Slot 2",
                 "startTime": "4:00 PM",
-                "endTime": "6:00 PM"
+                "endTime": "6:00 PM",
+                "price": 1000
             }
         ],
         "rating": [
@@ -186,7 +204,7 @@
     "arena5": {
         "arenaId": "arena5",
         "name": "Fitness Arena",
-        "city": "Faisalabad",
+        "city": "Lahore",
         "arenaPics": [
             "https://media.istockphoto.com/id/835801916/photo/stadium-in-cartagena-spain.jpg?s=612x612&w=0&k=20&c=kVAilDtKoz0dbMe8YsuGkiT7LMlijJ7irn2AXH7X24k="
         ],
@@ -199,7 +217,7 @@
             "cnic": "99999-88888"
         },
         "address": "456 Fitness Blvd, Faisalabad, Pakistan",
-        "sports": ["sport1", "sport2"],
+        "sports": ["sport1", "sport2", "sport3"],
         "location": {
             "latitude": 31.4504,
             "longitude": 73.1342
@@ -210,13 +228,15 @@
                 "slotId": "slot9",
                 "slotNumber": "Slot 1",
                 "startTime": "8:00 AM",
-                "endTime": "10:00 AM"
+                "endTime": "10:00 AM",
+                "price": 1000
             },
             {
                 "slotId": "slot10",
                 "slotNumber": "Slot 2",
                 "startTime": "6:00 PM",
-                "endTime": "8:00 PM"
+                "endTime": "8:00 PM",
+                "price": 1000
             }
         ],
         "rating": [

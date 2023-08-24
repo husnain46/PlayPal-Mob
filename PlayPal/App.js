@@ -22,6 +22,7 @@ import AddMatch from './Screens/AddMatch';
 import EditMatch from './Screens/EditMatch';
 import StartMatch from './Screens/StartMatch';
 import EditTeam from './Screens/EditTeam';
+import ViewArena from './Screens/ViewArena';
 
 const Stack = createStackNavigator();
 
@@ -67,6 +68,7 @@ export default function App() {
                 <Stack.Screen name="EditMatch" component={EditMatch} />
                 <Stack.Screen name="StartMatch" component={StartMatch} />
                 <Stack.Screen name="EditTeam" component={EditTeam} />
+                <Stack.Screen name="ViewArena" component={ViewArena} />
             </Stack.Navigator>
         </NavigationContainer>
     );
