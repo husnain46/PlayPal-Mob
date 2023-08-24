@@ -7,10 +7,14 @@ import {
     View,
     FlatList,
     Image,
+    TouchableOpacity,
 } from 'react-native';
 import {Button, IconButton, TextInput} from 'react-native-paper';
 import getPlayerData from '../Functions/getPlayerData';
 import AlertPro from 'react-native-alert-pro';
+import ImagePicker from 'react-native-image-crop-picker';
+import {Dropdown} from 'react-native-element-dropdown';
+import userData from '../Assets/userData.json';
 
 const EditTeam = ({navigation, route}) => {
     const {myTeam} = route.params;
@@ -18,6 +22,38 @@ const EditTeam = ({navigation, route}) => {
     const [teamName, setTeamName] = useState(myTeam.name);
     const [teamDetail, setTeamDetail] = useState(myTeam.description);
     const [listRefresh, setListRefresh] = useState(false);
+    const [imageSelected, setImageSelected] = useState('');
+    const [selectedCaptain, setSelectedCaptain] = useState(myTeam.captainId);
+
+    const openImagePicker = async () => {
+        try {
+            const image = await ImagePicker.openPicker({
+                mediaType: 'photo',
+                cropping: true,
+            });
+
+            if (!image.didCancel && image.path) {
+                setImageSelected(image.path);
+            } else if (image.didCancel) {
+                throw new Error('Image upload cancelled');
+            }
+        } catch (error) {
+            console.log(error); // Log the error for debugging purposes
+
+            let errorMessage = 'Failed to upload the image. Please try again.';
+
+            // Check specific error conditions and update error message accordingly
+            if (error.message === 'Image upload cancelled') {
+                errorMessage = 'Image upload cancelled.';
+            } else if (error.message.includes('file type')) {
+                errorMessage = 'The selected file type is not supported.';
+            } else if (error.message.includes('file size')) {
+                errorMessage = 'The selected file size is too large.';
+            }
+
+            Alert.alert('Error', errorMessage);
+        }
+    };
 
     const alertRefs = useRef([]);
     const showAlert = index => {
@@ -56,6 +92,11 @@ const EditTeam = ({navigation, route}) => {
         }
         setListRefresh(prevState => !prevState);
     };
+
+    const playersData = myTeam.playersId.map(pId => ({
+        label: `${userData[pId].firstName} ${userData[pId].lastName}`,
+        value: pId,
+    }));
 
     const renderItem = ({item, index}) => {
         const player = getPlayerData(item);
@@ -118,6 +159,43 @@ const EditTeam = ({navigation, route}) => {
                         outlineColor="black"
                     />
                 </View>
+
+                <View style={{width: 300, marginTop: 20}}>
+                    <Text style={styles.labelText}>Team photo:</Text>
+                    <TouchableOpacity
+                        style={styles.imageView}
+                        onPress={() => openImagePicker()}>
+                        {imageSelected ? (
+                            <Image
+                                style={styles.teamImage}
+                                source={{uri: imageSelected}}
+                            />
+                        ) : (
+                            <Image
+                                style={styles.pickImage}
+                                source={require('../Assets/Icons/photo.png')}
+                            />
+                        )}
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.dropView}>
+                    <Text style={styles.dropLabel}>Captain:</Text>
+                    <Dropdown
+                        style={styles.dropdown}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropContainer}
+                        iconStyle={styles.iconStyle}
+                        data={playersData}
+                        maxHeight={300}
+                        labelField="label"
+                        valueField="value"
+                        placeholder={'Select Captain'}
+                        value={selectedCaptain}
+                        onChange={item => setSelectedCaptain(item.value)}
+                    />
+                </View>
+
                 <View style={{marginTop: 20, width: 300}}>
                     <Text style={styles.teamLabel}>Players:</Text>
                 </View>
@@ -185,6 +263,53 @@ const styles = StyleSheet.create({
         width: 300,
         backgroundColor: 'white',
         borderRadius: 10,
+    },
+    imageView: {
+        width: 82,
+        height: 82,
+        alignItems: 'center',
+        marginTop: 15,
+        margin: 10,
+    },
+    pickImage: {
+        width: 80,
+        height: 80,
+    },
+    teamImage: {
+        width: 100,
+        height: 90,
+        borderWidth: 2,
+        borderColor: 'black',
+        borderRadius: 10,
+    },
+    dropView: {
+        width: 300,
+        marginTop: 20,
+    },
+    dropdown: {
+        height: 50,
+        width: 200,
+        borderColor: 'grey',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: 'white',
+    },
+    dropLabel: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: 'black',
+        marginBottom: 10,
+    },
+    dropContainer: {
+        borderBottomWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'grey',
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        color: '#11867F',
     },
     teamLabel: {
         fontSize: 18,

@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import {Text, Button, ButtonGroup} from '@rneui/themed';
 import {RadioButton, TextInput} from 'react-native-paper';
-import {Picker} from '@react-native-picker/picker';
 import ImagePicker from 'react-native-image-crop-picker';
 import sportsList from '../Assets/sportsList.json';
 import {Dropdown} from 'react-native-element-dropdown';

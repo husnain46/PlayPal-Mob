@@ -8,8 +8,9 @@ import {
     Dimensions,
     ScrollView,
     TouchableOpacity,
+    Modal,
 } from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
 import {Card, IconButton, Paragraph} from 'react-native-paper';
 import userData from '../Assets/userData.json';
@@ -20,6 +21,7 @@ const ViewTeam = ({navigation, route}) => {
     const captainName = `${userData[team.captainId].firstName} ${
         userData[team.captainId].lastName
     }`;
+    const [modalVisible, setModalVisible] = useState(false);
 
     const gotoViewProfile = user => {
         navigation.navigate('ViewProfile', {user});
@@ -80,13 +82,29 @@ const ViewTeam = ({navigation, route}) => {
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={{alignItems: 'center'}}>
                 <View style={styles.imgView}>
-                    <Image
-                        source={{uri: team.teamPic}}
-                        style={styles.mainImage}
-                        resizeMode="stretch"
-                    />
+                    <TouchableOpacity onPress={() => setModalVisible(true)}>
+                        <Image
+                            source={{uri: team.teamPic}}
+                            style={styles.mainImage}
+                            resizeMode="stretch"
+                        />
+                    </TouchableOpacity>
                 </View>
 
+                <Modal visible={modalVisible} transparent={true}>
+                    <View style={styles.modalView}>
+                        <TouchableOpacity
+                            onPress={() => setModalVisible(!modalVisible)}
+                            style={styles.closeTouchable}>
+                            <Text style={styles.closeText}>X</Text>
+                        </TouchableOpacity>
+                        <Image
+                            source={{uri: team.teamPic}}
+                            style={{width: '100%', height: 300}}
+                            resizeMode="contain"
+                        />
+                    </View>
+                </Modal>
                 <Text style={styles.teamTitle}>{team.name}</Text>
 
                 <IconButton
@@ -184,6 +202,25 @@ const styles = StyleSheet.create({
         width: Dimensions.get('window').width,
         height: 250,
         top: -2,
+    },
+    modalView: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 1)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    closeTouchable: {
+        position: 'absolute',
+        alignItems: 'center',
+        top: 30,
+        right: 10,
+        width: 40,
+        height: 30,
+    },
+    closeText: {
+        color: 'white',
+        fontSize: 20,
+        fontWeight: 'bold',
     },
     teamTitle: {
         fontSize: 24,

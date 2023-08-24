@@ -13,7 +13,7 @@ const Tab = createBottomTabNavigator();
 const BottomTab = () => {
     return (
         <Tab.Navigator
-            initialRouteName="Team"
+            initialRouteName="FindArena"
             screenOptions={{
                 headerTitle: () => <Header />,
                 tabBarHideOnKeyboard: true,
