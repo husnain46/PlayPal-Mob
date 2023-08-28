@@ -22,9 +22,9 @@ const BottomTab = () => {
 
                 tabBarStyle: {
                     position: 'absolute',
-                    bottom: 15,
-                    left: 15,
-                    right: 15,
+                    bottom: 10,
+                    left: 12,
+                    right: 12,
                     elevation: 5,
                     backgroundColor: '#ffffff',
                     borderRadius: 15,

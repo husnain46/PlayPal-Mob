@@ -43,7 +43,7 @@
                 "userId": "user1",
                 "ratingValue": 4,
                 "review": "Great facilities!",
-                "timestamp": "2023-08-24"
+                "timestamp": "2023-08-28T18:27:24.161Z"
             }
         ]
     },
@@ -51,7 +51,8 @@
         "arenaId": "arena2",
         "name": "Sports World",
         "arenaPics": [
-            "https://www.limerick.ie/sites/default/files/styles/hero_image/public/media/images/2016-12/University%20Arena%20810%20x%20456_1.jpg?itok=wjlFue_T"
+            "https://www.limerick.ie/sites/default/files/styles/hero_image/public/media/images/2016-12/University%20Arena%20810%20x%20456_1.jpg?itok=wjlFue_T",
+            "https://thumbs.dreamstime.com/b/modern-sports-arena-29314268.jpg"
         ],
         "city": "Lahore",
         "email": "info@sportsworld.com",
@@ -68,7 +69,7 @@
             "latitude": 31.5497,
             "longitude": 74.3436
         },
-        "facilities": ["Locker rooms", "Pro shop"],
+        "facilities": ["Locker rooms", "Pro shop", "Gym", "Cafeteria"],
         "slots": [
             {
                 "slotId": "slot3",
@@ -87,11 +88,18 @@
         ],
         "rating": [
             {
-                "ratingId": "rating2",
+                "ratingId": "rating1",
                 "userId": "user2",
                 "ratingValue": 5,
                 "review": "Clean and well-maintained.",
-                "timestamp": "2023-08-23"
+                "timestamp": "2023-08-20T18:27:24.161Z"
+            },
+            {
+                "ratingId": "rating2",
+                "userId": "user1",
+                "ratingValue": 4,
+                "review": "Great facilities!",
+                "timestamp": "2023-08-28T18:27:24.161Z"
             }
         ]
     },
@@ -99,7 +107,8 @@
         "arenaId": "arena3",
         "name": "PlayZone",
         "arenaPics": [
-            "https://thumbs.dreamstime.com/b/modern-sports-arena-29314268.jpg"
+            "https://thumbs.dreamstime.com/b/modern-sports-arena-29314268.jpg",
+            "https://www.limerick.ie/sites/default/files/styles/hero_image/public/media/images/2016-12/University%20Arena%20810%20x%20456_1.jpg?itok=wjlFue_T"
         ],
         "city": "Islamabad",
         "email": "playzone@example.com",
@@ -148,8 +157,7 @@
                 "userId": "user3",
                 "ratingValue": 4.5,
                 "review": "Friendly staff.",
-                "timestamp": "2023-08-22",
-                "price": 1000
+                "timestamp": "2023-01-28T18:27:24.161Z"
             }
         ]
     },
@@ -197,7 +205,7 @@
                 "userId": "user4",
                 "ratingValue": 4,
                 "review": "Beautiful pool area.",
-                "timestamp": "2023-08-21"
+                "timestamp": "2021-08-28T18:27:24.161Z"
             }
         ]
     },
@@ -245,7 +253,7 @@
                 "userId": "user5",
                 "ratingValue": 4.2,
                 "review": "Great place for workouts!",
-                "timestamp": "2023-08-20"
+                "timestamp": "2023-02-28T11:12:21.161Z"
             }
         ]
     }

@@ -24,8 +24,8 @@ const FindArena = ({navigation}) => {
     const [cityFilter, setCityFilter] = useState('');
     const [isFocus, setIsFocus] = useState(false);
 
-    const gotoViewArena = arena => {
-        navigation.navigate('ViewArena', {arena});
+    const gotoViewArena = (arena, arenaRating, ratingCount) => {
+        navigation.navigate('ViewArena', {arena, arenaRating, ratingCount});
     };
 
     const cityList = cityData.map(item => ({
@@ -162,7 +162,7 @@ const FindArena = ({navigation}) => {
 
         return (
             <TouchableOpacity
-                onPress={() => gotoViewArena(item)}
+                onPress={() => gotoViewArena(item, arenaRating, ratingCount)}
                 style={{width: '85%', alignSelf: 'center'}}>
                 <Card containerStyle={styles.cardContainer}>
                     <Card.Image
