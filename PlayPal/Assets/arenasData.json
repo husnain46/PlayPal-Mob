@@ -1,6 +1,5 @@
 {
     "arena1": {
-        "arenaId": "arena1",
         "arenaPics": [
             "https://assets.simpleviewcms.com/simpleview/image/upload/c_fill,f_jpg,h_750,q_85,w_800/v1/clients/lasvegas/MGCX9454d_2__72c81ba4-9cd6-448d-bcab-24fcf8119c37.jpg"
         ],
@@ -24,14 +23,24 @@
         "slots": [
             {
                 "slotId": "slot1",
-                "slotNumber": "Slot 1",
+                "days": ["Monday", "Wednesday", "Friday"],
+                "slotNumber": 1,
                 "startTime": "10:00 AM",
                 "endTime": "12:00 PM",
                 "price": 1000
             },
             {
                 "slotId": "slot2",
-                "slotNumber": "Slot 2",
+                "days": [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday"
+                ],
+                "slotNumber": 2,
                 "startTime": "3:00 PM",
                 "endTime": "5:00 PM",
                 "price": 1000
@@ -48,7 +57,6 @@
         ]
     },
     "arena2": {
-        "arenaId": "arena2",
         "name": "Sports World",
         "arenaPics": [
             "https://www.limerick.ie/sites/default/files/styles/hero_image/public/media/images/2016-12/University%20Arena%20810%20x%20456_1.jpg?itok=wjlFue_T",
@@ -73,14 +81,16 @@
         "slots": [
             {
                 "slotId": "slot3",
-                "slotNumber": "Slot 1",
+                "days": ["Monday", "Wednesday", "Friday"],
+                "slotNumber": 1,
                 "startTime": "9:00 AM",
                 "endTime": "11:00 AM",
                 "price": 1000
             },
             {
                 "slotId": "slot4",
-                "slotNumber": "Slot 2",
+                "days": ["Tuesday", "Thursday"],
+                "slotNumber": 2,
                 "startTime": "1:00 PM",
                 "endTime": "3:00 PM",
                 "price": 1000
@@ -104,7 +114,6 @@
         ]
     },
     "arena3": {
-        "arenaId": "arena3",
         "name": "PlayZone",
         "arenaPics": [
             "https://thumbs.dreamstime.com/b/modern-sports-arena-29314268.jpg",
@@ -138,14 +147,16 @@
         "slots": [
             {
                 "slotId": "slot5",
-                "slotNumber": "Slot 1",
+                "days": ["Monday", "Wednesday", "Friday"],
+                "slotNumber": 1,
                 "startTime": "12:00 PM",
                 "endTime": "2:00 PM",
                 "price": 1000
             },
             {
                 "slotId": "slot6",
-                "slotNumber": "Slot 2",
+                "days": ["Tuesday", "Thursday"],
+                "slotNumber": 2,
                 "startTime": "6:00 PM",
                 "endTime": "8:00 PM",
                 "price": 1000
@@ -162,7 +173,6 @@
         ]
     },
     "arena4": {
-        "arenaId": "arena4",
         "name": "Sports Oasis",
         "city": "Rawalpindi",
         "arenaPics": [
@@ -186,14 +196,16 @@
         "slots": [
             {
                 "slotId": "slot7",
-                "slotNumber": "Slot 1",
+                "days": ["Monday", "Wednesday", "Friday"],
+                "slotNumber": 1,
                 "startTime": "7:00 AM",
                 "endTime": "9:00 AM",
                 "price": 1000
             },
             {
                 "slotId": "slot8",
-                "slotNumber": "Slot 2",
+                "days": ["Tuesday", "Thursday"],
+                "slotNumber": 2,
                 "startTime": "4:00 PM",
                 "endTime": "6:00 PM",
                 "price": 1000
@@ -210,7 +222,6 @@
         ]
     },
     "arena5": {
-        "arenaId": "arena5",
         "name": "Fitness Arena",
         "city": "Lahore",
         "arenaPics": [
@@ -234,14 +245,16 @@
         "slots": [
             {
                 "slotId": "slot9",
-                "slotNumber": "Slot 1",
+                "days": ["Monday", "Wednesday", "Friday"],
+                "slotNumber": 1,
                 "startTime": "8:00 AM",
                 "endTime": "10:00 AM",
                 "price": 1000
             },
             {
                 "slotId": "slot10",
-                "slotNumber": "Slot 2",
+                "days": ["Tuesday", "Thursday"],
+                "slotNumber": 2,
                 "startTime": "6:00 PM",
                 "endTime": "8:00 PM",
                 "price": 1000

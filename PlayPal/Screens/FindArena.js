@@ -24,8 +24,20 @@ const FindArena = ({navigation}) => {
     const [cityFilter, setCityFilter] = useState('');
     const [isFocus, setIsFocus] = useState(false);
 
-    const gotoViewArena = (arena, arenaRating, ratingCount) => {
-        navigation.navigate('ViewArena', {arena, arenaRating, ratingCount});
+    const gotoViewArena = (arena, arenaRating, ratingCount, arenaId) => {
+        navigation.navigate('ViewArena', {
+            arena,
+            arenaRating,
+            ratingCount,
+            arenaId,
+        });
+    };
+
+    const getArenaId = arenaName => {
+        const arenaId = Object.keys(arenasData).find(
+            key => arenasData[key].name === arenaName,
+        );
+        return arenaId;
     };
 
     const cityList = cityData.map(item => ({
@@ -160,9 +172,13 @@ const FindArena = ({navigation}) => {
         let sportsList = getSportsByIds(item.sports);
         let startingPrice = getStartingPrice(item.slots);
 
+        let arenaId = getArenaId(item.name);
+
         return (
             <TouchableOpacity
-                onPress={() => gotoViewArena(item, arenaRating, ratingCount)}
+                onPress={() =>
+                    gotoViewArena(item, arenaRating, ratingCount, arenaId)
+                }
                 style={{width: '85%', alignSelf: 'center'}}>
                 <Card containerStyle={styles.cardContainer}>
                     <Card.Image
