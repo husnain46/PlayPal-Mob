@@ -3,24 +3,39 @@ import {
     SafeAreaView,
     View,
     TouchableOpacity,
-    Button,
     TouchableWithoutFeedback,
     Keyboard,
     TextInput,
-    ScrollView,
     Image,
     Text,
     ImageBackground,
+    Alert,
 } from 'react-native';
 import {RadioButton} from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import styles from '../Styles/signupStyles';
+import auth from '@react-native-firebase/auth';
+import {Button} from '@rneui/themed';
+import firestore from '@react-native-firebase/firestore';
+import {ActivityIndicator} from 'react-native';
 
 const SignUp = ({navigation}) => {
     const [backDate, setBackDate] = useState(new Date());
-    const [checked, setChecked] = useState('first');
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [gender, setGender] = useState('Male');
     const [selectedDate, setSelectedDate] = useState();
     const [showPicker, setShowPicker] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [phone, setPhone] = useState('');
+    const [username, setUsername] = useState('');
+    const [loading, setLoading] = useState(false);
+    const phonePattern = /^03[0-4][0-9]{8}$/;
+    const [isPhoneValid, setIsPhoneValid] = useState(false);
+    const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
+    const usernamePattern = /^[a-zA-Z0-9_]{6,20}$/;
+    const [isPasswordValid, setIsPasswordValid] = useState(false);
 
     useEffect(() => {
         const currentDate = new Date();
@@ -32,19 +47,94 @@ const SignUp = ({navigation}) => {
         setBackDate(newDate);
     }, []);
 
+    const gotoVerify = () => {
+        navigation.navigate('VerifyMail');
+    };
+
+    const checkUsername = async username => {
+        try {
+            const isValid = usernamePattern.test(username);
+
+            const querySnapshot = await firestore()
+                .collection('users')
+                .where('username', '==', username)
+                .get();
+
+            if (querySnapshot.empty && isValid) {
+                // Username is available
+                setIsUsernameAvailable(true);
+            } else {
+                // Username is not available
+
+                setIsUsernameAvailable(false);
+            }
+        } catch (error) {
+            Alert.alert('Error checking username availability:', error);
+            return false;
+        }
+    };
+
+    const createUser = () => {
+        if (
+            !firstName ||
+            !lastName ||
+            !selectedDate ||
+            !email ||
+            !password ||
+            !phone ||
+            !username
+        ) {
+            Alert.alert('Error', 'Please fill in all fields.');
+        } else if (!isPhoneValid) {
+            Alert.alert('Error', 'Phone number is not valid!');
+        } else if (!isPasswordValid || !isUsernameAvailable) {
+            console.log('Username/Password not valid');
+        } else {
+            setLoading(true);
+
+            const userData = {
+                firstName,
+                lastName,
+                gender,
+                dateOfBirth: selectedDate,
+                phone,
+                username,
+                email,
+            };
+
+            auth()
+                .createUserWithEmailAndPassword(email, password)
+                .then(async userCredential => {
+                    const user = userCredential.user;
+                    const uid = user.uid;
+
+                    if (user) {
+                        await firestore()
+                            .collection('users')
+                            .doc(uid)
+                            .set(userData);
+                        await user.sendEmailVerification();
+                        gotoVerify();
+                    } else {
+                        // Handle the case where user is null
+                        alert('Error! Some input may be empty.');
+                    }
+                })
+                .catch(error => {
+                    alert(error);
+                })
+                .finally(() => {
+                    // Set loading to false when the signup process is complete
+                    setLoading(false);
+                });
+        }
+    };
+
     const handleDateChange = (event, selected) => {
         setShowPicker(false);
         if (selected) {
             setSelectedDate(selected.toLocaleDateString('en-GB'));
         }
-    };
-
-    const gotoWelcome = () => {
-        navigation.navigate('Welcome');
-    };
-
-    const gotoLogin = () => {
-        navigation.navigate('Login');
     };
 
     return (
@@ -63,123 +153,170 @@ const SignUp = ({navigation}) => {
                             />
                         </View>
 
-                        <ScrollView>
-                            <TouchableWithoutFeedback
-                                onPress={Keyboard.dismiss}>
-                                <View style={styles.inner}>
-                                    <View style={styles.nameView}>
-                                        <TextInput
-                                            placeholder="First Name"
-                                            style={styles.textInput1}
-                                        />
-                                        <TextInput
-                                            placeholder="Last Name"
-                                            style={styles.textInput2}
-                                        />
-                                    </View>
-                                    <View style={styles.radioView}>
-                                        <Text style={styles.radioText}>
-                                            Male
-                                        </Text>
-                                        <RadioButton
-                                            value="first"
-                                            status={
-                                                checked === 'first'
-                                                    ? 'checked'
-                                                    : 'unchecked'
-                                            }
-                                            onPress={() => setChecked('first')}
-                                        />
-                                        <Text style={styles.radioText}>
-                                            Female
-                                        </Text>
+                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                            <View style={styles.inner}>
+                                <View style={styles.nameView}>
+                                    <TextInput
+                                        placeholder="First Name"
+                                        style={styles.textInput1}
+                                        onChangeText={text =>
+                                            setFirstName(text)
+                                        }
+                                        maxLength={15}
+                                    />
+                                    <TextInput
+                                        placeholder="Last Name"
+                                        style={styles.textInput2}
+                                        onChangeText={text => setLastName(text)}
+                                        maxLength={15}
+                                    />
+                                </View>
+                                <View style={styles.radioView}>
+                                    <Text style={styles.radioText}>Male</Text>
+                                    <RadioButton
+                                        value="first"
+                                        status={
+                                            gender === 'Male'
+                                                ? 'checked'
+                                                : 'unchecked'
+                                        }
+                                        onPress={() => setGender('Male')}
+                                    />
 
-                                        <RadioButton
-                                            value="second"
-                                            status={
-                                                checked === 'second'
-                                                    ? 'checked'
-                                                    : 'unchecked'
-                                            }
-                                            onPress={() => setChecked('second')}
-                                        />
-                                    </View>
-                                    <View style={styles.dobView}>
-                                        <Text style={styles.dobText}>
-                                            Date of birth:
-                                        </Text>
-                                        <View style={styles.dateView}>
-                                            <TouchableOpacity
-                                                style={styles.dateBox}
-                                                onPress={() =>
-                                                    setShowPicker(true)
-                                                }>
-                                                {selectedDate ? (
-                                                    <Text
-                                                        style={styles.dobText}>
-                                                        {selectedDate}
-                                                    </Text>
-                                                ) : (
-                                                    <Text>
-                                                        Select date of birth
-                                                    </Text>
-                                                )}
-                                            </TouchableOpacity>
-                                            {showPicker && (
-                                                <DateTimePicker
-                                                    value={backDate}
-                                                    mode="date"
-                                                    display="spinner"
-                                                    minimumDate={
-                                                        new Date(1970, 0, 1)
-                                                    }
-                                                    maximumDate={backDate}
-                                                    onChange={handleDateChange}
-                                                />
-                                            )}
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.inputView}>
-                                        <TextInput
-                                            placeholder="Email"
-                                            style={styles.textInput3}
-                                        />
-                                        <TextInput
-                                            placeholder="Mobile no. (e.g. 03xxxxxxxxx)"
-                                            style={styles.textInput3}
-                                        />
-                                        <TextInput
-                                            placeholder="Username"
-                                            style={styles.textInput3}
-                                        />
-                                        <TextInput
-                                            placeholder="Password"
-                                            style={styles.textInput3}
-                                            secureTextEntry={true}
-                                        />
-                                    </View>
-                                    <View style={styles.btnContainer}>
-                                        <Button
-                                            title="Submit"
-                                            onPress={() => gotoWelcome()}
-                                        />
-                                    </View>
-
-                                    <View style={styles.footerView}>
-                                        <Text style={styles.ftText}>
-                                            Already have an account?
-                                        </Text>
+                                    <Text style={styles.radioText}>Female</Text>
+                                    <RadioButton
+                                        value="Female"
+                                        status={
+                                            gender === 'Female'
+                                                ? 'checked'
+                                                : 'unchecked'
+                                        }
+                                        onPress={() => setGender('Female')}
+                                    />
+                                </View>
+                                <View style={styles.dobView}>
+                                    <Text style={styles.dobText}>
+                                        Date of birth:
+                                    </Text>
+                                    <View style={styles.dateView}>
                                         <TouchableOpacity
-                                            onPress={() => gotoLogin()}>
-                                            <Text style={styles.loginText}>
-                                                Login
-                                            </Text>
+                                            style={styles.dateBox}
+                                            onPress={() => setShowPicker(true)}>
+                                            {selectedDate ? (
+                                                <Text style={styles.dobText}>
+                                                    {selectedDate}
+                                                </Text>
+                                            ) : (
+                                                <Text>
+                                                    Select date of birth
+                                                </Text>
+                                            )}
                                         </TouchableOpacity>
+                                        {showPicker && (
+                                            <DateTimePicker
+                                                value={backDate}
+                                                mode="date"
+                                                display="spinner"
+                                                minimumDate={
+                                                    new Date(1970, 0, 1)
+                                                }
+                                                maximumDate={backDate}
+                                                onChange={handleDateChange}
+                                            />
+                                        )}
                                     </View>
                                 </View>
-                            </TouchableWithoutFeedback>
-                        </ScrollView>
+
+                                <View style={styles.inputView}>
+                                    <TextInput
+                                        placeholder="Email"
+                                        style={styles.textInput3}
+                                        onChangeText={text => setEmail(text)}
+                                    />
+                                    <TextInput
+                                        placeholder="Mobile no. (e.g. 03xxxxxxxxx)"
+                                        style={styles.textInput3}
+                                        onChangeText={text => {
+                                            setPhone(text);
+                                            if (phonePattern.test(text)) {
+                                                setIsPhoneValid(true);
+                                            } else {
+                                                setIsPhoneValid(false);
+                                            }
+                                        }}
+                                    />
+                                    <TextInput
+                                        placeholder="Username"
+                                        style={styles.textInput3}
+                                        onChangeText={async text => {
+                                            setUsername(text);
+                                            await checkUsername(text);
+                                        }}
+                                        maxLength={20}
+                                    />
+                                    {username.length > 0 ? (
+                                        <Text
+                                            style={{
+                                                color: isUsernameAvailable
+                                                    ? 'green'
+                                                    : 'red',
+                                                bottom: 18,
+                                                right: 12,
+                                                textAlign: 'right',
+                                            }}>
+                                            {isUsernameAvailable
+                                                ? 'Username is available'
+                                                : 'Username is not available'}
+                                        </Text>
+                                    ) : (
+                                        <></>
+                                    )}
+
+                                    <TextInput
+                                        placeholder="Password"
+                                        style={styles.textInput3}
+                                        secureTextEntry={true}
+                                        onChangeText={text => {
+                                            if (text.length >= 6) {
+                                                setIsPasswordValid(true);
+                                                setPassword(text);
+                                            } else {
+                                                setIsPasswordValid(false);
+                                            }
+                                        }}
+                                        maxLength={20}
+                                    />
+                                    {!isPasswordValid ? (
+                                        <Text
+                                            style={{
+                                                color: 'red',
+                                                bottom: 18,
+                                                textAlign: 'center',
+                                            }}>
+                                            Password must be at least 6
+                                            characters long
+                                        </Text>
+                                    ) : (
+                                        <></>
+                                    )}
+                                </View>
+                                <View style={styles.btnContainer}>
+                                    {loading ? (
+                                        <ActivityIndicator
+                                            size="large"
+                                            color="#0000ff"
+                                        />
+                                    ) : (
+                                        <Button
+                                            title="Submit"
+                                            titleStyle={styles.submitText}
+                                            onPress={() => createUser()}
+                                            containerStyle={styles.submitBtn}
+                                        />
+                                    )}
+                                </View>
+                            </View>
+                        </TouchableWithoutFeedback>
                     </View>
                 </ImageBackground>
             </View>

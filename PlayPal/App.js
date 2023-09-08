@@ -2,6 +2,7 @@ import 'react-native-gesture-handler';
 import * as React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack';
+import auth from '@react-native-firebase/auth';
 
 import BottomTab from './Navigation/bottomTab';
 import GettingStarted from './Screens/GettingStarted';
@@ -25,14 +26,30 @@ import EditTeam from './Screens/EditTeam';
 import ViewArena from './Screens/ViewArena';
 import Reviews from './Screens/Reviews';
 import Slots from './Screens/Slots';
+import VerifyMail from './Screens/VerifyMail';
+import ForgotPassword from './Screens/ForgotPassword';
 
 const Stack = createStackNavigator();
 
 export default function App() {
+    const [isUserSignedIn, setIsUserSignedIn] = React.useState(false);
+
+    React.useEffect(() => {
+        const unsubscribe = auth().onAuthStateChanged(user => {
+            if (user) {
+                setIsUserSignedIn(true);
+            } else {
+                setIsUserSignedIn(false);
+            }
+        });
+
+        return unsubscribe;
+    }, []);
+
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName="BottomTab"
+                initialRouteName={!isUserSignedIn ? 'Login' : 'GettingStarted'}
                 screenOptions={{
                     headerShown: false,
                 }}>
@@ -41,7 +58,18 @@ export default function App() {
                     component={GettingStarted}
                 />
                 <Stack.Screen name="SignUp" component={SignUp} />
+
+                <Stack.Screen
+                    name="VerifyMail"
+                    component={VerifyMail}
+                    options={{gestureEnabled: false}}
+                />
                 <Stack.Screen name="Login" component={Login} />
+                <Stack.Screen
+                    name="ForgotPassword"
+                    component={ForgotPassword}
+                />
+
                 <Stack.Screen name="Welcome" component={Welcome} />
                 <Stack.Screen name="BottomTab" component={BottomTab} />
                 <Stack.Screen name="ViewProfile" component={ViewProfile} />

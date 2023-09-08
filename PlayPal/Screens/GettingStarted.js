@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
     SafeAreaView,
     View,
@@ -9,6 +9,8 @@ import {
     ImageBackground,
     Dimensions,
 } from 'react-native';
+import auth from '@react-native-firebase/auth';
+import {StackActions} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('window');
 
@@ -19,6 +21,14 @@ const GettingStarted = ({navigation}) => {
     const gotoLogin = () => {
         navigation.navigate('Login');
     };
+
+    // useEffect(() => {
+    //     auth().onAuthStateChanged(user => {
+    //         const routeName = user !== null ? 'BottomTab' : 'GettingStarted';
+
+    //         navigation.dispatch(StackActions.replace(routeName));
+    //     });
+    // }, []);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -35,6 +45,7 @@ const GettingStarted = ({navigation}) => {
                         "Ignite Your Passion for Sports"
                     </Text>
                 </View>
+
                 <View style={styles.btnView}>
                     <TouchableOpacity
                         style={styles.button1}

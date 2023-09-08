@@ -14,7 +14,7 @@ import {Picker} from '@react-native-picker/picker';
 import cityData from '../Assets/cityData.json';
 import styles from '../Styles/welcomeStyles';
 
-const Welcome = ({navigation, route}) => {
+const Welcome = ({navigation}) => {
     const [selectedSports, setSelectedSports] = useState([]);
     const [nextBool, setNextBool] = useState(false);
     const [imageSelected, setImageSelected] = useState('');

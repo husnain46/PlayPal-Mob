@@ -12,11 +12,44 @@ import {
     StyleSheet,
     Text,
     ImageBackground,
+    Alert,
 } from 'react-native';
 
+import auth from '@react-native-firebase/auth';
+import {StackActions} from '@react-navigation/native';
+
 const Login = ({navigation}) => {
-    const gotoHome = () => {
-        navigation.navigate('BottomTab');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSignIn = () => {
+        if (email && password) {
+            auth()
+                .signInWithEmailAndPassword(email, password)
+                .then(async userCredential => {
+                    const user = userCredential.user;
+                    if (user.emailVerified) {
+                        navigation.dispatch(StackActions.replace('BottomTab'));
+                    } else {
+                        await user.sendEmailVerification();
+                        alert(
+                            'Your email is not verified, Check your email and verify.',
+                        );
+                        await auth().signOut();
+                    }
+                })
+                .catch(error => {
+                    if (error.code === 'auth/user-not-found') {
+                        Alert.alert('Error', 'No user found with this email.');
+                    } else if (error.code === 'auth/wrong-password') {
+                        Alert.alert('Error', 'Incorrect password.');
+                    } else {
+                        Alert.alert('Error', 'An error occurred during login.');
+                    }
+                });
+        } else {
+            Alert.alert('Empty fields', 'Please enter email/password to login');
+        }
     };
 
     return (
@@ -42,21 +75,33 @@ const Login = ({navigation}) => {
                                         <TextInput
                                             placeholder="Email"
                                             style={styles.textInput}
+                                            onChangeText={text =>
+                                                setEmail(text)
+                                            }
                                         />
                                         <TextInput
                                             placeholder="Password"
                                             style={styles.textInput}
+                                            secureTextEntry={true}
+                                            onChangeText={text =>
+                                                setPassword(text)
+                                            }
                                         />
                                     </View>
                                     <View style={styles.btnContainer}>
                                         <Button
                                             title="Login"
-                                            onPress={() => gotoHome()}
+                                            onPress={() => handleSignIn()}
                                         />
                                     </View>
 
                                     <View style={styles.footerView}>
-                                        <TouchableOpacity>
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                navigation.navigate(
+                                                    'ForgotPassword',
+                                                )
+                                            }>
                                             <Text style={styles.loginText}>
                                                 Forgot password
                                             </Text>

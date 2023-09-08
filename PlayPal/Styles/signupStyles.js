@@ -29,7 +29,6 @@ const styles = StyleSheet.create({
         height: 90,
     },
     inner: {
-        flex: 1,
         marginTop: 40,
         justifyContent: 'center',
         alignContent: 'center',
@@ -39,11 +38,13 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignContent: 'center',
+        marginBottom: 10,
     },
     radioView: {
         flexDirection: 'row',
         alignItems: 'center',
         marginTop: 20,
+        marginBottom: 15,
     },
     radioText: {
         fontSize: 17,
@@ -56,6 +57,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         left: 13,
         alignItems: 'center',
+        marginBottom: 10,
     },
     dateView: {
         marginLeft: 20,
@@ -96,29 +98,26 @@ const styles = StyleSheet.create({
     textInput3: {
         height: 40,
         width: 280,
-        borderColor: '#000000',
-        marginBottom: 20,
+        marginBottom: 25,
         borderBottomWidth: 1,
         alignSelf: 'center',
         fontSize: 17,
     },
     btnContainer: {
-        width: 150,
         alignSelf: 'center',
-        marginTop: 40,
+        marginTop: 45,
+        borderRadius: 20,
+        height: 80,
     },
-    footerView: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 40,
+    submitBtn: {
+        borderRadius: 8,
+        width: 140,
+        elevation: 5,
     },
-    ftText: {
-        fontSize: 17,
-    },
-    loginText: {
+    submitText: {
         fontSize: 18,
-        textDecorationLine: 'underline',
-        fontWeight: 'bold',
+        letterSpacing: 0.5,
+        fontWeight: '600',
     },
 });
 
