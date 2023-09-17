@@ -34,8 +34,8 @@ const SignUp = ({navigation}) => {
     const phonePattern = /^03[0-4][0-9]{8}$/;
     const [isPhoneValid, setIsPhoneValid] = useState(false);
     const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
-    const usernamePattern = /^[a-zA-Z0-9_]{6,20}$/;
-    const [isPasswordValid, setIsPasswordValid] = useState(false);
+    const usernamePattern = /^[a-zA-Z0-9_.]{6,20}$/;
+    const [passError, setPassError] = useState('');
 
     useEffect(() => {
         const currentDate = new Date();
@@ -74,6 +74,22 @@ const SignUp = ({navigation}) => {
         }
     };
 
+    const handlePasswordChange = text => {
+        setPassword(text);
+        validatePassword(text);
+    };
+
+    // Function to validate the password
+    const validatePassword = text => {
+        if (text.length < 6) {
+            setPassError('Password must be at least 6 characters long');
+        } else if (text.includes(' ')) {
+            setPassError('Password cannot contain spaces');
+        } else {
+            setPassError('');
+        }
+    };
+
     const createUser = () => {
         if (
             !firstName ||
@@ -87,8 +103,8 @@ const SignUp = ({navigation}) => {
             Alert.alert('Error', 'Please fill in all fields.');
         } else if (!isPhoneValid) {
             Alert.alert('Error', 'Phone number is not valid!');
-        } else if (!isPasswordValid || !isUsernameAvailable) {
-            console.log('Username/Password not valid');
+        } else if (passError !== '' || !isUsernameAvailable) {
+            alert('Username/Password not valid!');
         } else {
             setLoading(true);
 
@@ -96,10 +112,21 @@ const SignUp = ({navigation}) => {
                 firstName,
                 lastName,
                 gender,
-                dateOfBirth: selectedDate,
+                DOB: selectedDate,
                 phone,
                 username,
                 email,
+                area: '',
+                bio: '',
+                city: '',
+                preferredSports: [],
+                profilePic: '',
+                skillLevel: '',
+                friends: [],
+                friendReqSent: [],
+                friendReqReceived: [],
+                teamReqSent: [],
+                teamReqReceived: [],
             };
 
             auth()
@@ -276,25 +303,18 @@ const SignUp = ({navigation}) => {
                                         placeholder="Password"
                                         style={styles.textInput3}
                                         secureTextEntry={true}
-                                        onChangeText={text => {
-                                            if (text.length >= 6) {
-                                                setIsPasswordValid(true);
-                                                setPassword(text);
-                                            } else {
-                                                setIsPasswordValid(false);
-                                            }
-                                        }}
+                                        onChangeText={handlePasswordChange}
                                         maxLength={20}
                                     />
-                                    {!isPasswordValid ? (
+                                    {passError !== '' ? (
                                         <Text
                                             style={{
                                                 color: 'red',
                                                 bottom: 18,
-                                                textAlign: 'center',
+                                                left: 10,
+                                                textAlign: 'left',
                                             }}>
-                                            Password must be at least 6
-                                            characters long
+                                            {passError}
                                         </Text>
                                     ) : (
                                         <></>
@@ -308,7 +328,7 @@ const SignUp = ({navigation}) => {
                                         />
                                     ) : (
                                         <Button
-                                            title="Submit"
+                                            title="Signup"
                                             titleStyle={styles.submitText}
                                             onPress={() => createUser()}
                                             containerStyle={styles.submitBtn}

@@ -31,7 +31,7 @@ const VerifyMail = ({navigation}) => {
                 const isEmailVerified = auth().currentUser.emailVerified;
                 if (!isEmailVerified) {
                     alert(
-                        'Your email is not verified. Please check your email.',
+                        'Email verification has been sent, check your email and verify',
                     );
                 }
             }
@@ -72,7 +72,7 @@ const VerifyMail = ({navigation}) => {
 
     return (
         <View style={styles.container} key={reloadKey}>
-            <Text style={styles.title}>Verify Your Email</Text>
+            <Text style={styles.title}>Email Verification</Text>
             {auth().currentUser.emailVerified ? (
                 <>
                     <Text style={styles.message2}>

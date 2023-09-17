@@ -5,6 +5,9 @@ import {createStackNavigator} from '@react-navigation/stack';
 import auth from '@react-native-firebase/auth';
 
 import BottomTab from './Navigation/bottomTab';
+import Notifications from './Screens/Notifications';
+import MyProfile from './Screens/MyProfile';
+import EditProfile from './Screens/EditProfile';
 import GettingStarted from './Screens/GettingStarted';
 import SignUp from './Screens/SignUp';
 import Login from './Screens/Login';
@@ -32,24 +35,24 @@ import ForgotPassword from './Screens/ForgotPassword';
 const Stack = createStackNavigator();
 
 export default function App() {
-    const [isUserSignedIn, setIsUserSignedIn] = React.useState(false);
+    const [routeName, setRouteName] = React.useState('BottomTab');
 
     React.useEffect(() => {
         const unsubscribe = auth().onAuthStateChanged(user => {
             if (user) {
-                setIsUserSignedIn(true);
+                setRouteName('BottomTab');
             } else {
-                setIsUserSignedIn(false);
+                setRouteName('GettingStarted');
             }
         });
 
-        return unsubscribe;
+        unsubscribe();
     }, []);
 
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName={!isUserSignedIn ? 'Login' : 'GettingStarted'}
+                initialRouteName={routeName}
                 screenOptions={{
                     headerShown: false,
                 }}>
@@ -72,6 +75,9 @@ export default function App() {
 
                 <Stack.Screen name="Welcome" component={Welcome} />
                 <Stack.Screen name="BottomTab" component={BottomTab} />
+                <Stack.Screen name="Notifications" component={Notifications} />
+                <Stack.Screen name="MyProfile" component={MyProfile} />
+                <Stack.Screen name="EditProfile" component={EditProfile} />
                 <Stack.Screen name="ViewProfile" component={ViewProfile} />
                 <Stack.Screen name="ChatScreen" component={ChatScreen} />
                 <Stack.Screen name="CreateTeam" component={CreateTeam} />

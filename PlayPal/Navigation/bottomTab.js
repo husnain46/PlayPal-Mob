@@ -5,17 +5,17 @@ import FindPlayers from '../Screens/FindPlayers';
 import Team from '../Screens/Team';
 import Tournament from '../Screens/Tournament';
 import FindArena from '../Screens/FindArena';
-import {View, Image, Text, StyleSheet, SafeAreaView} from 'react-native';
+import {View, Image, Text, StyleSheet} from 'react-native';
 import Header from './header';
 
 const Tab = createBottomTabNavigator();
 
-const BottomTab = () => {
+const BottomTab = ({navigation}) => {
     return (
         <Tab.Navigator
             initialRouteName="FindArena"
             screenOptions={{
-                headerTitle: () => <Header />,
+                headerTitle: () => <Header navigation={navigation} />,
                 tabBarHideOnKeyboard: true,
                 headerStyle: {height: 65, borderBottomWidth: 2},
                 tabBarShowLabel: false,
@@ -40,7 +40,7 @@ const BottomTab = () => {
                 component={Home}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <SafeAreaView>
+                        <View>
                             <View
                                 style={{
                                     width: 43,
@@ -72,7 +72,7 @@ const BottomTab = () => {
                                 }}>
                                 Home
                             </Text>
-                        </SafeAreaView>
+                        </View>
                     ),
                 }}
             />
@@ -81,7 +81,7 @@ const BottomTab = () => {
                 component={FindPlayers}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <SafeAreaView style={{right: 3}}>
+                        <View style={{right: 3}}>
                             <View
                                 style={{
                                     width: 43,
@@ -113,7 +113,7 @@ const BottomTab = () => {
                                 }}>
                                 Players
                             </Text>
-                        </SafeAreaView>
+                        </View>
                     ),
                 }}
             />
@@ -122,7 +122,7 @@ const BottomTab = () => {
                 component={Team}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <SafeAreaView style={{right: 8}}>
+                        <View style={{right: 8}}>
                             <View
                                 style={{
                                     width: 43,
@@ -154,7 +154,7 @@ const BottomTab = () => {
                                 }}>
                                 Team
                             </Text>
-                        </SafeAreaView>
+                        </View>
                     ),
                 }}
             />
@@ -163,7 +163,7 @@ const BottomTab = () => {
                 component={Tournament}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <SafeAreaView
+                        <View
                             style={{
                                 width: 80,
                                 alignItems: 'center',
@@ -201,7 +201,7 @@ const BottomTab = () => {
                                 }}>
                                 Tournament
                             </Text>
-                        </SafeAreaView>
+                        </View>
                     ),
                 }}
             />
@@ -210,7 +210,7 @@ const BottomTab = () => {
                 component={FindArena}
                 options={{
                     tabBarIcon: ({focused}) => (
-                        <SafeAreaView>
+                        <View>
                             <View
                                 style={{
                                     width: 43,
@@ -242,7 +242,7 @@ const BottomTab = () => {
                                 }}>
                                 Arenas
                             </Text>
-                        </SafeAreaView>
+                        </View>
                     ),
                 }}
             />

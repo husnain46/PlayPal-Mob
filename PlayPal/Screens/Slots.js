@@ -15,7 +15,7 @@ import bookingData from '../Assets/bookingData.json';
 const Slots = ({navigation, route}) => {
     const {slots, arenaId} = route.params;
 
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState();
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [availableSlots, setAvailableSlots] = useState([]);
     const [dateBool, setDateBool] = useState(false);
@@ -24,10 +24,16 @@ const Slots = ({navigation, route}) => {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
+        weekday: 'short',
     };
 
     const handleDateChange = async (event, selected) => {
         setShowDatePicker(false);
+
+        if (event.type === 'dismissed') {
+            // User canceled the date picker, no need to update the state.
+            return;
+        }
         if (selected) {
             setSelectedDate(selected);
 
@@ -111,26 +117,32 @@ const Slots = ({navigation, route}) => {
                                 type="feather"
                                 style={{marginRight: 10, marginLeft: 15}}
                             />
-                            <Text style={styles.dateText}>
-                                {selectedDate.toLocaleDateString(
-                                    'en-US',
-                                    options,
-                                )}
-                            </Text>
+                            {!selectedDate ? (
+                                <Text style={styles.dateText}>
+                                    ________________
+                                </Text>
+                            ) : (
+                                <Text style={styles.dateText}>
+                                    {selectedDate.toLocaleDateString(
+                                        'en-US',
+                                        options,
+                                    )}
+                                </Text>
+                            )}
                         </View>
                         <Text style={styles.selectText}>Select date</Text>
                     </TouchableOpacity>
                 </View>
                 {showDatePicker && (
                     <DateTimePicker
-                        value={selectedDate}
+                        value={!selectedDate ? new Date() : selectedDate}
                         mode="date"
                         display="default"
                         onChange={handleDateChange}
                         minimumDate={new Date()}
                     />
                 )}
-                {dateBool ? (
+                {dateBool && availableSlots.length > 0 ? (
                     <FlatList
                         data={availableSlots}
                         keyExtractor={item => item.slotId}
@@ -140,11 +152,15 @@ const Slots = ({navigation, route}) => {
                     />
                 ) : (
                     <View style={{marginTop: 20}}>
-                        <Text style={{fontSize: 18}}>
-                            {availableSlots.length > 0
-                                ? 'No slot available!'
-                                : 'Select a date to see available slots'}
-                        </Text>
+                        {dateBool && availableSlots.length === 0 ? (
+                            <Text style={{fontSize: 18}}>
+                                No slot available for the selected date!
+                            </Text>
+                        ) : (
+                            <Text style={{fontSize: 18}}>
+                                Select a date to see available slots
+                            </Text>
+                        )}
                     </View>
                 )}
             </ScrollView>

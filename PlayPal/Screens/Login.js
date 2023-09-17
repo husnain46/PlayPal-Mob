@@ -13,43 +13,75 @@ import {
     Text,
     ImageBackground,
     Alert,
+    ActivityIndicator,
 } from 'react-native';
-
+import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {StackActions} from '@react-navigation/native';
 
 const Login = ({navigation}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleSignIn = () => {
         if (email && password) {
+            setIsLoading(true);
+
             auth()
                 .signInWithEmailAndPassword(email, password)
                 .then(async userCredential => {
                     const user = userCredential.user;
                     if (user.emailVerified) {
-                        navigation.dispatch(StackActions.replace('BottomTab'));
+                        checkProfile(user.uid);
                     } else {
+                        setIsLoading(false);
                         await user.sendEmailVerification();
-                        alert(
+                        Alert.alert(
+                            'Email verification',
                             'Your email is not verified, Check your email and verify.',
                         );
                         await auth().signOut();
                     }
                 })
                 .catch(error => {
+                    setIsLoading(false);
                     if (error.code === 'auth/user-not-found') {
                         Alert.alert('Error', 'No user found with this email.');
                     } else if (error.code === 'auth/wrong-password') {
                         Alert.alert('Error', 'Incorrect password.');
                     } else {
-                        Alert.alert('Error', 'An error occurred during login.');
+                        Alert.alert(
+                            'Error',
+                            'An error occurred during login.',
+                            error.code,
+                        );
                     }
                 });
         } else {
             Alert.alert('Empty fields', 'Please enter email/password to login');
         }
+    };
+
+    const checkProfile = userId => {
+        const userDocRef = firestore().collection('users').doc(userId);
+
+        userDocRef
+            .get()
+            .then(docSnapshot => {
+                if (docSnapshot.exists) {
+                    const userData = docSnapshot.data();
+
+                    if (!userData.city) {
+                        navigation.dispatch(StackActions.replace('Welcome'));
+                    } else {
+                        navigation.dispatch(StackActions.replace('BottomTab'));
+                    }
+                }
+            })
+            .catch(error => {
+                Alert.alert('Error', error.message);
+            });
     };
 
     return (
@@ -89,10 +121,17 @@ const Login = ({navigation}) => {
                                         />
                                     </View>
                                     <View style={styles.btnContainer}>
-                                        <Button
-                                            title="Login"
-                                            onPress={() => handleSignIn()}
-                                        />
+                                        {isLoading ? (
+                                            <ActivityIndicator
+                                                size="large"
+                                                color="#0000ff"
+                                            />
+                                        ) : (
+                                            <Button
+                                                title="Login"
+                                                onPress={() => handleSignIn()}
+                                            />
+                                        )}
                                     </View>
 
                                     <View style={styles.footerView}>

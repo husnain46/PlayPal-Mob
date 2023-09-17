@@ -1,17 +1,70 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     StyleSheet,
-    Text,
     View,
     Image,
     TouchableOpacity,
     SafeAreaView,
+    Alert,
 } from 'react-native';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
-export default function Header({title, navigation}) {
-    const openMenu = () => {
-        navigation.openDrawer();
-    };
+export default function Header({navigation}) {
+    const [userData, setUserData] = useState();
+
+    useEffect(() => {
+        // Fetch user data from Firestore
+        const fetchUserData = async () => {
+            const uid = auth().currentUser.uid;
+            try {
+                const userDoc = await firestore()
+                    .collection('users')
+                    .doc(uid)
+                    .get();
+                if (userDoc.exists) {
+                    setUserData(userDoc.data());
+                } else {
+                    // User data not found, display an error message
+                    Alert.alert(
+                        'User Data Not Found',
+                        'User data not found. Please try again later.',
+                        [
+                            {
+                                text: 'Reload',
+                                onPress: () => {
+                                    // Reload the app
+                                    navigation.navigate('App', {
+                                        screen: 'Home',
+                                    });
+                                },
+                            },
+                        ],
+                    );
+                }
+            } catch (error) {
+                // Handle the error and display an error message
+                Alert.alert(
+                    'Error',
+                    'An error occurred while fetching user data. Please try again later.',
+                    [
+                        {
+                            text: 'Reload',
+                            onPress: () => {
+                                // Reload the app
+                                navigation.navigate('App', {
+                                    screen: 'Home',
+                                });
+                            },
+                        },
+                    ],
+                );
+                console.error('Error fetching user data: ', error.message);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     return (
         <SafeAreaView style={styles.header}>
@@ -24,7 +77,8 @@ export default function Header({title, navigation}) {
             </View>
 
             <View style={styles.rightView}>
-                <TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('Notifications')}>
                     <Image
                         source={require('../Assets/Icons/bell.png')}
                         style={styles.bell}
@@ -33,7 +87,10 @@ export default function Header({title, navigation}) {
                 </TouchableOpacity>
                 <View style={styles.divider} />
 
-                <TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() =>
+                        navigation.navigate('MyProfile', {userData})
+                    }>
                     <Image
                         source={require('../Assets/Icons/account.png')}
                         style={styles.account}

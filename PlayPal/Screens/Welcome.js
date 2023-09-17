@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     SafeAreaView,
     View,
@@ -8,21 +8,55 @@ import {
     Text,
     Alert,
     ScrollView,
+    ActivityIndicator,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import {Picker} from '@react-native-picker/picker';
 import cityData from '../Assets/cityData.json';
 import styles from '../Styles/welcomeStyles';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import storage from '@react-native-firebase/storage';
+import sportsList from '../Assets/sportsList.json';
+import {StackActions} from '@react-navigation/native';
 
 const Welcome = ({navigation}) => {
     const [selectedSports, setSelectedSports] = useState([]);
     const [nextBool, setNextBool] = useState(false);
     const [imageSelected, setImageSelected] = useState('');
     const [skillLevel, setSkillLevel] = useState(null);
-
+    const [bio, setBio] = useState('');
     const [selectedProvince, setSelectedProvince] = useState('');
     const [cities, setCities] = useState([]);
     const [selectedCity, setSelectedCity] = useState('');
+    const [area, setArea] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+
+    const [playerName, setPlayerName] = useState('');
+    const [userFirstName, setUserFirstName] = useState('');
+
+    // Function to fetch user name from Firestore
+    const fetchUserName = async uid => {
+        try {
+            const userRef = firestore().collection('users').doc(uid);
+            const userDoc = await userRef.get();
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const {firstName, lastName} = userData;
+                setPlayerName(`${firstName} ${lastName}`);
+                setUserFirstName(firstName);
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+    };
+
+    useEffect(() => {
+        const uid = auth().currentUser.uid;
+        if (uid) {
+            fetchUserName(uid);
+        }
+    }, []);
 
     const provinces = [
         {label: 'Punjab', value: 'Punjab'},
@@ -61,8 +95,58 @@ const Welcome = ({navigation}) => {
         setSkillLevel(itemValue);
     };
 
-    const gotoHome = () => {
-        navigation.navigate('BottomTab');
+    const finishProfile = async () => {
+        const userData = {
+            city: selectedCity,
+            area,
+            bio,
+            preferredSports: selectedSports,
+            skillLevel,
+        };
+
+        let uid = auth().currentUser.uid;
+
+        if (
+            !selectedCity ||
+            !area ||
+            !bio ||
+            !selectedSports ||
+            !skillLevel ||
+            !imageSelected
+        ) {
+            Alert.alert('Error', 'Please fill/select all the fields!');
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+
+            // Upload the image to Firebase Storage
+            const imageUri = await uploadImage(uid, imageSelected);
+            // Add the image URL to the user data
+            userData.profilePic = imageUri;
+
+            // Update user data in Firestore
+            await firestore().collection('users').doc(uid).update(userData);
+
+            navigation.dispatch(StackActions.replace('BottomTab')); // Navigate to home screen
+        } catch (error) {
+            setIsLoading(false);
+            Alert.alert('Error', error.message);
+        }
+    };
+
+    const uploadImage = async (userId, imageUri) => {
+        const storageRef = storage().ref(`profile_images/${userId}`);
+        const task = storageRef.putFile(imageUri);
+
+        // Wait for the upload to complete
+        await task;
+
+        // Get the download URL of the uploaded image
+        const downloadURL = await storageRef.getDownloadURL();
+
+        return downloadURL;
     };
 
     const openImagePicker = async () => {
@@ -96,32 +180,20 @@ const Welcome = ({navigation}) => {
         }
     };
 
-    const sportsOptions = [
-        {id: '1', name: 'Football'},
-        {id: '2', name: 'Cricket'},
-        {id: '3', name: 'Tennis'},
-        {id: '4', name: 'Basketball'},
-        {id: '5', name: 'Table Tennis'},
-        {id: '6', name: 'Hockey'},
-        {id: '7', name: 'Bedminton'},
-        {id: '8', name: 'Volleyball'},
-    ];
-
-    const handleSportSelection = sport => {
-        const index = selectedSports.findIndex(item => item.id === sport.id);
-        if (index > -1) {
-            setSelectedSports(prevSelected => {
-                const updatedSelected = [...prevSelected];
-                updatedSelected.splice(index, 1);
-                return updatedSelected;
-            });
+    const handleSportSelection = sportId => {
+        // Check if the sport is already selected
+        if (selectedSports.includes(sportId)) {
+            setSelectedSports(
+                selectedSports.filter(sport => sport !== sportId),
+            );
         } else {
-            setSelectedSports(prevSelected => [...prevSelected, sport]);
+            setSelectedSports([...selectedSports, sportId]);
         }
     };
 
-    const isSportSelected = sport =>
-        selectedSports.some(item => item.id === sport.id);
+    const isSportSelected = sportId => {
+        return selectedSports.includes(sportId);
+    };
 
     const nextPanel = () => {
         return (
@@ -146,17 +218,7 @@ const Welcome = ({navigation}) => {
                         />
                     </TouchableOpacity>
                 </View>
-                <Text style={styles.nameTxt}>Husnain Ahmed</Text>
-                <View style={styles.inputView}>
-                    <Text style={styles.text1}>Enter your bio:</Text>
-                    <TextInput
-                        multiline={true}
-                        numberOfLines={3}
-                        style={styles.textInput}
-                        color={'white'}
-                        textAlignVertical="top"
-                    />
-                </View>
+                <Text style={styles.nameTxt}>{playerName}</Text>
 
                 <View style={styles.pickerView}>
                     <Text style={styles.text3}>Your province:</Text>
@@ -221,25 +283,51 @@ const Welcome = ({navigation}) => {
                     </View>
                 </View>
 
+                <View style={styles.inputView}>
+                    <Text style={styles.text1}>Your area:</Text>
+                    <TextInput
+                        placeholder="write area name here"
+                        placeholderTextColor={'darkgrey'}
+                        style={styles.textInput2}
+                        maxLength={30}
+                        color={'white'}
+                        onChangeText={text => setArea(text.trim())}
+                    />
+                </View>
+
+                <View style={styles.inputView}>
+                    <Text style={styles.text1}>Enter your bio:</Text>
+                    <TextInput
+                        multiline={true}
+                        numberOfLines={3}
+                        maxLength={200}
+                        style={styles.textInput}
+                        color={'white'}
+                        textAlignVertical="top"
+                        onChangeText={text => setBio(text.trim())}
+                    />
+                </View>
+
                 <View style={styles.container2}>
                     <Text style={styles.text2}>
                         Select your sports interest:
                     </Text>
-                    {sportsOptions.map(sport => (
+                    {Object.keys(sportsList).map(sportId => (
                         <TouchableOpacity
-                            key={sport.id}
+                            key={sportId}
                             style={[
                                 styles.option,
-                                isSportSelected(sport) && styles.optionSelected,
+                                isSportSelected(sportId) &&
+                                    styles.optionSelected,
                             ]}
-                            onPress={() => handleSportSelection(sport)}>
+                            onPress={() => handleSportSelection(sportId)}>
                             <Text
                                 style={[
                                     styles.optionText,
-                                    isSportSelected(sport) &&
+                                    isSportSelected(sportId) &&
                                         styles.optionTextSelected,
                                 ]}>
-                                {sport.name}
+                                {sportsList[sportId].name}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -275,10 +363,16 @@ const Welcome = ({navigation}) => {
                     </View>
                 </View>
 
-                <View style={styles.btnView}>
-                    <TouchableOpacity onPress={() => gotoHome()}>
-                        <Text style={styles.btnText}>Finish</Text>
-                    </TouchableOpacity>
+                <View style={{marginTop: 40, marginBottom: 50}}>
+                    {isLoading ? (
+                        <ActivityIndicator size="large" color="#0000ff" />
+                    ) : (
+                        <TouchableOpacity
+                            onPress={() => finishProfile()}
+                            style={styles.btnView}>
+                            <Text style={styles.btnText}>Finish</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             </ScrollView>
         );
@@ -295,7 +389,7 @@ const Welcome = ({navigation}) => {
                         style={styles.dpImage}
                     />
 
-                    <Text style={styles.nameTxt}>Welcome Husnain</Text>
+                    <Text style={styles.nameTxt}>Welcome {userFirstName}</Text>
                     <Text style={styles.profileTxt}>
                         Let's complete your profile first!
                     </Text>
