@@ -8,13 +8,14 @@ const styles = StyleSheet.create({
     searchView: {
         flexDirection: 'row',
         alignSelf: 'center',
+        width: '83%',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignContent: 'center',
         marginTop: 20,
     },
     searchBar: {
-        width: 270,
+        width: 280,
         height: 50,
         marginEnd: 30,
         justifyContent: 'center',

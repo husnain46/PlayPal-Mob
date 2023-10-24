@@ -125,8 +125,7 @@ const SignUp = ({navigation}) => {
                 friends: [],
                 friendReqSent: [],
                 friendReqReceived: [],
-                teamReqSent: [],
-                teamReqReceived: [],
+                teamReq: [],
             };
 
             auth()

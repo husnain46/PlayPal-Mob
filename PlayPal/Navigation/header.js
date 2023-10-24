@@ -70,7 +70,7 @@ export default function Header({navigation}) {
         <SafeAreaView style={styles.header}>
             <View>
                 <Image
-                    source={require('../Assets/Icons/logo4.png')}
+                    source={require('../Assets/Icons/Logo.png')}
                     style={styles.logo}
                     resizeMode="contain"
                 />
@@ -105,17 +105,17 @@ export default function Header({navigation}) {
 const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
-        justifyContent: 'center',
+        width: '100%',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     logo: {
-        width: 90,
+        width: 150,
         height: 90,
-        left: -10,
     },
     rightView: {
         flexDirection: 'row',
         alignItems: 'center',
-        left: 180,
     },
     bell: {
         width: 26,

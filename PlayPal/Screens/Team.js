@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useCallback, useState} from 'react';
 import {Button, Card} from '@rneui/themed';
 import {
     SafeAreaView,
@@ -9,17 +9,28 @@ import {
     Image,
     FlatList,
     TouchableOpacity,
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 import {Divider, Title} from 'react-native-paper';
-import getMyTeams from '../Functions/getMyTeams';
 import getSportsByIds from '../Functions/getSportsByIds';
-import getTeamData from '../Functions/getTeamData';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import {useFocusEffect} from '@react-navigation/native';
 
 const Team = ({navigation}) => {
-    const myTeamIds = getMyTeams('user2');
+    const [teams, setTeams] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const gotoCreateTeam = () => {
-        navigation.navigate('CreateTeam');
+        if (teams.length > 0) {
+            Alert.alert(
+                'You are already in a team!',
+                'You cannot create a team if you have joined another team.',
+            );
+        } else {
+            navigation.navigate('CreateTeam');
+        }
     };
 
     const gotoViewTeam = (team, sportName) => {
@@ -29,21 +40,59 @@ const Team = ({navigation}) => {
         navigation.navigate('JoinTeam');
     };
 
+    useFocusEffect(
+        useCallback(() => {
+            const fetchMyTeams = async () => {
+                try {
+                    let playerId = auth().currentUser.uid;
+                    const fetchedTeams = [];
+
+                    const querySnapshot = await firestore()
+                        .collection('teams')
+                        .where('playersId', 'array-contains', playerId)
+                        .get();
+
+                    if (querySnapshot.empty) {
+                        // No team found with the given playerId
+                        setLoading(false);
+                        return null;
+                    }
+
+                    // Extract team data from the query result
+                    querySnapshot.forEach(doc => {
+                        const team = {
+                            teamId: doc.id,
+                            ...doc.data(),
+                        };
+                        fetchedTeams.push(team);
+                    });
+                    setTeams(fetchedTeams);
+
+                    setLoading(false);
+                } catch (error) {
+                    setLoading(false);
+                    alert('Error getting teams', error.message);
+                }
+            };
+
+            fetchMyTeams();
+        }, []),
+    );
+
     const renderItem = ({item}) => {
-        const myTeam = getTeamData(item);
-        const sportName = getSportsByIds([myTeam.sportId]);
-        const playerCount = myTeam.playersId.length;
+        const sportName = getSportsByIds([item.sportId]);
+        const playerCount = item.playersId.length;
 
         return (
-            <TouchableOpacity onPress={() => gotoViewTeam(myTeam, sportName)}>
+            <TouchableOpacity onPress={() => gotoViewTeam(item, sportName)}>
                 <Card containerStyle={styles.card}>
                     <Card.Image
                         style={styles.cardImage}
-                        source={{uri: myTeam.teamPic}}
+                        source={{uri: item.teamPic}}
                         resizeMode="stretch"
                     />
                     <View style={styles.content}>
-                        <Title style={styles.cardTitle}>{myTeam.name}</Title>
+                        <Title style={styles.cardTitle}>{item.name}</Title>
                         <Divider style={{height: 1, backgroundColor: 'grey'}} />
                         <View style={styles.cardSubView}>
                             <View style={styles.cardDetailView}>
@@ -53,19 +102,17 @@ const Team = ({navigation}) => {
                             <View style={styles.cardDetailView}>
                                 <Text style={styles.cardLabel}>Players:</Text>
                                 <Text style={styles.cardText}>
-                                    {`${playerCount}/${myTeam.size}`}
+                                    {`${playerCount}/${item.size}`}
                                 </Text>
                             </View>
                         </View>
                         <View style={styles.cardSubView}>
                             <View style={styles.cardDetailView}>
-                                <Text style={styles.cardText}>
-                                    {myTeam.rank}
-                                </Text>
+                                <Text style={styles.cardText}>{item.rank}</Text>
                             </View>
                             <View style={styles.cardDetailView}>
                                 <Text style={styles.cardText}>
-                                    {myTeam.ageCategory}
+                                    {item.ageCategory}
                                 </Text>
                             </View>
                         </View>
@@ -84,19 +131,25 @@ const Team = ({navigation}) => {
                 }}
                 style={{width: '100%'}}>
                 <View style={styles.yourTeamView}>
-                    <Text style={styles.text1}>My teams</Text>
+                    <Text style={styles.text1}>My team</Text>
                     <Divider style={styles.divider} />
                     <View style={styles.listView}>
-                        {myTeamIds == '' ? (
+                        {loading ? (
+                            <ActivityIndicator
+                                style={styles.loader}
+                                size="large"
+                                color="#4A5B96"
+                            />
+                        ) : teams.length === 0 ? (
                             <Text style={styles.text2}>
                                 You are not in a team yet
                             </Text>
                         ) : (
                             <FlatList
                                 showsVerticalScrollIndicator={false}
-                                data={myTeamIds}
+                                data={teams}
                                 renderItem={renderItem}
-                                keyExtractor={myTeamIds.teamId}
+                                keyExtractor={item => item.teamId}
                                 contentContainerStyle={{paddingBottom: 10}}
                                 scrollEnabled={false}
                             />
@@ -104,7 +157,6 @@ const Team = ({navigation}) => {
                     </View>
                     <Divider style={styles.divider} />
                 </View>
-
                 <Card containerStyle={styles.card2}>
                     <View style={styles.header}>
                         <Text style={styles.text1}>Create team</Text>
@@ -177,6 +229,10 @@ const styles = StyleSheet.create({
         width: '100%',
         alignItems: 'center',
         marginBottom: 15,
+    },
+    loader: {
+        marginTop: 20,
+        marginBottom: 10,
     },
     card: {
         borderRadius: 10,

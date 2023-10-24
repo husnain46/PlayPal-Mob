@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, SearchBar} from '@rneui/themed';
 import styles from '../Styles/joinTeamStyles';
@@ -10,21 +10,53 @@ import {
     View,
     Text,
     FlatList,
+    Alert,
 } from 'react-native';
 import {Button, Card, Title, Divider} from 'react-native-paper';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
-import teamsData from '../Assets/teamsData.json';
+import firestore from '@react-native-firebase/firestore';
+import {ActivityIndicator} from 'react-native';
 
 const JoinTeam = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
     const [sportsFilter, setSportsFilter] = useState('');
     const [rankFilter, setRankFilter] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [teamsData, setTeamsData] = useState();
+    const [isLoading, setIsLoading] = useState(true);
 
     const gotoViewTeam = (team, sportName) => {
         navigation.navigate('ViewTeam', {team, sportName});
     };
+
+    useEffect(() => {
+        const fetchTeams = async () => {
+            const teamsCollection = firestore().collection('teams');
+
+            try {
+                const querySnapshot = await teamsCollection.get();
+
+                const teams = [];
+                querySnapshot.forEach(doc => {
+                    const tData = {
+                        teamId: doc.id,
+                        ...doc.data(),
+                    };
+
+                    teams.push(tData);
+                });
+                setTeamsData(teams);
+                setFilteredTeams(teams);
+                setIsLoading(false);
+            } catch (error) {
+                setIsLoading(false);
+                Alert.alert('Error fetching teams: ', error.message);
+            }
+        };
+
+        fetchTeams();
+    }, []);
 
     const rankLvl = [
         {label: 'Freshies', value: 'Freshies'},
@@ -44,9 +76,7 @@ const JoinTeam = ({navigation}) => {
     const handleSearch = text => {
         setSearchQuery(text);
 
-        const searchFilteredTeams = Object.keys(teamsData).map(
-            key => teamsData[key],
-        );
+        const searchFilteredTeams = teamsData;
 
         const filtered = searchFilteredTeams.filter(team => {
             const isNameMatched = team.name
@@ -64,24 +94,20 @@ const JoinTeam = ({navigation}) => {
         setFilteredTeams(filtered);
     };
 
-    const [filteredTeams, setFilteredTeams] = useState(
-        Object.keys(teamsData).map(key => teamsData[key]),
-    );
+    const [filteredTeams, setFilteredTeams] = useState();
 
     const applyFilters = () => {
-        const filtered = Object.keys(teamsData)
-            .map(key => teamsData[key])
-            .filter(team => {
-                const isNameMatched = team.name
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase());
+        const filtered = teamsData.filter(team => {
+            const isNameMatched = team.name
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase());
 
-                const isSportsMatched =
-                    !sportsFilter || team.sportId.includes(sportsFilter);
+            const isSportsMatched =
+                !sportsFilter || team.sportId.includes(sportsFilter);
 
-                const isRankMatched = !rankFilter || team.rank === rankFilter;
-                return isNameMatched && isSportsMatched && isRankMatched;
-            });
+            const isRankMatched = !rankFilter || team.rank === rankFilter;
+            return isNameMatched && isSportsMatched && isRankMatched;
+        });
 
         setFilteredTeams(filtered);
         setModalVisible(false);
@@ -241,15 +267,25 @@ const JoinTeam = ({navigation}) => {
                 </View>
             </Modal>
 
-            <View style={styles.listView}>
-                <FlatList
-                    showsVerticalScrollIndicator={false}
-                    data={filteredTeams}
-                    renderItem={renderItem}
-                    keyExtractor={filteredTeams.teamId}
-                    contentContainerStyle={{paddingBottom: 180}}
-                />
-            </View>
+            {isLoading ? (
+                <View style={{alignSelf: 'center'}}>
+                    <ActivityIndicator
+                        style={{top: 100}}
+                        size={50}
+                        color="#11867F"
+                    />
+                </View>
+            ) : (
+                <View style={styles.listView}>
+                    <FlatList
+                        showsVerticalScrollIndicator={false}
+                        data={filteredTeams}
+                        renderItem={renderItem}
+                        keyExtractor={item => item.teamId}
+                        contentContainerStyle={{paddingBottom: 180}}
+                    />
+                </View>
+            )}
         </SafeAreaView>
     );
 };

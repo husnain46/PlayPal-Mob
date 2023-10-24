@@ -22,14 +22,6 @@ const GettingStarted = ({navigation}) => {
         navigation.navigate('Login');
     };
 
-    // useEffect(() => {
-    //     auth().onAuthStateChanged(user => {
-    //         const routeName = user !== null ? 'BottomTab' : 'GettingStarted';
-
-    //         navigation.dispatch(StackActions.replace(routeName));
-    //     });
-    // }, []);
-
     return (
         <SafeAreaView style={styles.container}>
             <ImageBackground
@@ -40,9 +32,10 @@ const GettingStarted = ({navigation}) => {
                     <Image
                         source={require('../Assets/Icons/Logo.png')}
                         style={styles.logoImg}
+                        resizeMode="contain"
                     />
                     <Text style={styles.mottoTxt}>
-                        "Ignite Your Passion for Sports"
+                        "Ignite your passion for sports"
                     </Text>
                 </View>
 
@@ -79,12 +72,12 @@ const styles = StyleSheet.create({
     },
     logoImg: {
         marginTop: 80,
-        width: 230,
+        width: 250,
         height: 60,
     },
     mottoTxt: {
         fontSize: 24,
-        marginTop: 50,
+        marginTop: 40,
         fontWeight: 'bold',
         fontStyle: 'italic',
         color: '#442e65',

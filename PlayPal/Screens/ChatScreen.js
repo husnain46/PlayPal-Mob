@@ -1,23 +1,47 @@
 import {Icon} from '@rneui/themed';
-import React, {useRef, useState} from 'react';
-import {Alert, Image, SafeAreaView} from 'react-native';
+import React, {useRef, useState, useEffect} from 'react';
+import {
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    SafeAreaView,
+    ToastAndroid,
+} from 'react-native';
 import {
     View,
     FlatList,
     TextInput,
     TouchableOpacity,
     Text,
-    KeyboardAvoidingView,
     StyleSheet,
 } from 'react-native';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
+import firestore from '@react-native-firebase/firestore';
 
 const ChatScreen = ({navigation, route}) => {
-    const {user} = route.params;
+    const {user, chatId, senderId} = route.params;
 
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState('');
     const flatListRef = useRef(null);
+
+    useEffect(() => {
+        const unsubscribe = firestore()
+            .collection('chats')
+            .doc(chatId)
+            .onSnapshot(snapshot => {
+                if (snapshot.exists) {
+                    const chatData = snapshot.data();
+                    if (chatData.messages) {
+                        setMessages(chatData.messages);
+                    } else {
+                        setMessages([]); // If there are no messages, set messages to an empty array
+                    }
+                }
+            });
+
+        return () => unsubscribe();
+    }, []);
 
     const handleDeleteChat = () => {
         Alert.alert(
@@ -30,88 +54,112 @@ const ChatScreen = ({navigation, route}) => {
         );
     };
 
-    const confirmDelete = () => {
-        // Implement logic to delete the chat
-        setMessages([]);
-        navigation.goBack();
+    const confirmDelete = async () => {
+        try {
+            const chatRef = await firestore()
+                .collection('chats')
+                .doc(chatId)
+                .update({messages: []});
+
+            setMessages([]);
+        } catch (error) {
+            Alert.alert('Error deleting chat: ', error.message);
+        }
     };
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (inputMessage.trim() === '') {
             return;
         }
 
-        const newMessage = {
-            id: Math.random().toString(),
-            content: inputMessage,
-            sender: 'user', // You can set sender as 'user' for now
-            timestamp: new Date().toISOString(), // Add timestamp here
+        setInputMessage('');
+
+        const message = {
+            sender: senderId, // or get sender information from authentication
+            text: inputMessage,
+            timestamp: new Date().toISOString(),
         };
 
-        setMessages([...messages, newMessage]);
-        setInputMessage('');
+        try {
+            await firestore()
+                .collection('chats')
+                .doc(chatId)
+                .update({
+                    messages: firestore.FieldValue.arrayUnion(message),
+                });
+        } catch (error) {
+            Alert.alert('Message not sent!: ', error.message);
+        }
     };
 
     const formatTimestamp = timestamp => {
-        const date = new Date(timestamp);
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        return `${hours}:${minutes < 10 ? '0' + minutes : minutes}`;
+        if (timestamp) {
+            const date = new Date(timestamp);
+            const hours = date.getHours();
+            const minutes = date.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            const formattedHours = hours % 12 || 12;
+
+            return `${formattedHours}:${
+                minutes < 10 ? '0' + minutes : minutes
+            } ${ampm}`;
+        }
+        return '-';
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.headerContainer}>
-                <View style={{flexDirection: 'row'}}>
-                    <Image
-                        source={{uri: user.profilePic}}
-                        style={styles.profilePicture}
+            <KeyboardAvoidingView>
+                <View style={styles.headerContainer}>
+                    <View style={{flexDirection: 'row'}}>
+                        <Image
+                            source={{uri: user.profilePic}}
+                            style={styles.profilePicture}
+                        />
+                        <Text style={styles.username}>
+                            {`${user.firstName} ${user.lastName}`}
+                        </Text>
+                    </View>
+                    <Icon
+                        name="delete"
+                        color={'#B95252'}
+                        size={30}
+                        type="Icons"
+                        onPress={handleDeleteChat}
                     />
-                    <Text style={styles.username}>
-                        {`${user.firstName} ${user.lastName}`}
-                    </Text>
                 </View>
-                <Icon
-                    name="delete"
-                    color={'#B95252'}
-                    size={30}
-                    type="Icons"
-                    onPress={handleDeleteChat}
-                />
-            </View>
+            </KeyboardAvoidingView>
 
-            <KeyboardAvoidingView style={styles.flex1}>
-                {messages.length > 0 ? (
-                    <FlatList
-                        ref={flatListRef}
-                        style={styles.flex1}
-                        data={messages}
-                        keyExtractor={item => item.id}
-                        renderItem={({item}) => (
-                            <View
-                                style={
-                                    item.sender === 'user'
-                                        ? styles.userMessageContainer
-                                        : styles.otherMessageContainer
-                                }>
-                                <View style={styles.messageContent}>
-                                    <Text style={styles.messageText}>
-                                        {item.content}
-                                    </Text>
-                                </View>
-                                <Text style={styles.timestampText}>
-                                    {formatTimestamp(item.timestamp)}
+            {messages.length > 0 ? (
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    contentContainerStyle={{paddingTop: 10, paddingBottom: 20}}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({item}) => (
+                        <View
+                            style={
+                                item.sender === senderId
+                                    ? styles.userMessageContainer
+                                    : styles.otherMessageContainer
+                            }>
+                            <View style={styles.messageContent}>
+                                <Text style={styles.messageText}>
+                                    {item.text}
                                 </Text>
                             </View>
-                        )}
-                        onContentSizeChange={() =>
-                            flatListRef.current.scrollToEnd({animated: true})
-                        }
-                    />
-                ) : (
-                    <></>
-                )}
-            </KeyboardAvoidingView>
+                            <Text style={styles.timestampText}>
+                                {formatTimestamp(item.timestamp)}
+                            </Text>
+                        </View>
+                    )}
+                    onContentSizeChange={() =>
+                        flatListRef.current.scrollToEnd({animated: true})
+                    }
+                />
+            ) : (
+                <View style={{flex: 1}}></View>
+            )}
 
             <View style={styles.inputContainer}>
                 <TextInput
@@ -119,6 +167,7 @@ const ChatScreen = ({navigation, route}) => {
                     placeholder="Type a message..."
                     value={inputMessage}
                     onChangeText={text => setInputMessage(text)}
+                    numberOfLines={4}
                 />
                 <TouchableOpacity
                     style={styles.sendButton}
@@ -190,28 +239,34 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#CCCCCC',
         alignSelf: 'flex-end',
+        marginTop: 5,
     },
     inputContainer: {
         flexDirection: 'row',
-        height: 80,
+        height: 65,
         alignItems: 'center',
         borderTopWidth: 1,
         borderColor: '#EDEDED',
         paddingHorizontal: 10,
+        paddingBottom: 10,
     },
     input: {
-        flex: 1,
+        width: '85%',
+        height: 50,
         fontSize: 16,
         borderWidth: 2,
         borderColor: 'grey',
         borderRadius: 10,
+        paddingLeft: 10,
     },
     sendButton: {
+        width: 50,
+        height: 50,
         backgroundColor: '#0084ff',
-        borderRadius: 8,
-        paddingVertical: 8,
+        borderRadius: 40,
         paddingHorizontal: 15,
         marginLeft: 10,
+        paddingVertical: 14,
     },
     sendButtonText: {
         color: 'white',

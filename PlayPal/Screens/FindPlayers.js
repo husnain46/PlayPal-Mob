@@ -1,8 +1,9 @@
 import styles from '../Styles/findplayersStyles';
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {FlatList} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, Divider, SearchBar} from '@rneui/themed';
+import firestore from '@react-native-firebase/firestore';
 
 import {
     Image,
@@ -11,13 +12,13 @@ import {
     SafeAreaView,
     View,
     Text,
+    ActivityIndicator,
 } from 'react-native';
 import {Button, Card, Title} from 'react-native-paper';
 import locationIcon from '../Assets/Icons/location.png';
 import levelIcon from '../Assets/Icons/level.png';
 import sportsIcon from '../Assets/Icons/sports.png';
 import getAge from '../Functions/getAge';
-import userData from '../Assets/userData.json';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
 
@@ -27,6 +28,32 @@ const FindPlayers = ({navigation}) => {
     const [sportsFilter, setSportsFilter] = useState(null);
     const [levelFilter, setLevelFilter] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [playersData, setPlayersData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchUserDataFromFirestore = async () => {
+        try {
+            const usersCollection = firestore().collection('users');
+            const snapshot = await usersCollection.get();
+
+            const userData = snapshot.docs.map(doc => {
+                return {...doc.data(), id: doc.id};
+            });
+
+            setFilteredUsers(userData); // Initialize filteredUsers with all user data
+            setPlayersData(userData);
+            setIsLoading(false);
+        } catch (error) {
+            setIsLoading(false);
+            Alert.alert(
+                'Error',
+                'An error occurred while fetching players. Please reload app.',
+            );
+        }
+    };
+    useEffect(() => {
+        fetchUserDataFromFirestore();
+    }, []);
 
     const gotoViewProfile = user => {
         navigation.navigate('ViewProfile', {user});
@@ -61,10 +88,7 @@ const FindPlayers = ({navigation}) => {
     const handleSearch = text => {
         setSearchQuery(text);
 
-        const searchFilteredUsers = Object.keys(userData).map(
-            key => userData[key],
-        );
-
+        const searchFilteredUsers = playersData;
         const searchWords = text.trim().toLowerCase().split(/\s+/);
 
         const filtered = searchFilteredUsers.filter(user => {
@@ -95,16 +119,10 @@ const FindPlayers = ({navigation}) => {
         setFilteredUsers(filtered);
     };
 
-    const [filteredUsers, setFilteredUsers] = useState(
-        Object.keys(userData).map(key => userData[key]),
-    );
+    const [filteredUsers, setFilteredUsers] = useState();
 
     const applyFilters = () => {
-        const searchFilteredUsers = Object.keys(userData).map(
-            key => userData[key],
-        );
-
-        const filtered = searchFilteredUsers.filter(user => {
+        const filtered = playersData.filter(user => {
             const isNameMatched =
                 user.firstName
                     .toLowerCase()
@@ -136,6 +154,7 @@ const FindPlayers = ({navigation}) => {
 
     const renderItem = ({item}) => {
         const sportName = getSportsByIds(item.preferredSports);
+
         return (
             <Card style={styles.card} mode="elevated">
                 <Card.Title
@@ -343,15 +362,25 @@ const FindPlayers = ({navigation}) => {
                 </View>
             </Modal>
 
-            <View style={styles.listView}>
-                <FlatList
-                    showsVerticalScrollIndicator={false}
-                    data={filteredUsers}
-                    renderItem={renderItem}
-                    keyExtractor={item => item.username}
-                    contentContainerStyle={{paddingBottom: 180}}
-                />
-            </View>
+            {isLoading ? (
+                <View style={{alignSelf: 'center'}}>
+                    <ActivityIndicator
+                        style={{top: 100}}
+                        size={50}
+                        color="#11867F"
+                    />
+                </View>
+            ) : (
+                <View style={styles.listView}>
+                    <FlatList
+                        showsVerticalScrollIndicator={false}
+                        data={filteredUsers}
+                        renderItem={renderItem}
+                        keyExtractor={item => item.username}
+                        contentContainerStyle={{paddingBottom: 180}}
+                    />
+                </View>
+            )}
         </SafeAreaView>
     );
 };

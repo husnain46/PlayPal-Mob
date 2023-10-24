@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef, useState, useEffect} from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -8,22 +8,63 @@ import {
     FlatList,
     Image,
     TouchableOpacity,
+    ActivityIndicator,
+    Alert,
 } from 'react-native';
 import {Button, IconButton, TextInput} from 'react-native-paper';
-import getPlayerData from '../Functions/getPlayerData';
 import AlertPro from 'react-native-alert-pro';
 import ImagePicker from 'react-native-image-crop-picker';
 import {Dropdown} from 'react-native-element-dropdown';
-import userData from '../Assets/userData.json';
+import firestore from '@react-native-firebase/firestore';
+import cityData from '../Assets/cityData.json';
+import storage from '@react-native-firebase/storage';
 
 const EditTeam = ({navigation, route}) => {
-    const {myTeam} = route.params;
+    const {myTeam, playersList} = route.params;
 
     const [teamName, setTeamName] = useState(myTeam.name);
     const [teamDetail, setTeamDetail] = useState(myTeam.description);
-    const [listRefresh, setListRefresh] = useState(false);
-    const [imageSelected, setImageSelected] = useState('');
+    const [imageSelected, setImageSelected] = useState(myTeam.teamPic);
     const [selectedCaptain, setSelectedCaptain] = useState(myTeam.captainId);
+    const [teamCity, setTeamCity] = useState(myTeam.city);
+    const [isFocus, setIsFocus] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [playersData, setPlayersData] = useState([]);
+    const [listLoading, setListLoading] = useState(true);
+
+    const cityList = cityData.map(item => ({
+        label: item.city,
+        value: item.city,
+    }));
+
+    useEffect(() => {
+        const fetchPlayersData = () => {
+            try {
+                const initialPlayersData = myTeam.playersId
+                    .map(pId => {
+                        const player = playersList.find(
+                            player => player.id === pId,
+                        );
+                        if (player) {
+                            return {
+                                label: `${player.firstName} ${player.lastName}`,
+                                value: pId,
+                            };
+                        } else {
+                            return null;
+                        }
+                    })
+                    .filter(player => player !== null);
+                setPlayersData(initialPlayersData);
+            } catch (error) {
+                Alert.alert('Error fetching players data!', error.message);
+            } finally {
+                setListLoading(false);
+            }
+        };
+
+        fetchPlayersData();
+    }, []);
 
     const openImagePicker = async () => {
         try {
@@ -38,8 +79,6 @@ const EditTeam = ({navigation, route}) => {
                 throw new Error('Image upload cancelled');
             }
         } catch (error) {
-            console.log(error); // Log the error for debugging purposes
-
             let errorMessage = 'Failed to upload the image. Please try again.';
 
             // Check specific error conditions and update error message accordingly
@@ -53,6 +92,19 @@ const EditTeam = ({navigation, route}) => {
 
             Alert.alert('Error', errorMessage);
         }
+    };
+
+    const uploadImage = async imageUri => {
+        const storageRef = storage().ref(`team_images/${myTeam.teamId}`);
+        const task = storageRef.putFile(imageUri);
+
+        // Wait for the upload to complete
+        await task;
+
+        // Get the download URL of the uploaded image
+        const downloadURL = await storageRef.getDownloadURL();
+
+        return downloadURL;
     };
 
     const alertRefs = useRef([]);
@@ -77,7 +129,7 @@ const EditTeam = ({navigation, route}) => {
                 onCancel={() => handleClose(index)}
                 textCancel="No"
                 textConfirm="Yes"
-                onConfirm={() => confirmDelete(pId)}
+                onConfirm={() => confirmDelete(pId, index)}
                 customStyles={{
                     message: {marginTop: -20, marginBottom: 10},
                 }}
@@ -85,28 +137,59 @@ const EditTeam = ({navigation, route}) => {
         );
     };
 
-    const confirmDelete = pId => {
-        const index = myTeam.playersId.indexOf(pId);
-        if (index !== -1) {
-            myTeam.playersId.splice(index, 1);
+    const confirmDelete = (pId, index) => {
+        const arrayIndex = playersData.findIndex(
+            player => player.value === pId,
+        );
+        alertRefs.current[index].close();
+
+        if (arrayIndex !== -1) {
+            const updatedPlayersData = [...playersData];
+            updatedPlayersData.splice(arrayIndex, 1);
+            setPlayersData(updatedPlayersData);
         }
-        setListRefresh(prevState => !prevState);
     };
 
-    const playersData = myTeam.playersId.map(pId => ({
-        label: `${userData[pId].firstName} ${userData[pId].lastName}`,
-        value: pId,
-    }));
+    const updateTeam = async () => {
+        setLoading(true);
+        try {
+            let imageUri = imageSelected;
+            if (
+                !imageUri.startsWith('https://firebasestorage.googleapis.com')
+            ) {
+                imageUri = await uploadImage(imageSelected);
+            }
+
+            const updatedPlayers = playersData.map(item => item.value);
+
+            const teamData = {
+                name: teamName,
+                description: teamDetail,
+                teamPic: imageUri,
+                city: teamCity,
+                captainId: selectedCaptain,
+                playersId: updatedPlayers,
+            };
+
+            await firestore()
+                .collection('teams')
+                .doc(myTeam.teamId)
+                .update(teamData);
+
+            navigation.navigate('BottomTab', {screen: 'Team'});
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            Alert.alert('Error updating data!', error.message);
+        }
+    };
 
     const renderItem = ({item, index}) => {
-        const player = getPlayerData(item);
-        const fullName = `${player.firstName} ${player.lastName}`;
-
         const num = index + 1;
         return (
             <View style={styles.teamCard}>
-                <Text style={styles.teamName}>{`${num})  ${fullName}`}</Text>
-                {item === myTeam.captainId ? (
+                <Text style={styles.teamName}>{`${num})  ${item.label}`}</Text>
+                {item.value === myTeam.captainId ? (
                     <Image
                         source={require('../Assets/Icons/captain.png')}
                         style={{marginRight: 14}}
@@ -120,11 +203,20 @@ const EditTeam = ({navigation, route}) => {
                         onPress={() => showAlert(index)}
                     />
                 )}
-                {renderAlert(item, fullName, index)}
+                {renderAlert(item.value, item.label, index)}
             </View>
         );
     };
 
+    if (listLoading) {
+        return (
+            <ActivityIndicator
+                size="large"
+                color="#0000ff"
+                animating={listLoading}
+            />
+        );
+    }
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView
@@ -180,6 +272,35 @@ const EditTeam = ({navigation, route}) => {
                 </View>
 
                 <View style={styles.dropView}>
+                    <Text style={styles.dropLabel}>City:</Text>
+                    <Dropdown
+                        style={styles.dropdown}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropContainer}
+                        itemTextStyle={styles.dropItemText}
+                        itemContainerStyle={styles.dropItem}
+                        iconStyle={styles.iconStyle}
+                        inputSearchStyle={styles.dropSearch}
+                        data={cityList}
+                        maxHeight={200}
+                        labelField="label"
+                        search={true}
+                        valueField="value"
+                        placeholder={!isFocus ? 'Select city' : '...'}
+                        searchPlaceholder={'Search...'}
+                        searchField=""
+                        value={teamCity}
+                        defaultValue={teamCity}
+                        onFocus={() => setIsFocus(true)}
+                        onBlur={() => setIsFocus(false)}
+                        onChange={item => {
+                            setTeamCity(item.value);
+                            setIsFocus(false);
+                        }}
+                    />
+                </View>
+
+                <View style={styles.dropView}>
                     <Text style={styles.dropLabel}>Captain:</Text>
                     <Dropdown
                         style={styles.dropdown}
@@ -199,22 +320,39 @@ const EditTeam = ({navigation, route}) => {
                 <View style={{marginTop: 20, width: 300}}>
                     <Text style={styles.teamLabel}>Players:</Text>
                 </View>
+
                 <FlatList
-                    data={myTeam.playersId}
+                    data={playersData}
                     renderItem={renderItem}
-                    extraData={listRefresh}
-                    keyExtractor={item => item}
+                    keyExtractor={item => item.value}
                     scrollEnabled={false}
                     contentContainerStyle={{
                         paddingHorizontal: 10,
                     }}
                 />
-                <Button
-                    mode="outlined"
-                    buttonColor="#348883"
-                    style={styles.updateBtn}>
-                    <Text style={styles.updateTxt}>Update</Text>
-                </Button>
+                <View
+                    style={{
+                        marginTop: 40,
+                        width: 200,
+                        height: 50,
+                        alignItems: 'center',
+                    }}>
+                    {loading ? (
+                        <ActivityIndicator size={30} color="#0000ff" />
+                    ) : (
+                        <Button
+                            mode="outlined"
+                            style={{
+                                width: 120,
+                                borderRadius: 12,
+                                elevation: 20,
+                            }}
+                            buttonColor="#11ab7a"
+                            onPress={() => updateTeam()}>
+                            <Text style={styles.updateTxt}>Update</Text>
+                        </Button>
+                    )}
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -225,6 +363,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
     },
+
     scrollView: {
         alignItems: 'center',
         paddingBottom: 50,
@@ -288,7 +427,7 @@ const styles = StyleSheet.create({
     },
     dropdown: {
         height: 50,
-        width: 200,
+        width: 260,
         borderColor: 'grey',
         borderWidth: 1,
         borderRadius: 8,
@@ -310,6 +449,19 @@ const styles = StyleSheet.create({
     selectedTextStyle: {
         fontSize: 16,
         color: '#11867F',
+    },
+    dropItemText: {
+        height: 22,
+        color: 'black',
+    },
+    dropItem: {
+        height: 45,
+        justifyContent: 'center',
+    },
+    dropSearch: {
+        height: 40,
+        fontSize: 16,
+        borderColor: 'black',
     },
     teamLabel: {
         fontSize: 18,
@@ -339,11 +491,8 @@ const styles = StyleSheet.create({
     removeIcon: {
         marginRight: 5,
     },
-    updateBtn: {
-        marginTop: 30,
-    },
     updateTxt: {
-        fontSize: 17,
+        fontSize: 18,
         color: 'white',
         fontWeight: '600',
     },

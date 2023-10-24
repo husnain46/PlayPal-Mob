@@ -3,7 +3,6 @@ import {
     SafeAreaView,
     View,
     TouchableOpacity,
-    Button,
     TouchableWithoutFeedback,
     Keyboard,
     TextInput,
@@ -18,6 +17,7 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {StackActions} from '@react-navigation/native';
+import {Button} from '@rneui/themed';
 
 const Login = ({navigation}) => {
     const [email, setEmail] = useState('');
@@ -50,6 +50,11 @@ const Login = ({navigation}) => {
                         Alert.alert('Error', 'No user found with this email.');
                     } else if (error.code === 'auth/wrong-password') {
                         Alert.alert('Error', 'Incorrect password.');
+                    } else if (error.code === 'auth/invalid-email') {
+                        Alert.alert(
+                            'Error',
+                            'Invalid email format. Please enter a valid email address.',
+                        );
                     } else {
                         Alert.alert(
                             'Error',
@@ -96,6 +101,7 @@ const Login = ({navigation}) => {
                             <Image
                                 source={require('../Assets/Icons/Logo.png')}
                                 style={styles.logoImg}
+                                resizeMode="contain"
                             />
                         </View>
 
@@ -128,7 +134,13 @@ const Login = ({navigation}) => {
                                             />
                                         ) : (
                                             <Button
+                                                containerStyle={{
+                                                    borderRadius: 8,
+                                                    elevation: 5,
+                                                    width: 130,
+                                                }}
                                                 title="Login"
+                                                titleStyle={{fontSize: 17}}
                                                 onPress={() => handleSignIn()}
                                             />
                                         )}
@@ -204,6 +216,7 @@ const styles = StyleSheet.create({
     btnContainer: {
         width: 150,
         alignSelf: 'center',
+        alignItems: 'center',
         marginTop: 50,
     },
     footerView: {

@@ -13,24 +13,25 @@ import {RadioButton, TextInput} from 'react-native-paper';
 import ImagePicker from 'react-native-image-crop-picker';
 import sportsList from '../Assets/sportsList.json';
 import {Dropdown} from 'react-native-element-dropdown';
+import cityData from '../Assets/cityData.json';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import {ActivityIndicator} from 'react-native';
+import {ToastAndroid} from 'react-native';
 
-const CreateTeam = () => {
+const CreateTeam = ({navigation}) => {
     const [teamName, setTeamName] = useState('');
     const [teamDetail, setTeamDetail] = useState('');
     const [sportValue, setSportValue] = useState('');
     const [teamSize, setTeamSize] = useState();
-    const [ageValue, setAgeValue] = useState();
     const [imageSelected, setImageSelected] = useState('');
+    const [isFocus, setIsFocus] = useState(false);
+    const [teamCity, setTeamCity] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const ageData = [
-        {value: 'Under 20', label: 'Under 20'},
-        {value: 'Under 25', label: 'Under 25'},
-        {value: 'Under 30', label: 'Under 30'},
-        {value: 'Under 40', label: 'Under 40'},
-    ];
-    const ageRange = ageData.map(item => ({
-        label: item.label,
-        value: item.value,
+    const cityList = cityData.map(item => ({
+        label: item.city,
+        value: item.city,
     }));
 
     const sportsData = Object.keys(sportsList).map(sportId => ({
@@ -51,8 +52,6 @@ const CreateTeam = () => {
                 throw new Error('Image upload cancelled');
             }
         } catch (error) {
-            console.log(error); // Log the error for debugging purposes
-
             let errorMessage = 'Failed to upload the image. Please try again.';
 
             // Check specific error conditions and update error message accordingly
@@ -68,15 +67,78 @@ const CreateTeam = () => {
         }
     };
 
-    const handleCreateTeam = () => {
+    const handleCreateTeam = async () => {
+        let capId = auth().currentUser.uid;
         console.log(
             teamName,
             teamDetail,
+            teamCity,
             sportValue,
             teamSize,
-            ageValue,
             imageSelected,
+            capId,
         );
+
+        const tName = teamName.trim().toLowerCase(); // Convert input team name to lowercase
+
+        try {
+            setLoading(true);
+            // Fetch teams from Firestore
+            const teamsQuery = await firestore().collection('teams').get();
+
+            // Check if a team with the same name (case-insensitive) already exists
+            const matchName = teamsQuery.docs.find(doc => {
+                const tData = doc.data();
+                const firestoreTeamName = tData.name.trim().toLowerCase(); // Convert Firestore team name to lowercase for comparison
+                return firestoreTeamName === tName;
+            });
+
+            if (matchName) {
+                setLoading(false);
+                Alert.alert(
+                    'Error',
+                    'A team with this name already exists! Change your team name and try again.',
+                );
+            } else if (
+                !teamName ||
+                !teamDetail ||
+                !teamCity ||
+                !sportValue ||
+                !teamSize ||
+                !imageSelected ||
+                !capId
+            ) {
+                Alert.alert('Error', 'Please fill in all fields.');
+            } else {
+                // Team with the same name does not exist, create the team
+                const teamData = {
+                    name: teamName,
+                    sportId: sportValue,
+                    size: teamSize,
+                    city: teamCity,
+                    description: teamDetail,
+                    teamPic: imageSelected,
+                    playersId: [capId],
+                    captainId: capId,
+                    rank: 'Freshies',
+                    totalMatch: 0,
+                    wins: 0,
+                    loses: 0,
+                    draws: 0,
+                };
+
+                await firestore().collection('teams').add(teamData);
+                setLoading(false);
+                ToastAndroid.show(
+                    `Your team ${teamName} created successfully!`,
+                    ToastAndroid.TOP,
+                );
+                navigation.navigate('Team');
+            }
+        } catch (error) {
+            setLoading(false);
+            Alert.alert('Error creating team', error.message);
+        }
     };
 
     return (
@@ -110,9 +172,37 @@ const CreateTeam = () => {
                 </View>
 
                 <View style={styles.dropView}>
+                    <Text style={styles.dropLabel}>City:</Text>
+                    <Dropdown
+                        style={styles.dropdown1}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropContainer}
+                        itemTextStyle={styles.dropItemText}
+                        itemContainerStyle={styles.dropItem}
+                        iconStyle={styles.iconStyle}
+                        inputSearchStyle={styles.dropSearch}
+                        data={cityList}
+                        maxHeight={200}
+                        labelField="label"
+                        search={true}
+                        valueField="value"
+                        placeholder={!isFocus ? 'Select city' : '...'}
+                        searchPlaceholder={'Search...'}
+                        searchField=""
+                        value={teamCity}
+                        onFocus={() => setIsFocus(true)}
+                        onBlur={() => setIsFocus(false)}
+                        onChange={item => {
+                            setTeamCity(item.value);
+                            setIsFocus(false);
+                        }}
+                    />
+                </View>
+
+                <View style={styles.dropView}>
                     <Text style={styles.dropLabel}>Team sport:</Text>
                     <Dropdown
-                        style={styles.dropdown}
+                        style={styles.dropdown2}
                         selectedTextStyle={styles.selectedTextStyle}
                         containerStyle={styles.dropContainer}
                         iconStyle={styles.iconStyle}
@@ -149,23 +239,6 @@ const CreateTeam = () => {
                     <View style={{width: 280}}></View>
                 )}
 
-                <View style={styles.dropView}>
-                    <Text style={styles.dropLabel}>Age category:</Text>
-                    <Dropdown
-                        style={styles.dropdown}
-                        selectedTextStyle={styles.selectedTextStyle}
-                        containerStyle={styles.dropContainer}
-                        iconStyle={styles.iconStyle}
-                        data={ageRange}
-                        maxHeight={300}
-                        labelField="label"
-                        valueField="value"
-                        placeholder={'Select age category'}
-                        value={ageValue}
-                        onChange={item => setAgeValue(item.value)}
-                    />
-                </View>
-
                 <View>
                     <Text style={styles.subtitle}>Upload team photo:</Text>
                     <TouchableOpacity
@@ -185,13 +258,22 @@ const CreateTeam = () => {
                     </TouchableOpacity>
                 </View>
 
-                <View style={{alignItems: 'center', marginBottom: 30}}>
-                    <Button
-                        title="Create"
-                        onPress={handleCreateTeam}
-                        buttonStyle={styles.createButton}
-                        titleStyle={{fontSize: 18}}
-                    />
+                <View
+                    style={{
+                        alignItems: 'center',
+                        marginBottom: 30,
+                        marginTop: 50,
+                    }}>
+                    {loading ? (
+                        <ActivityIndicator size="large" color="#0000ff" />
+                    ) : (
+                        <Button
+                            title="Create"
+                            onPress={handleCreateTeam}
+                            buttonStyle={styles.createButton}
+                            titleStyle={{fontSize: 18}}
+                        />
+                    )}
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -217,7 +299,6 @@ const styles = StyleSheet.create({
         marginTop: 30,
     },
     createButton: {
-        marginTop: 50,
         width: 120,
         backgroundColor: '#189863',
         borderRadius: 10,
@@ -255,9 +336,18 @@ const styles = StyleSheet.create({
         width: 300,
         marginTop: 20,
     },
-    dropdown: {
+    dropdown1: {
         height: 50,
-        width: 200,
+        width: 260,
+        borderColor: 'grey',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: 'white',
+    },
+    dropdown2: {
+        height: 50,
+        width: 260,
         borderColor: 'grey',
         borderWidth: 1,
         borderRadius: 8,
@@ -284,6 +374,19 @@ const styles = StyleSheet.create({
         width: 25,
         height: 25,
         tintColor: 'black',
+    },
+    dropItemText: {
+        height: 22,
+        color: 'black',
+    },
+    dropItem: {
+        height: 45,
+        justifyContent: 'center',
+    },
+    dropSearch: {
+        height: 40,
+        fontSize: 16,
+        borderColor: 'black',
     },
     imageView: {
         width: 82,
