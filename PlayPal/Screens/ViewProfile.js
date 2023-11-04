@@ -43,10 +43,18 @@ const ViewProfile = ({navigation, route}) => {
 
                         const chatSnapshot = await firestore()
                             .collection('chats')
-                            .where('participants', '==', [senderId, receiverId])
+                            .where('participants', 'array-contains', senderId)
                             .get();
 
-                        if (chatSnapshot.empty) {
+                        const chatId = chatSnapshot.docs
+                            .filter(doc =>
+                                doc.data().participants.includes(receiverId),
+                            )
+                            .map(doc => doc.id)[0];
+
+                        console.log(chatId);
+
+                        if (!chatId) {
                             // No chat found, create a new chat
                             const newChat = await firestore()
                                 .collection('chats')
@@ -58,8 +66,7 @@ const ViewProfile = ({navigation, route}) => {
                             setChatId(newChat.id);
                         } else {
                             // Found an existing chat, return the chatId
-                            const cId = chatSnapshot.docs[0].id;
-                            setChatId(cId);
+                            setChatId(chatId);
                         }
                     } catch (error) {
                         Alert.alert('Error initiating chat', error.message);
@@ -208,6 +215,8 @@ const ViewProfile = ({navigation, route}) => {
                 .update({
                     friends: firestore.FieldValue.arrayRemove(playerId),
                 });
+
+            await firestore().collection('chats').doc(chatId).delete();
 
             setIsFriend(false);
             ToastAndroid.show(

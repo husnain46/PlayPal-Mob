@@ -30,13 +30,25 @@ const ChatScreen = ({navigation, route}) => {
             .collection('chats')
             .doc(chatId)
             .onSnapshot(snapshot => {
-                if (snapshot.exists) {
-                    const chatData = snapshot.data();
-                    if (chatData.messages) {
-                        setMessages(chatData.messages);
-                    } else {
-                        setMessages([]); // If there are no messages, set messages to an empty array
+                try {
+                    if (snapshot.exists) {
+                        const chatData = snapshot.data();
+                        if (chatData.messages) {
+                            const sortedMessages = chatData.messages.sort(
+                                (a, b) => {
+                                    return (
+                                        new Date(a.timestamp) -
+                                        new Date(b.timestamp)
+                                    );
+                                },
+                            );
+                            setMessages(sortedMessages);
+                        } else {
+                            setMessages([]);
+                        }
                     }
+                } catch (error) {
+                    ToastAndroid.show(error.message, ToastAndroid.SHORT);
                 }
             });
 
@@ -45,11 +57,11 @@ const ChatScreen = ({navigation, route}) => {
 
     const handleDeleteChat = () => {
         Alert.alert(
-            'Delete Chat',
-            'Are you sure you want to delete this chat?',
+            'Clear Chat',
+            'Are you sure you want to delete all the messages?',
             [
-                {text: 'Cancel', style: 'cancel'},
-                {text: 'Delete', style: 'destructive', onPress: confirmDelete},
+                {text: 'No', style: 'cancel'},
+                {text: 'Yes', style: 'destructive', onPress: confirmDelete},
             ],
         );
     };
@@ -72,8 +84,6 @@ const ChatScreen = ({navigation, route}) => {
             return;
         }
 
-        setInputMessage('');
-
         const message = {
             sender: senderId, // or get sender information from authentication
             text: inputMessage,
@@ -81,6 +91,8 @@ const ChatScreen = ({navigation, route}) => {
         };
 
         try {
+            setInputMessage('');
+
             await firestore()
                 .collection('chats')
                 .doc(chatId)
@@ -222,7 +234,7 @@ const styles = StyleSheet.create({
         marginVertical: 5,
         marginLeft: 10,
         maxWidth: '70%',
-        backgroundColor: '#EDEDED',
+        backgroundColor: '#50a38d',
         borderRadius: 8,
         padding: 10,
     },

@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
         height: 90,
     },
     inner: {
-        marginTop: 40,
+        marginTop: 30,
         justifyContent: 'center',
         alignContent: 'center',
     },
@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
         fontSize: 17,
         textAlign: 'right',
         marginLeft: 15,
+        color: 'black',
     },
     dobView: {
         flexDirection: 'row',
@@ -73,6 +74,7 @@ const styles = StyleSheet.create({
     },
     dobText: {
         fontSize: 17,
+        color: 'black',
     },
     inputView: {
         width: 300,
@@ -105,7 +107,7 @@ const styles = StyleSheet.create({
     },
     btnContainer: {
         alignSelf: 'center',
-        marginTop: 45,
+        marginTop: 10,
         borderRadius: 20,
         height: 80,
     },

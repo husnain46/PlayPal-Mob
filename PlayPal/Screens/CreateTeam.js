@@ -79,7 +79,7 @@ const CreateTeam = ({navigation}) => {
             capId,
         );
 
-        const tName = teamName.trim().toLowerCase(); // Convert input team name to lowercase
+        const tName = teamName.trim().toLowerCase();
 
         try {
             setLoading(true);
@@ -89,7 +89,7 @@ const CreateTeam = ({navigation}) => {
             // Check if a team with the same name (case-insensitive) already exists
             const matchName = teamsQuery.docs.find(doc => {
                 const tData = doc.data();
-                const firestoreTeamName = tData.name.trim().toLowerCase(); // Convert Firestore team name to lowercase for comparison
+                const firestoreTeamName = tData.name.trim().toLowerCase();
                 return firestoreTeamName === tName;
             });
 
@@ -108,6 +108,8 @@ const CreateTeam = ({navigation}) => {
                 !imageSelected ||
                 !capId
             ) {
+                setLoading(false);
+
                 Alert.alert('Error', 'Please fill in all fields.');
             } else {
                 // Team with the same name does not exist, create the team
@@ -120,6 +122,7 @@ const CreateTeam = ({navigation}) => {
                     teamPic: imageSelected,
                     playersId: [capId],
                     captainId: capId,
+                    requests: [],
                     rank: 'Freshies',
                     totalMatch: 0,
                     wins: 0,
@@ -133,6 +136,8 @@ const CreateTeam = ({navigation}) => {
                     `Your team ${teamName} created successfully!`,
                     ToastAndroid.TOP,
                 );
+                setLoading(false);
+
                 navigation.navigate('Team');
             }
         } catch (error) {

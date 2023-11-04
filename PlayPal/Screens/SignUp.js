@@ -189,12 +189,14 @@ const SignUp = ({navigation}) => {
                                             setFirstName(text)
                                         }
                                         maxLength={15}
+                                        placeholderTextColor={'darkgrey'}
                                     />
                                     <TextInput
                                         placeholder="Last Name"
                                         style={styles.textInput2}
                                         onChangeText={text => setLastName(text)}
                                         maxLength={15}
+                                        placeholderTextColor={'darkgrey'}
                                     />
                                 </View>
                                 <View style={styles.radioView}>
@@ -233,7 +235,8 @@ const SignUp = ({navigation}) => {
                                                     {selectedDate}
                                                 </Text>
                                             ) : (
-                                                <Text>
+                                                <Text
+                                                    style={{color: 'darkgrey'}}>
                                                     Select date of birth
                                                 </Text>
                                             )}
@@ -258,6 +261,7 @@ const SignUp = ({navigation}) => {
                                         placeholder="Email"
                                         style={styles.textInput3}
                                         onChangeText={text => setEmail(text)}
+                                        placeholderTextColor={'darkgrey'}
                                     />
                                     <TextInput
                                         placeholder="Mobile no. (e.g. 03xxxxxxxxx)"
@@ -270,6 +274,7 @@ const SignUp = ({navigation}) => {
                                                 setIsPhoneValid(false);
                                             }
                                         }}
+                                        placeholderTextColor={'darkgrey'}
                                     />
                                     <TextInput
                                         placeholder="Username"
@@ -279,6 +284,7 @@ const SignUp = ({navigation}) => {
                                             await checkUsername(text);
                                         }}
                                         maxLength={20}
+                                        placeholderTextColor={'darkgrey'}
                                     />
                                     {username.length > 0 ? (
                                         <Text
@@ -304,6 +310,7 @@ const SignUp = ({navigation}) => {
                                         secureTextEntry={true}
                                         onChangeText={handlePasswordChange}
                                         maxLength={20}
+                                        placeholderTextColor={'darkgrey'}
                                     />
                                     {passError !== '' ? (
                                         <Text

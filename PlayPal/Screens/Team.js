@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import {Button, Card} from '@rneui/themed';
 import {
     SafeAreaView,
@@ -17,17 +17,19 @@ import getSportsByIds from '../Functions/getSportsByIds';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';
+import AlertPro from 'react-native-alert-pro';
 
 const Team = ({navigation}) => {
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
+    const myId = auth().currentUser.uid;
+    const alertRefs = useRef([]);
 
     const gotoCreateTeam = () => {
-        if (teams.length > 0) {
-            Alert.alert(
-                'You are already in a team!',
-                'You cannot create a team if you have joined another team.',
-            );
+        const isCaptain = teams.some(team => team.captainId === myId);
+
+        if (isCaptain) {
+            alertRefs.current.open();
         } else {
             navigation.navigate('CreateTeam');
         }
@@ -36,6 +38,7 @@ const Team = ({navigation}) => {
     const gotoViewTeam = (team, sportName) => {
         navigation.navigate('ViewTeam', {team, sportName});
     };
+
     const gotoJoinTeam = () => {
         navigation.navigate('JoinTeam');
     };
@@ -157,6 +160,22 @@ const Team = ({navigation}) => {
                     </View>
                     <Divider style={styles.divider} />
                 </View>
+
+                <AlertPro
+                    ref={ref => (alertRefs.current = ref)}
+                    title={'Captain Restriction!'}
+                    message={
+                        'You cannot create another team if you are captain of a team already.'
+                    }
+                    onConfirm={() => alertRefs.current.close()}
+                    showCancel={false}
+                    textConfirm={'Ok'}
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#2bad8b'},
+                        container: {borderWidth: 2, borderColor: 'lightgrey'},
+                    }}
+                />
+
                 <Card containerStyle={styles.card2}>
                     <View style={styles.header}>
                         <Text style={styles.text1}>Create team</Text>
@@ -228,7 +247,7 @@ const styles = StyleSheet.create({
     listView: {
         width: '100%',
         alignItems: 'center',
-        marginBottom: 15,
+        marginBottom: 10,
     },
     loader: {
         marginTop: 20,
@@ -241,7 +260,7 @@ const styles = StyleSheet.create({
         margin: 9,
         borderWidth: 2,
         borderColor: 'lightgrey',
-        marginTop: 30,
+        marginTop: 25,
     },
     cardImage: {
         width: '100%',

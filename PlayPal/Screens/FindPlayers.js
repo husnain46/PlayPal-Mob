@@ -1,5 +1,5 @@
 import styles from '../Styles/findplayersStyles';
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {FlatList} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, Divider, SearchBar} from '@rneui/themed';
@@ -21,6 +21,8 @@ import sportsIcon from '../Assets/Icons/sports.png';
 import getAge from '../Functions/getAge';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
+import {useFocusEffect} from '@react-navigation/native';
+import auth from '@react-native-firebase/auth';
 
 const FindPlayers = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -33,6 +35,8 @@ const FindPlayers = ({navigation}) => {
 
     const fetchUserDataFromFirestore = async () => {
         try {
+            const myId = auth().currentUser.uid;
+
             const usersCollection = firestore().collection('users');
             const snapshot = await usersCollection.get();
 
@@ -40,7 +44,9 @@ const FindPlayers = ({navigation}) => {
                 return {...doc.data(), id: doc.id};
             });
 
-            setFilteredUsers(userData); // Initialize filteredUsers with all user data
+            const newUsersData = userData.filter(user => user.id !== myId);
+
+            setFilteredUsers(newUsersData);
             setPlayersData(userData);
             setIsLoading(false);
         } catch (error) {
@@ -51,9 +57,12 @@ const FindPlayers = ({navigation}) => {
             );
         }
     };
-    useEffect(() => {
-        fetchUserDataFromFirestore();
-    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchUserDataFromFirestore();
+        }, []),
+    );
 
     const gotoViewProfile = user => {
         navigation.navigate('ViewProfile', {user});

@@ -116,6 +116,7 @@ const Login = ({navigation}) => {
                                             onChangeText={text =>
                                                 setEmail(text)
                                             }
+                                            placeholderTextColor={'darkgrey'}
                                         />
                                         <TextInput
                                             placeholder="Password"
@@ -124,6 +125,7 @@ const Login = ({navigation}) => {
                                             onChangeText={text =>
                                                 setPassword(text)
                                             }
+                                            placeholderTextColor={'darkgrey'}
                                         />
                                     </View>
                                     <View style={styles.btnContainer}>
@@ -229,6 +231,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         textDecorationLine: 'underline',
         fontWeight: 'bold',
+        color: 'darkblue',
     },
 });
 
