@@ -13,11 +13,13 @@ const styles = StyleSheet.create({
     },
     dpView: {
         width: 120,
+        height: 120,
         alignSelf: 'center',
         marginTop: 40,
+        marginBottom: 10,
     },
     dpImage2: {
-        width: 100,
+        width: 110,
         height: 115,
         borderRadius: 15,
         alignSelf: 'center',

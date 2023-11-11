@@ -121,7 +121,7 @@ const SignUp = ({navigation}) => {
                 city: '',
                 preferredSports: [],
                 profilePic: '',
-                skillLevel: '',
+                skillLevel: 'Beginner',
                 friends: [],
                 friendReqSent: [],
                 friendReqReceived: [],

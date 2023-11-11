@@ -1,27 +1,35 @@
 import React, {useState} from 'react';
-import {StyleSheet, Text, View, SafeAreaView} from 'react-native';
+import {
+    StyleSheet,
+    Text,
+    View,
+    SafeAreaView,
+    ToastAndroid,
+    Modal,
+    ActivityIndicator,
+} from 'react-native';
 import {Button, TextInput} from 'react-native-paper';
 import {Divider} from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {Dropdown} from 'react-native-element-dropdown';
-import teamsData from '../Assets/teamsData.json';
+import firestore from '@react-native-firebase/firestore';
 
 const EditMatch = ({navigation, route}) => {
-    const {match, teamIds} = route.params;
+    const {tournamentId, match, teamsData} = route.params;
     const [matchTitle, setMatchTitle] = useState(match.title);
-    const [selectedDate, setSelectedDate] = useState(match.date);
+    const [selectedDate, setSelectedDate] = useState(match.date.toDate());
     const [showPicker1, setShowPicker1] = useState(false);
-    const [selectedTime, setSelectedTime] = useState(match.time);
+    const [selectedTime, setSelectedTime] = useState(match.time.toDate());
     const [showPicker2, setShowPicker2] = useState(false);
     const [selectedTeam1, setSelectedTeam1] = useState(match.teams.team1);
     const [selectedTeam2, setSelectedTeam2] = useState(match.teams.team2);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const tournamentTeams = teamIds.map(tId => ({
-        label: teamsData[tId].name,
-        value: tId,
+    const tournamentTeams = teamsData.map(team => ({
+        label: team.name,
+        value: team.id,
     }));
 
-    //
     const currentDate = new Date();
     const nextDay = new Date(currentDate);
     nextDay.setDate(currentDate.getDate() + 1);
@@ -31,19 +39,115 @@ const EditMatch = ({navigation, route}) => {
     const handleDateChange = (event, selected) => {
         setShowPicker1(false);
         if (selected) {
-            setSelectedDate(selected.toLocaleDateString('en-GB'));
+            setSelectedDate(selected);
         }
     };
 
     const handleTimeChange = (event, selected) => {
         setShowPicker2(false);
         if (selected) {
-            setSelectedTime(
-                selected.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                }),
-            );
+            setSelectedTime(selected);
+        }
+    };
+
+    const filteredTeams = teamSelected => {
+        return tournamentTeams.filter(team => team.value !== teamSelected);
+    };
+
+    const handleUpdateMatch = async () => {
+        try {
+            setIsLoading(true);
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(tournamentId);
+            const tournamentDoc = await tournamentRef.get();
+
+            if (tournamentDoc.exists) {
+                const tournamentData = tournamentDoc.data();
+
+                const updatedMatches = tournamentData.matches.map(item => {
+                    if (
+                        item.title === match.title &&
+                        item.date.isEqual(match.date) &&
+                        item.time.isEqual(match.time)
+                    ) {
+                        return {
+                            title: matchTitle.trim(),
+                            date: selectedDate,
+                            time: selectedTime,
+                            teams: {
+                                team1: selectedTeam1,
+                                team2: selectedTeam2,
+                            },
+                            result: {
+                                scoreTeam1: item.result.scoreTeam1,
+                                scoreTeam2: item.result.scoreTeam2,
+                            },
+                            status: item.status,
+                        };
+                    } else {
+                        return item; // Keep other matches unchanged
+                    }
+                });
+
+                // Update the tournament document with the modified matches array
+                await tournamentRef.update({matches: updatedMatches});
+
+                ToastAndroid.show(
+                    'Match updated successfully!',
+                    ToastAndroid.LONG,
+                );
+
+                setIsLoading(false);
+
+                navigation.goBack();
+            }
+        } catch (error) {
+            setIsLoading(false);
+            ToastAndroid.show(error.message, ToastAndroid.TOP);
+        }
+    };
+
+    const handleDeleteMatch = async () => {
+        try {
+            setIsLoading(true);
+
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(tournamentId);
+
+            const tournamentDoc = await tournamentRef.get();
+
+            if (tournamentDoc.exists) {
+                const tournamentData = tournamentDoc.data();
+
+                const matchIndexToDelete = tournamentData.matches.findIndex(
+                    item =>
+                        item.title === match.title &&
+                        item.date.isEqual(match.date) &&
+                        item.time.isEqual(match.time),
+                );
+
+                if (matchIndexToDelete !== -1) {
+                    const updatedMatches = tournamentData.matches.filter(
+                        (item, index) => index !== matchIndexToDelete,
+                    );
+
+                    await tournamentRef.update({matches: updatedMatches});
+                    ToastAndroid.show('Match deleted!', ToastAndroid.LONG);
+                } else {
+                    ToastAndroid.show(
+                        'Match could not be deleted!',
+                        ToastAndroid.LONG,
+                    );
+                }
+            }
+
+            setIsLoading(false);
+            navigation.goBack();
+        } catch (error) {
+            setIsLoading(false);
+            ToastAndroid.show(error.message, ToastAndroid.TOP);
         }
     };
 
@@ -74,14 +178,16 @@ const EditMatch = ({navigation, route}) => {
                     buttonColor="#cfdfe8"
                     onPress={() => setShowPicker1(true)}>
                     {selectedDate ? (
-                        <Text style={styles.dateText}>{selectedDate}</Text>
+                        <Text style={styles.dateText}>
+                            {selectedDate.toLocaleDateString('en-GB')}
+                        </Text>
                     ) : (
                         <Text style={styles.datePlaceholder}>Select date</Text>
                     )}
                 </Button>
                 {showPicker1 && (
                     <DateTimePicker
-                        value={nextDay}
+                        value={selectedDate}
                         mode="date"
                         display="compact"
                         minimumDate={nextDay}
@@ -98,21 +204,41 @@ const EditMatch = ({navigation, route}) => {
                     buttonColor="#cfdfe8"
                     style={styles.dateBox}
                     onPress={() => setShowPicker2(true)}>
-                    {selectedTime !== null ? (
-                        <Text style={styles.dateText}>{selectedTime}</Text>
+                    {selectedTime ? (
+                        <Text style={styles.dateText}>
+                            {selectedTime.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                            })}
+                        </Text>
                     ) : (
                         <Text style={styles.datePlaceholder}>Select time</Text>
                     )}
                 </Button>
                 {showPicker2 && (
                     <DateTimePicker
-                        value={currentDate}
+                        value={selectedTime}
                         mode="time"
                         display="default"
                         onChange={handleTimeChange}
                     />
                 )}
             </View>
+
+            <Modal
+                transparent={true}
+                animationType={'none'}
+                visible={isLoading}>
+                <View style={styles.modalBackground}>
+                    <View style={styles.activityIndicatorWrapper}>
+                        <ActivityIndicator
+                            size="large"
+                            color="#0000ff"
+                            animating={isLoading}
+                        />
+                    </View>
+                </View>
+            </Modal>
 
             <View style={styles.dropView}>
                 <Text style={styles.dropLabel}>Team 1:</Text>
@@ -121,7 +247,7 @@ const EditMatch = ({navigation, route}) => {
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
                     iconStyle={styles.iconStyle}
-                    data={tournamentTeams}
+                    data={filteredTeams(selectedTeam2)}
                     maxHeight={300}
                     labelField="label"
                     valueField="value"
@@ -138,7 +264,7 @@ const EditMatch = ({navigation, route}) => {
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
                     iconStyle={styles.iconStyle}
-                    data={tournamentTeams}
+                    data={filteredTeams(selectedTeam1)}
                     maxHeight={300}
                     labelField="label"
                     valueField="value"
@@ -147,21 +273,43 @@ const EditMatch = ({navigation, route}) => {
                     onChange={item => setSelectedTeam2(item)}
                 />
             </View>
+            <View
+                style={{
+                    width: '75%',
+                    flexDirection: 'row',
+                    marginTop: 100,
+                    justifyContent: 'space-between',
+                }}>
+                <Button
+                    style={{borderRadius: 10}}
+                    mode="contained"
+                    buttonColor="red"
+                    onPress={() => handleDeleteMatch()}>
+                    <Text
+                        style={{
+                            fontSize: 18,
+                            color: 'white',
+                            paddingTop: 1,
+                        }}>
+                        Delete
+                    </Text>
+                </Button>
 
-            <Button
-                style={{marginTop: 50}}
-                mode="contained"
-                buttonColor="#119677"
-                onPress={{}}>
-                <Text
-                    style={{
-                        fontSize: 18,
-                        color: 'white',
-                        paddingTop: 1,
-                    }}>
-                    Update
-                </Text>
-            </Button>
+                <Button
+                    style={{borderRadius: 10, width: 100}}
+                    mode="contained"
+                    buttonColor="#22446c"
+                    onPress={() => handleUpdateMatch()}>
+                    <Text
+                        style={{
+                            fontSize: 18,
+                            color: 'white',
+                            paddingTop: 1,
+                        }}>
+                        Save
+                    </Text>
+                </Button>
+            </View>
         </SafeAreaView>
     );
 };
@@ -170,6 +318,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
+    },
+    modalBackground: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    activityIndicatorWrapper: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
     },
     screenTitle: {
         fontSize: 26,

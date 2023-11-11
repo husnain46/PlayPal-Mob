@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {Button} from '@rneui/themed';
 import {
     SafeAreaView,
@@ -7,46 +7,74 @@ import {
     StyleSheet,
     Text,
     Image,
-    FlatList,
+    TouchableOpacity,
+    ToastAndroid,
+    SectionList,
+    ActivityIndicator,
 } from 'react-native';
 import {Divider, Card, Title} from 'react-native-paper';
-import getMyTeams from '../Functions/getMyTeams';
-import getMyTournament from '../Functions/getMyTournament';
 import getSportsByIds from '../Functions/getSportsByIds';
-import {TouchableOpacity} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
 
 const Tournament = ({navigation}) => {
-    const myTeams = getMyTeams('user4');
+    const myId = auth().currentUser.uid;
+    const [loading, setLoading] = useState(true);
 
-    const myTournaments = Object.values(getMyTournament(myTeams));
+    const [myTournaments, setMyTournaments] = useState([]);
 
-    const gotoViewTournament = (data, sportName, startDate, endDate) => {
-        navigation.navigate('ViewTournament', {
-            data,
-            sportName,
-            startDate,
-            endDate,
-        });
-    };
+    useFocusEffect(
+        useCallback(() => {
+            const fetchTeamTournaments = async () => {
+                try {
+                    const teamRef = firestore()
+                        .collection('teams')
+                        .where('playersId', 'array-contains', myId);
+                    const teamSnapshot = await teamRef.get();
+                    const teamsData = [];
 
-    const getTournamentDates = tournament => {
-        const matches = tournament.matches;
-        if (matches.length === 0) {
-            return {startDate: null, lastDate: null};
-        }
+                    teamSnapshot.forEach(doc => {
+                        teamsData.push({id: doc.id, teamName: doc.data().name});
+                    });
 
-        const sortedMatches = matches.sort((a, b) => {
-            return a.date.localeCompare(b.date);
-        });
+                    const teamTournaments = [];
 
-        const startDate = sortedMatches[0].date;
-        const lastDate = sortedMatches[sortedMatches.length - 1].date;
+                    for (const team of teamsData) {
+                        const tournamentRef = firestore()
+                            .collection('tournaments')
+                            .where('teamIds', 'array-contains', team.id);
+                        const tournamentSnapshot = await tournamentRef.get();
+                        const tournaments = [];
 
-        return {
-            startDate: startDate,
-            endDate: lastDate,
-        };
-    };
+                        tournamentSnapshot.forEach(doc => {
+                            tournaments.push({
+                                id: doc.id,
+                                ...doc.data(),
+                            });
+                        });
+
+                        if (tournaments.length > 0) {
+                            teamTournaments.push({
+                                teamName: team.teamName,
+                                data: tournaments,
+                            });
+                        }
+                    }
+
+                    setMyTournaments(teamTournaments);
+                    setLoading(false);
+                } catch (error) {
+                    setLoading(false);
+                    ToastAndroid.show(error.message, ToastAndroid.LONG);
+                }
+            };
+
+            fetchTeamTournaments();
+
+            return () => {};
+        }, []),
+    );
 
     const sportIcons = {
         Cricket: require('../Assets/Icons/cricket.png'),
@@ -60,6 +88,13 @@ const Tournament = ({navigation}) => {
         default: require('../Assets/Icons/no image.png'),
     };
 
+    const gotoViewTournament = (tournamentId, sportName) => {
+        navigation.navigate('ViewTournament', {
+            tournamentId,
+            sportName,
+        });
+    };
+
     const gotoOrganizeTournament = () => {
         navigation.navigate('OrganizeTournament');
     };
@@ -69,14 +104,21 @@ const Tournament = ({navigation}) => {
     };
 
     const renderItem = ({item}) => {
-        const {startDate, endDate} = getTournamentDates(item);
+        const startDate = item.start_date.toDate().toLocaleDateString('en-GB', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+        const endDate = item.end_date.toDate().toLocaleDateString('en-GB', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
         const sportName = getSportsByIds([item.sport]);
         const iconPath = sportIcons[sportName] || sportIcons.default;
         return (
             <TouchableOpacity
-                onPress={() =>
-                    gotoViewTournament(item, sportName, startDate, endDate)
-                }>
+                onPress={() => gotoViewTournament(item.id, sportName)}>
                 <Card style={styles.card1}>
                     <Card.Content style={styles.cardContent}>
                         <View style={{flexWrap: 'wrap'}}>
@@ -96,14 +138,15 @@ const Tournament = ({navigation}) => {
                                     flexDirection: 'row',
                                     paddingVertical: 10,
                                 }}>
-                                <Text style={styles.dateText}>
-                                    Start date:{' '}
+                                <Text style={styles.dateText}>Start date:</Text>
+                                <Text style={styles.info1}>
+                                    {` ${startDate}`}
                                 </Text>
-                                <Text style={styles.info1}>{startDate} </Text>
                             </View>
                             <View style={{flexDirection: 'row'}}>
-                                <Text>End date: </Text>
-                                <Text style={styles.info2}>{endDate} </Text>
+                                <Text>End date:</Text>
+                                <Text
+                                    style={styles.info2}>{` ${endDate}`}</Text>
                             </View>
                         </View>
                         <View style={styles.sportIconView}>
@@ -130,17 +173,37 @@ const Tournament = ({navigation}) => {
                     <Text style={styles.text1}>My tournaments</Text>
                     <Divider style={styles.divider2} />
                     <View style={styles.listView}>
-                        {myTournaments == '' ? (
-                            <Text style={styles.emptyText}>
-                                No tournament yet!
-                            </Text>
+                        {loading ? (
+                            <ActivityIndicator
+                                style={styles.loader}
+                                size="large"
+                                color="#4A5B96"
+                            />
                         ) : (
-                            <FlatList
-                                showsVerticalScrollIndicator={false}
-                                data={myTournaments}
+                            <SectionList
+                                sections={myTournaments}
+                                keyExtractor={(item, index) => item + index}
                                 renderItem={renderItem}
-                                keyExtractor={myTournaments.tournamentId}
+                                renderSectionHeader={({
+                                    section: {teamName},
+                                }) => (
+                                    <View style={styles.sectionHeaderContainer}>
+                                        <Text style={styles.sectionHeader}>
+                                            ({teamName})
+                                        </Text>
+                                    </View>
+                                )}
                                 scrollEnabled={false}
+                                ListEmptyComponent={() => (
+                                    <Text
+                                        style={{
+                                            fontSize: 18,
+                                            color: 'black',
+                                            textAlign: 'center',
+                                        }}>
+                                        No tournament is joined yet!
+                                    </Text>
+                                )}
                             />
                         )}
                     </View>
@@ -222,10 +285,15 @@ const styles = StyleSheet.create({
         marginTop: 20,
         marginBottom: 10,
     },
-    emptyText: {
-        fontSize: 18,
-        fontWeight: '600',
+    sectionHeaderContainer: {
+        marginBottom: 5,
+    },
+    sectionHeader: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#164c6b',
         textAlign: 'center',
+        letterSpacing: 0.5,
     },
     cardView1: {
         alignItems: 'center',

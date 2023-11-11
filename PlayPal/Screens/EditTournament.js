@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -7,60 +7,152 @@ import {
     View,
     FlatList,
     Alert,
+    ToastAndroid,
+    ActivityIndicator,
+    Modal,
 } from 'react-native';
 import {Button, TextInput} from 'react-native-paper';
 import DropDownPicker from 'react-native-dropdown-picker';
 import cityData from '../Assets/cityData.json';
-import getTeamData from '../Functions/getTeamData';
-import {Icon} from '@rneui/themed';
+import {Divider, Icon} from '@rneui/themed';
+import AlertPro from 'react-native-alert-pro';
+import firestore from '@react-native-firebase/firestore';
+import {StackActions} from '@react-navigation/native';
 
 const EditTournament = ({navigation, route}) => {
-    const {data} = route.params;
-
+    const {data, teamsData} = route.params;
+    const [teamsList, setTeamsList] = useState(teamsData);
     const [tourName, setTourName] = useState(data.name);
     const [selectedCity, setSelectedCity] = useState(data.city);
     const [open, setOpen] = useState(false);
-    const [items, setItems] = useState(cityData);
     const [tourDetail, setTourDetail] = useState(data.detail);
-    const [listRefresh, setListRefresh] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const isTeamInMatches = (matches, teamId) => {
+        return matches.some(
+            match =>
+                match.teams.team1 === teamId || match.teams.team2 === teamId,
+        );
+    };
 
     const searchCity = query => {
-        const filteredItems = items.filter(item =>
+        const filteredItems = cityData.filter(item =>
             item.label.toLowerCase().includes(query.toLowerCase()),
         );
         return filteredItems;
     };
 
-    const handleRemoveTeam = (tId, tName) => {
-        Alert.alert(
-            'Remove Team',
-            `Are you sure you want to remove ${tName} from the tournament?`,
-            [
-                {text: 'Cancel', style: 'cancel'},
-                {
-                    text: 'Remove',
-                    style: 'destructive',
-                    onPress: () => confirmDelete(tId),
-                },
-            ],
+    const alertRefs = useRef([]);
+
+    const showAlert = index => {
+        if (alertRefs.current[index]) {
+            alertRefs.current[index].open();
+        }
+    };
+
+    const handleClose = index => {
+        if (alertRefs.current[index]) {
+            alertRefs.current[index].close();
+        }
+    };
+
+    const renderAlert = (tId, tName, index, isTeamInMatch) => {
+        return (
+            <AlertPro
+                ref={ref => (alertRefs.current[index] = ref)}
+                title=""
+                message={
+                    isTeamInMatch
+                        ? `${tName} is already in a match. You cannot remove this team directly`
+                        : `Are you sure you want to remove ${tName} from the tournament?`
+                }
+                onCancel={() => handleClose(index)}
+                showConfirm={isTeamInMatch ? false : true}
+                textCancel={isTeamInMatch ? 'Ok' : 'No'}
+                textConfirm="Yes"
+                onConfirm={() => confirmDelete(tId, index)}
+                customStyles={{
+                    message: {
+                        marginTop: -20,
+                        marginBottom: 10,
+                    },
+                    buttonConfirm: {backgroundColor: 'red'},
+                    buttonCancel: {
+                        backgroundColor: isTeamInMatch ? '#1d4d80' : '#00acef',
+                    },
+                }}
+            />
         );
     };
 
-    const confirmDelete = tId => {
-        const index = data.teamIds.indexOf(tId);
-        if (index !== -1) {
-            data.teamIds.splice(index, 1);
+    const confirmDelete = (tId, index) => {
+        const arrayIndex = teamsData.findIndex(team => team.id === tId);
+        alertRefs.current[index].close();
+
+        if (arrayIndex !== -1) {
+            const updatedTeamsData = [...teamsData];
+            updatedTeamsData.splice(arrayIndex, 1);
+            setTeamsList(updatedTeamsData);
         }
-        setListRefresh(prevState => !prevState);
+    };
+
+    const handleUpdateTournament = async () => {
+        try {
+            setLoading(true);
+
+            const updatedTeams = teamsList.map(item => item.id);
+
+            const tournamentData = {
+                name: tourName,
+                detail: tourDetail,
+                city: selectedCity,
+                teamIds: updatedTeams,
+            };
+
+            await firestore()
+                .collection('tournaments')
+                .doc(data.id)
+                .update(tournamentData);
+
+            ToastAndroid.show(
+                'Tournament updated successfully!',
+                ToastAndroid.LONG,
+            );
+
+            navigation.goBack();
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            ToastAndroid.show(error.message, ToastAndroid.TOP);
+        }
+    };
+
+    const handleDeleteTournament = async () => {
+        try {
+            setLoading(true);
+
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(data.id);
+
+            await tournamentRef.delete();
+
+            navigation.navigate('BottomTab', {screen: 'Tournament'});
+
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            ToastAndroid.show(error.message, ToastAndroid.TOP);
+        }
     };
 
     const renderItem = ({item, index}) => {
-        const team = getTeamData(item);
         const num = index + 1;
+        const isTeamInMatch = isTeamInMatches(data.matches, item.id);
         return (
             <View style={styles.teamCard}>
-                <Text style={styles.teamName}>{`${num})  ${team.name}`}</Text>
-                {item === data.organizer ? (
+                <Text style={styles.teamName}>{`${num})  ${item.name}`}</Text>
+                {item.id === data.organizer ? (
                     <></>
                 ) : (
                     <Icon
@@ -69,9 +161,10 @@ const EditTournament = ({navigation, route}) => {
                         size={28}
                         style={styles.removeIcon}
                         type="Icons"
-                        onPress={() => handleRemoveTeam(item, team.name)}
+                        onPress={() => showAlert(index)}
                     />
                 )}
+                {renderAlert(item.id, item.name, index, isTeamInMatch)}
             </View>
         );
     };
@@ -81,21 +174,44 @@ const EditTournament = ({navigation, route}) => {
             <ScrollView
                 contentContainerStyle={styles.scrollView}
                 style={{width: '100%'}}>
-                <Text style={styles.titleScreen}>Edit Tournament</Text>
+                <View style={styles.titleView}>
+                    <Text style={styles.titleScreen}>Edit Tournament</Text>
+                    <Button
+                        mode="contained"
+                        style={{borderRadius: 10}}
+                        buttonColor="#18ad79"
+                        onPress={() => handleUpdateTournament()}>
+                        <Text style={styles.updateTxt}>Save</Text>
+                    </Button>
+                </View>
 
-                <View style={styles.inputView2}>
+                <Divider style={styles.divider} width={2} color="grey" />
+
+                <View style={styles.inputView1}>
                     <Text style={styles.labelText}>Tournament title:</Text>
-
                     <TextInput
-                        style={styles.textInput2}
-                        outlineStyle={styles.inputOutline}
-                        contentStyle={styles.inputText2}
                         mode="outlined"
                         value={tourName}
                         onChangeText={text => setTourName(text)}
-                        outlineColor="black"
+                        style={styles.input1}
+                        outlineStyle={styles.outline}
                     />
                 </View>
+
+                <Modal
+                    transparent={true}
+                    animationType={'none'}
+                    visible={loading}>
+                    <View style={styles.modalBackground}>
+                        <View style={styles.activityIndicatorWrapper}>
+                            <ActivityIndicator
+                                size="large"
+                                color="#0000ff"
+                                animating={loading}
+                            />
+                        </View>
+                    </View>
+                </Modal>
 
                 <View style={styles.dropView}>
                     <Text style={styles.labelText}>Tournament city:</Text>
@@ -104,7 +220,7 @@ const EditTournament = ({navigation, route}) => {
                         labelStyle={{fontSize: 17}}
                         open={open}
                         value={selectedCity}
-                        items={items.map(item => ({
+                        items={cityData.map(item => ({
                             label: item.city,
                             value: item.city,
                         }))}
@@ -131,7 +247,7 @@ const EditTournament = ({navigation, route}) => {
                         value={tourDetail}
                         onChangeText={text => setTourDetail(text)}
                         style={styles.detailInput}
-                        outlineStyle={styles.inputOutline}
+                        outlineStyle={styles.outline}
                         outlineColor="black"
                     />
                 </View>
@@ -139,21 +255,24 @@ const EditTournament = ({navigation, route}) => {
                     <Text style={styles.teamLabel}>Teams:</Text>
                 </View>
                 <FlatList
-                    data={data.teamIds}
+                    data={teamsList}
                     renderItem={renderItem}
-                    extraData={listRefresh}
-                    keyExtractor={item => item}
+                    keyExtractor={item => item.id}
                     scrollEnabled={false}
                     contentContainerStyle={{
                         paddingHorizontal: 10,
                     }}
                 />
-                <Button
-                    mode="outlined"
-                    buttonColor="#348883"
-                    style={styles.updateBtn}>
-                    <Text style={styles.updateTxt}>Update</Text>
-                </Button>
+
+                <View style={styles.updateView}>
+                    <Button
+                        style={{borderRadius: 10}}
+                        mode="contained"
+                        buttonColor="red"
+                        onPress={() => handleDeleteTournament()}>
+                        <Text style={styles.updateTxt}>Delete tournament</Text>
+                    </Button>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -164,50 +283,52 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
     },
+    modalBackground: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    activityIndicatorWrapper: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+    },
     scrollView: {
         alignItems: 'center',
-        paddingBottom: 50,
+        paddingBottom: 60,
+    },
+    titleView: {
+        width: '90%',
+        marginTop: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     titleScreen: {
         fontSize: 26,
         fontWeight: '700',
         color: '#4a5a96',
-        marginVertical: 30,
-        marginBottom: 40,
     },
-    inputView1: {
+    divider: {
+        alignSelf: 'center',
+        width: '90%',
+        marginTop: 10,
         marginBottom: 20,
     },
-
-    inputView2: {
-        marginVertical: 5,
+    inputView1: {
+        marginTop: 20,
     },
-    textInput1: {
-        width: 300,
-        height: 60,
-        borderTopStartRadius: 10,
-        borderTopEndRadius: 10,
-        borderRadius: 10,
-        backgroundColor: '#4377AA',
-    },
-    textInput2: {
-        width: 300,
-        height: 60,
+    input1: {
         backgroundColor: 'white',
+        width: 300,
+        marginVertical: 6,
     },
-    inputOutline: {
-        borderRadius: 10,
-    },
-    inputText1: {
-        fontSize: 20,
-        fontWeight: '700',
-        fontStyle: 'italic',
-        letterSpacing: 1.5,
-        textAlign: 'center',
-    },
-    inputText2: {
-        fontSize: 17,
-        height: 65,
+    outline: {
+        borderRadius: 8,
     },
     pickerView: {
         marginTop: 20,
@@ -274,8 +395,8 @@ const styles = StyleSheet.create({
     removeIcon: {
         marginRight: 10,
     },
-    updateBtn: {
-        marginTop: 30,
+    updateView: {
+        marginTop: 50,
     },
     updateTxt: {
         fontSize: 17,

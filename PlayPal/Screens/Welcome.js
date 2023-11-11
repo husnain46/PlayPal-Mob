@@ -24,18 +24,15 @@ const Welcome = ({navigation}) => {
     const [selectedSports, setSelectedSports] = useState([]);
     const [nextBool, setNextBool] = useState(false);
     const [imageSelected, setImageSelected] = useState('');
-    const [skillLevel, setSkillLevel] = useState(null);
     const [bio, setBio] = useState('');
     const [selectedProvince, setSelectedProvince] = useState('');
     const [cities, setCities] = useState([]);
     const [selectedCity, setSelectedCity] = useState('');
     const [area, setArea] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-
     const [playerName, setPlayerName] = useState('');
     const [userFirstName, setUserFirstName] = useState('');
 
-    // Function to fetch user name from Firestore
     const fetchUserName = async uid => {
         try {
             const userRef = firestore().collection('users').doc(uid);
@@ -85,23 +82,12 @@ const Welcome = ({navigation}) => {
         setSelectedCity(itemValue);
     };
 
-    const skLvl = [
-        {label: 'Beginner', value: 'Beginner'},
-        {label: 'Amateur', value: 'Amateur'},
-        {label: 'Pro', value: 'Pro'},
-    ];
-
-    const handleSkillChange = itemValue => {
-        setSkillLevel(itemValue);
-    };
-
     const finishProfile = async () => {
         const userData = {
             city: selectedCity,
             area,
             bio,
             preferredSports: selectedSports,
-            skillLevel,
         };
 
         let uid = auth().currentUser.uid;
@@ -111,7 +97,6 @@ const Welcome = ({navigation}) => {
             !area ||
             !bio ||
             !selectedSports ||
-            !skillLevel ||
             !imageSelected
         ) {
             Alert.alert('Error', 'Please fill/select all the fields!');
@@ -331,36 +316,6 @@ const Welcome = ({navigation}) => {
                             </Text>
                         </TouchableOpacity>
                     ))}
-                </View>
-
-                <View style={styles.pickerView}>
-                    <Text style={styles.text3}>Your skills level:</Text>
-                    <View style={styles.pickerStyle}>
-                        <Picker
-                            style={{width: 290}}
-                            selectedValue={skillLevel}
-                            onValueChange={handleSkillChange}
-                            mode="dropdown"
-                            dropdownIconColor={'white'}
-                            dropdownIconRippleColor={'#11867F'}>
-                            <Picker.Item
-                                style={styles.pickerBox}
-                                label="Select skill level"
-                                value=""
-                                enabled={false}
-                                color="#11867F"
-                            />
-                            {skLvl.map((lvl, index) => (
-                                <Picker.Item
-                                    style={styles.pickerBox}
-                                    color="white"
-                                    key={index}
-                                    label={lvl.label}
-                                    value={lvl.value}
-                                />
-                            ))}
-                        </Picker>
-                    </View>
                 </View>
 
                 <View style={{marginTop: 40, marginBottom: 50}}>

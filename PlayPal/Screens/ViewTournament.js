@@ -6,44 +6,129 @@ import {
     FlatList,
     ScrollView,
     TouchableOpacity,
+    ActivityIndicator,
+    Modal,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {Divider} from '@rneui/themed';
 import {Button, Card, Paragraph} from 'react-native-paper';
-import teamsData from '../Assets/teamsData.json';
-import getTeamData from '../Functions/getTeamData';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import {useFocusEffect} from '@react-navigation/native';
 
 const ViewTournament = ({navigation, route}) => {
-    const {data, sportName, startDate, endDate} = route.params;
-    const organizer = teamsData[data.organizer];
-    const isCaptain = true;
+    const {tournamentId, sportName} = route.params;
+    const [data, setData] = useState([]);
+
+    const [teamsData, setTeamsData] = useState([]);
+    const [organizer, setOrganizer] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
+    const myId = auth().currentUser.uid;
+    const [isOrganizer, setIsOrganizer] = useState(false);
+
+    useFocusEffect(
+        useCallback(() => {
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(tournamentId);
+
+            const unsubscribe = tournamentRef.onSnapshot(
+                snapshot => {
+                    if (snapshot.exists) {
+                        const tData = snapshot.data();
+                        tData.id = snapshot.id;
+                        setData(tData);
+
+                        const fetchTeamsData = async () => {
+                            try {
+                                const organizerDoc = await firestore()
+                                    .collection('teams')
+                                    .doc(tData.organizer)
+                                    .get();
+
+                                const tName = organizerDoc.data().name;
+                                const cap =
+                                    myId === organizerDoc.data().captainId;
+                                setIsOrganizer(cap);
+                                setOrganizer(tName);
+
+                                const promises = tData.teamIds.map(
+                                    async tId => {
+                                        const docSnapshot = await firestore()
+                                            .collection('teams')
+                                            .doc(tId)
+                                            .get();
+
+                                        if (docSnapshot.exists) {
+                                            const tData = docSnapshot.data();
+                                            tData.id = tId;
+                                            return tData;
+                                        } else {
+                                            return null;
+                                        }
+                                    },
+                                );
+
+                                const teamDataArray = await Promise.all(
+                                    promises,
+                                );
+                                const teamInfo = teamDataArray.filter(
+                                    tData => tData !== null,
+                                );
+                                setTeamsData(teamInfo);
+                                setIsLoading(false);
+                            } catch (error) {
+                                setIsLoading(false);
+                                navigation.goBack();
+                                ToastAndroid.show(
+                                    error.message,
+                                    ToastAndroid.LONG,
+                                );
+                            }
+                        };
+
+                        fetchTeamsData();
+                    } else {
+                        setData([]);
+                        setIsLoading(false);
+                    }
+                },
+                error => {
+                    console.error('Error fetching tournament document:', error);
+                },
+            );
+
+            return () => {
+                unsubscribe();
+            };
+        }, [tournamentId, navigation]),
+    );
 
     const gotoEditTournament = () => {
-        navigation.navigate('EditTournament', {data});
+        navigation.navigate('EditTournament', {data, teamsData});
     };
 
     const gotoMatches = () => {
-        navigation.navigate('Matches', {data});
+        navigation.navigate('Matches', {data, teamsData, isOrganizer});
     };
 
     const gotoViewTeam = () => {
         navigation.navigate('ViewTeam', {organizer, sportName});
     };
     const renderItem = ({item, index}) => {
-        const team = getTeamData(item);
         const num = index + 1;
         return (
             <View style={styles.teamCard}>
                 <View style={styles.cardSubView}>
                     <Text style={styles.numText}>{`${num})`}</Text>
-                    <Text style={styles.teamName}>{team.name}</Text>
+                    <Text style={styles.teamName}>{item.name}</Text>
                 </View>
                 <View style={styles.cardSubView2}>
-                    <Text style={styles.pointsText}>1</Text>
+                    <Text style={styles.pointsText}>4</Text>
                 </View>
 
                 <View style={styles.cardSubView2}>
-                    <Text style={styles.pointsText}>02</Text>
+                    <Text style={styles.pointsText}>0</Text>
                 </View>
 
                 <View style={styles.cardSubView2}>
@@ -56,6 +141,25 @@ const ViewTournament = ({navigation, route}) => {
             </View>
         );
     };
+
+    if (!data || teamsData.length === 0) {
+        return (
+            <Modal
+                transparent={true}
+                animationType={'none'}
+                visible={isLoading}>
+                <View style={styles.modalBackground}>
+                    <View style={styles.activityIndicatorWrapper}>
+                        <ActivityIndicator
+                            size="large"
+                            color="#0000ff"
+                            animating={isLoading}
+                        />
+                    </View>
+                </View>
+            </Modal>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -91,11 +195,27 @@ const ViewTournament = ({navigation, route}) => {
                 <View style={styles.detailView}>
                     <View style={styles.subView}>
                         <Text style={styles.detailLabel}>Start:</Text>
-                        <Text style={styles.detailText}>{startDate}</Text>
+                        <Text style={styles.detailText}>
+                            {data.start_date
+                                .toDate()
+                                .toLocaleDateString('en-GB', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
+                        </Text>
                     </View>
                     <View style={styles.subView}>
                         <Text style={styles.detailLabel}>End:</Text>
-                        <Text style={styles.detailText}>{endDate}</Text>
+                        <Text style={styles.detailText}>
+                            {data.end_date
+                                .toDate()
+                                .toLocaleDateString('en-GB', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
+                        </Text>
                     </View>
                 </View>
 
@@ -111,7 +231,7 @@ const ViewTournament = ({navigation, route}) => {
 
                             <TouchableOpacity onPress={() => gotoViewTeam()}>
                                 <Text style={styles.organizer}>
-                                    {organizer.name}
+                                    {organizer}
                                 </Text>
                             </TouchableOpacity>
                         </Card.Content>
@@ -140,7 +260,7 @@ const ViewTournament = ({navigation, route}) => {
                         flexDirection: 'row',
                         justifyContent: 'space-evenly',
                     }}>
-                    {!isCaptain ? (
+                    {!isOrganizer ? (
                         <></>
                     ) : (
                         <Button
@@ -184,10 +304,11 @@ const ViewTournament = ({navigation, route}) => {
                         <Text style={styles.headerText}>Points</Text>
                     </View>
                 </View>
+
                 <FlatList
-                    data={data.teamIds}
+                    data={teamsData}
                     renderItem={renderItem}
-                    keyExtractor={item => item}
+                    keyExtractor={item => item.id}
                     scrollEnabled={false}
                     contentContainerStyle={{paddingBottom: 20}}
                 />
@@ -200,6 +321,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
+    },
+    modalBackground: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    activityIndicatorWrapper: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
     },
     titleView: {
         marginTop: 15,
@@ -239,7 +374,7 @@ const styles = StyleSheet.create({
     },
     subView: {
         flexDirection: 'row',
-        margin: 12,
+        margin: 10,
         marginHorizontal: 15,
         flexWrap: 'wrap',
     },
@@ -266,7 +401,7 @@ const styles = StyleSheet.create({
     },
     organizer: {
         fontSize: 18,
-        marginTop: 20,
+        paddingVertical: 15,
         color: '#4a5a96',
         textDecorationLine: 'underline',
         fontWeight: '500',
@@ -274,7 +409,7 @@ const styles = StyleSheet.create({
     },
     totalMatch: {
         fontSize: 24,
-        marginTop: 17,
+        paddingVertical: 15,
         color: '#4a5a96',
         fontWeight: '500',
         textAlign: 'center',
@@ -314,7 +449,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     headerView1: {
-        width: 150,
+        width: '40%',
         left: 30,
     },
     headerView2: {
@@ -346,9 +481,9 @@ const styles = StyleSheet.create({
         marginRight: 10,
     },
     cardSubView2: {
-        width: 25,
-        marginLeft: 5,
-        marginRight: 7,
+        width: '7%',
+        marginRight: 20,
+        alignItems: 'center',
     },
     cardSubView3: {
         width: 25,

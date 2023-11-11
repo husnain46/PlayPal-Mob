@@ -1,111 +1,261 @@
 import {
     Image,
     SafeAreaView,
-    ScrollView,
     StyleSheet,
     Text,
     View,
     FlatList,
-    TouchableOpacity,
 } from 'react-native';
-import React, {useState} from 'react';
-import {Button, Card, Divider, Icon} from '@rneui/themed';
-import getTeamData from '../Functions/getTeamData';
+import React, {useCallback, useRef, useState} from 'react';
+import {Button, Divider, Icon} from '@rneui/themed';
+import {useFocusEffect} from '@react-navigation/native';
+import {IconButton, Card} from 'react-native-paper';
+import firestore from '@react-native-firebase/firestore';
+import {ToastAndroid} from 'react-native';
+import AlertPro from 'react-native-alert-pro';
 
 const Matches = ({navigation, route}) => {
-    // import {format} from 'date-fns';
+    const {data, teamsData, isOrganizer} = route.params;
+    const [matches, setMatches] = useState(data.matches);
+    const alertRefs = useRef([]);
 
-    // const timestamp = new Date('2023-08-20T12:34:56');
-    // const formattedTimestamp = format(timestamp, 'MMMM dd, yyyy - HH:mm');
+    useFocusEffect(
+        useCallback(() => {
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(data.id);
 
-    const {data} = route.params;
-    const matches = data.matches;
-    const [matchStatus, setMatchStatus] = useState('Upcoming');
+            const unsubscribe = tournamentRef.onSnapshot(
+                snapshot => {
+                    if (snapshot.exists) {
+                        const matchesData = snapshot.data().matches;
+
+                        setMatches(matchesData);
+                    } else {
+                        setMatches([]);
+                    }
+                },
+                error => {
+                    ToastAndroid.show(error.message, ToastAndroid.LONG);
+                },
+            );
+
+            return () => {
+                unsubscribe();
+            };
+        }, [navigation]),
+    );
 
     const gotoAddMatch = () => {
-        navigation.navigate('AddMatch', {data});
+        navigation.navigate('AddMatch', {data, teamsData});
     };
 
     const gotoEditMatch = match => {
         navigation.navigate('EditMatch', {
+            tournamentId: data.id,
             match,
-            teamIds: data.teamIds,
+            teamsData,
         });
     };
 
-    const gotoStartMatch = match => {
-        setMatchStatus('Started');
-        navigation.navigate('StartMatch', {match});
+    const gotoStartMatch = async (match, matchIndex, team1, team2) => {
+        if (match.status === 'Upcoming') {
+            alertRefs.current.close();
+
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(data.id);
+
+            const tournamentDoc = await tournamentRef.get();
+            const matchesArray = tournamentDoc.data().matches;
+
+            matchesArray[matchIndex].status = 'Started';
+
+            await tournamentRef.update({
+                matches: matchesArray,
+            });
+
+            ToastAndroid.show('Match has been started!', ToastAndroid.LONG);
+        }
+
+        const matchNum = matchIndex + 1;
+
+        navigation.navigate('StartMatch', {
+            match,
+            team1,
+            team2,
+            matchNum,
+            tournamentId: data.id,
+        });
+    };
+
+    const renderAlert = (item, index, team1, team2) => {
+        return (
+            <AlertPro
+                ref={ref => (alertRefs.current = ref)}
+                title={'Start match?'}
+                message={'Are you sure you want to start the match now?'}
+                onCancel={() => alertRefs.current.close()}
+                textCancel={'No'}
+                onConfirm={() => gotoStartMatch(item, index, team1, team2)}
+                textConfirm={'Yes'}
+                customStyles={{
+                    buttonConfirm: {backgroundColor: '#2bad8b'},
+                    container: {borderWidth: 2, borderColor: 'lightgrey'},
+                }}
+            />
+        );
     };
 
     const renderItem = ({item, index}) => {
-        const team1 = getTeamData(item.teams.team1);
-        const team2 = getTeamData(item.teams.team2);
+        const t1 = item.teams.team1;
+        const t2 = item.teams.team2;
+
+        const team1 = teamsData.find(team => team.id === t1);
+        const team2 = teamsData.find(team => team.id === t2);
+
+        const currentTime = new Date().getTime();
+        const matchTime = item.time.toDate().getTime();
+        const timeDifference = (matchTime - currentTime) / (1000 * 60);
+
         let matchNum = index + 1;
         return (
-            <View style={{marginTop: 35}}>
-                <View style={styles.matchHeader}>
-                    <Text style={styles.matchText}>Match {matchNum}:</Text>
-                    <Icon
-                        name="edit"
-                        color={'#4a5a96'}
-                        size={25}
-                        type="Icons"
-                        containerStyle={{
-                            borderWidth: 1,
-                            top: 2,
-                        }}
-                        onPress={() => gotoEditMatch(item)}
-                    />
-                </View>
-                <Card containerStyle={styles.cardContainer}>
-                    <View style={styles.teamsContainer}>
-                        <View style={styles.team1View}>
-                            <Image
-                                source={{uri: team1.teamPic}}
-                                style={styles.teamImage}
-                            />
-                            <Text style={styles.teamName}>{team1.name}</Text>
-                        </View>
-                        <View style={styles.scoreView}>
-                            <Text style={styles.scoreText}>
-                                {item.result.scoreTeam1}
-                            </Text>
-                        </View>
-                        <Text style={styles.vsText}>Vs</Text>
-                        <View style={styles.scoreView}>
-                            <Text style={styles.scoreText}>
-                                {item.result.scoreTeam2}
-                            </Text>
-                        </View>
-                        <View style={styles.team1View}>
-                            <Image
-                                source={{uri: team2.teamPic}}
-                                style={styles.teamImage}
-                            />
-                            <Text style={styles.teamName}>{team2.name}</Text>
-                        </View>
-                    </View>
-                    <Divider style={styles.cardDivider} width={1} />
-                    {!item.title ? (
-                        <View style={{marginVertical: 5}}></View>
+            <View style={{marginBottom: 30}}>
+                <View style={styles.headerView}>
+                    <Text
+                        style={{
+                            fontSize: 24,
+                            color: 'black',
+                            fontWeight: '600',
+                        }}>
+                        {`Match ${matchNum}:`}
+                    </Text>
+                    {(isOrganizer && item.status.includes('Upcoming')) ||
+                    item.status.includes('Started') ? (
+                        <IconButton
+                            icon={'square-edit-outline'}
+                            size={35}
+                            onPress={() => gotoEditMatch(item)}
+                        />
                     ) : (
-                        <View style={styles.matchTitleView}>
-                            <Text style={styles.matchTitle}>{item.title}</Text>
-                        </View>
+                        <></>
                     )}
-                    <View style={styles.matchDetails}>
-                        <Text style={styles.detailText}>Date: {item.date}</Text>
-                        <Text style={styles.detailText}>Time: {item.time}</Text>
-                    </View>
-                    <View style={styles.matchDetails}>
-                        <Text style={styles.detailText2}>{matchStatus}</Text>
-                        <TouchableOpacity
-                            style={styles.startBtn}
-                            onPress={() => gotoStartMatch(item)}>
-                            <Text style={styles.startText}>Start</Text>
-                        </TouchableOpacity>
-                    </View>
+                </View>
+
+                <Card style={styles.card}>
+                    <Card.Content style={styles.cardContent}>
+                        <View style={styles.teamView}>
+                            <View style={styles.teamContainer}>
+                                <Image
+                                    source={{uri: team1.teamPic}}
+                                    style={styles.teamImage}
+                                />
+                                <Text style={styles.teamName}>
+                                    {team1.name}
+                                </Text>
+                            </View>
+                            <View style={styles.scoreContainer}>
+                                <Text style={styles.scoreText}>
+                                    {item.status === 'Upcoming'
+                                        ? '-'
+                                        : item.result.scoreTeam1}
+                                </Text>
+                                <Text style={styles.vsText}>VS</Text>
+                                <Text style={styles.scoreText}>
+                                    {item.status === 'Upcoming'
+                                        ? '-'
+                                        : item.result.scoreTeam2}
+                                </Text>
+                            </View>
+                            <View style={styles.teamContainer}>
+                                <Image
+                                    source={{uri: team2.teamPic}}
+                                    style={styles.teamImage}
+                                />
+                                <Text style={styles.teamName}>
+                                    {team2.name}
+                                </Text>
+                            </View>
+                        </View>
+
+                        <Divider
+                            style={styles.cardDivider}
+                            width={1}
+                            color="grey"
+                        />
+
+                        <View style={{alignSelf: 'center', marginBottom: 12}}>
+                            <Text style={styles.matchTitle}>
+                                ({item.title})
+                            </Text>
+                        </View>
+                        <View style={styles.detailsContainer1}>
+                            <Text style={styles.detailText}>
+                                Date:{' '}
+                                {item.date.toDate().toLocaleDateString('en-GB')}
+                            </Text>
+                            <Text style={styles.detailText}>
+                                Time:{' '}
+                                {item.time.toDate().toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                })}
+                            </Text>
+                        </View>
+
+                        <View
+                            style={[
+                                item.status === 'Upcoming' ||
+                                item.status === 'Started'
+                                    ? styles.detailsContainer2
+                                    : styles.detailsContainer3,
+                            ]}>
+                            <Text
+                                style={[
+                                    item.status === 'Upcoming' ||
+                                    item.status === 'Started'
+                                        ? styles.detailText
+                                        : styles.resultText,
+                                ]}>
+                                {item.status}
+                            </Text>
+
+                            {isOrganizer && timeDifference <= 10 ? (
+                                item.status === 'Upcoming' ||
+                                item.status === 'Started' ? (
+                                    <Button
+                                        containerStyle={styles.startButton}
+                                        mode="contained"
+                                        onPress={() => {
+                                            item.status.includes('Upcoming')
+                                                ? alertRefs.current.open()
+                                                : gotoStartMatch(
+                                                      item,
+                                                      index,
+                                                      team1,
+                                                      team2,
+                                                  );
+                                        }}
+                                        color="#28b581"
+                                        title={
+                                            item.status === 'Upcoming'
+                                                ? 'Start'
+                                                : 'Update'
+                                        }
+                                        titleStyle={{
+                                            fontSize: 17,
+                                            margin: -2,
+                                        }}
+                                    />
+                                ) : (
+                                    <></>
+                                )
+                            ) : (
+                                <></>
+                            )}
+                            {renderAlert(item, index, team1, team2)}
+                        </View>
+                    </Card.Content>
                 </Card>
             </View>
         );
@@ -114,19 +264,31 @@ const Matches = ({navigation, route}) => {
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Matches</Text>
             <Divider style={styles.divider} width={2} color="grey" />
-            <Button
-                onPress={() => gotoAddMatch()}
-                containerStyle={styles.matchBtn}
-                color={'#23a889'}
-                title={'Add match'}
-                titleStyle={styles.btnText}
-            />
+
+            {isOrganizer ? (
+                <Button
+                    onPress={() => gotoAddMatch()}
+                    containerStyle={styles.matchBtn}
+                    color={'#3c5885'}
+                    title={'Add match'}
+                    titleStyle={styles.btnText}
+                />
+            ) : (
+                <></>
+            )}
 
             <FlatList
                 contentContainerStyle={{paddingBottom: 30}}
                 data={matches}
-                keyExtractor={item => item.matchId}
+                keyExtractor={(item, index) => index.toString()}
                 renderItem={renderItem}
+                ListEmptyComponent={() => (
+                    <View style={{marginTop: 40}}>
+                        <Text style={{fontSize: 20, color: 'black'}}>
+                            No match scheduled yet!
+                        </Text>
+                    </View>
+                )}
             />
         </SafeAreaView>
     );
@@ -141,120 +303,121 @@ const styles = StyleSheet.create({
         fontSize: 26,
         color: '#4a5a96',
         fontWeight: '700',
-        marginTop: 30,
+        marginTop: 20,
     },
     divider: {
         alignSelf: 'center',
         width: '90%',
-        marginTop: 10,
-        marginBottom: 10,
+        marginVertical: 10,
     },
-
     matchBtn: {
         marginTop: 15,
         borderRadius: 10,
         width: 120,
         marginHorizontal: 10,
+        marginBottom: 30,
     },
     btnText: {
         fontSize: 16,
         color: 'white',
     },
-    matchHeader: {
+    headerView: {
         flexDirection: 'row',
         width: 380,
-        alignItems: 'center',
+        height: 60,
         justifyContent: 'space-between',
-    },
-    matchText: {
-        fontSize: 20,
-        fontWeight: '700',
-        paddingHorizontal: 20,
-        color: 'black',
-    },
-    cardContainer: {
-        borderRadius: 10,
-        elevation: 5,
-        marginTop: 15,
+        alignItems: 'center',
         alignSelf: 'center',
-        width: '92%',
-        backgroundColor: 'white',
+        marginHorizontal: 20,
     },
-    teamsContainer: {
+    card: {
+        width: 380,
+        marginHorizontal: 16,
+        borderWidth: 1,
+        borderColor: 'lightgrey',
+        borderRadius: 12,
+    },
+    cardContent: {
+        padding: 16,
+    },
+    teamView: {
         flexDirection: 'row',
-        alignItems: 'center',
         width: '100%',
-        justifyContent: 'space-between',
+        justifyContent: 'center',
     },
-    team1View: {
-        width: 80,
+    teamContainer: {
         alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 10,
     },
     teamImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-    },
-    scoreView: {
-        width: 80,
-        height: 80,
-        justifyContent: 'center',
-    },
-    scoreText: {
-        fontWeight: 'bold',
-        fontSize: 17,
-        textAlign: 'center',
+        width: 70,
+        height: 70,
+        borderRadius: 40,
     },
     teamName: {
-        fontWeight: 'bold',
         fontSize: 16,
-        marginTop: 10,
+        width: 100,
         textAlign: 'center',
+        marginTop: 10,
+        color: 'black',
+    },
+    scoreContainer: {
+        flexDirection: 'row',
+        width: 160,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16,
+    },
+    scoreText: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginHorizontal: 25,
+        color: '#31b571',
     },
     vsText: {
-        fontSize: 14,
-        textAlign: 'center',
+        fontSize: 18,
     },
     cardDivider: {
-        marginTop: 10,
-        backgroundColor: 'lightgrey',
-    },
-    matchTitleView: {
-        marginVertical: 10,
-        alignItems: 'center',
+        alignSelf: 'center',
+        width: '100%',
+        marginBottom: 10,
     },
     matchTitle: {
-        fontSize: 17,
-        color: 'darkblue',
-        fontWeight: '500',
+        fontSize: 18,
+        color: '#154075',
     },
-    matchDetails: {
-        marginVertical: 5,
-        paddingHorizontal: 5,
+    detailsContainer1: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        marginBottom: 10,
     },
     detailText: {
-        fontSize: 15,
+        fontSize: 16,
+        color: 'black',
     },
-    detailText2: {
-        fontSize: 15,
-        width: 230,
-    },
-    startBtn: {
-        width: 80,
-        height: 30,
-        backgroundColor: '#0d9bb8',
-        justifyContent: 'center',
-        borderRadius: 5,
-    },
-    startText: {
-        fontSize: 14,
-        textAlign: 'center',
-        color: 'white',
-        letterSpacing: 1,
-        bottom: 1,
+    resultText: {
+        fontSize: 17,
         fontWeight: '600',
+        color: '#068f6f',
+        letterSpacing: 0.2,
+    },
+    startButton: {
+        width: 80,
+        borderRadius: 8,
+    },
+    detailsContainer2: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    detailsContainer3: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
 });
+
 export default Matches;

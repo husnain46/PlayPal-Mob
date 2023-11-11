@@ -1,49 +1,170 @@
 import React, {useState} from 'react';
-import {StyleSheet, Text, View, SafeAreaView} from 'react-native';
+import {StyleSheet, Text, View, SafeAreaView, ToastAndroid} from 'react-native';
 import {Button, TextInput} from 'react-native-paper';
 import {Divider} from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {Dropdown} from 'react-native-element-dropdown';
-import teamsData from '../Assets/teamsData.json';
+import firestore from '@react-native-firebase/firestore';
+import {ActivityIndicator} from 'react-native';
 
 const AddMatch = ({navigation, route}) => {
-    const {data} = route.params;
+    const {data, teamsData} = route.params;
     const [matchTitle, setMatchTitle] = useState('');
     const [selectedDate, setSelectedDate] = useState(null);
     const [showPicker1, setShowPicker1] = useState(false);
     const [selectedTime, setSelectedTime] = useState(null);
     const [showPicker2, setShowPicker2] = useState(false);
-    const [selectedTeam1, setSelectedTeam1] = useState(null);
-    const [selectedTeam2, setSelectedTeam2] = useState(null);
+    const [selectedTeam1, setSelectedTeam1] = useState('');
+    const [selectedTeam2, setSelectedTeam2] = useState('');
+    const [loading, setLoading] = useState(false);
+    const minDate = data.start_date.toDate();
+    const maxDate = data.end_date.toDate();
 
-    const tournamentTeams = data.teamIds.map(tId => ({
-        label: teamsData[tId].name,
-        value: tId,
+    const [errors, setErrors] = useState({
+        matchTitle: '',
+        date: '',
+        time: '',
+        team1: '',
+        team2: '',
+    });
+
+    const tournamentTeams = teamsData.map(team => ({
+        label: team.name,
+        value: team.id,
     }));
-
-    //
-    const currentDate = new Date();
-    const nextDay = new Date(currentDate);
-    nextDay.setDate(currentDate.getDate() + 1);
-    const maxDate = new Date();
-    maxDate.setMonth(currentDate.getMonth() + 12);
 
     const handleDateChange = (event, selected) => {
         setShowPicker1(false);
         if (selected) {
-            setSelectedDate(selected.toLocaleDateString('en-GB'));
+            setSelectedDate(selected);
         }
     };
 
     const handleTimeChange = (event, selected) => {
         setShowPicker2(false);
         if (selected) {
-            setSelectedTime(
-                selected.toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                }),
-            );
+            setSelectedTime(selected);
+        }
+    };
+
+    const filteredTeams = teamSelected => {
+        return tournamentTeams.filter(team => team.value !== teamSelected);
+    };
+
+    const fetchUpdatedData = async () => {
+        const snapshot = await firestore()
+            .collection('tournaments')
+            .doc(data.id)
+            .get();
+
+        const fetchedData = snapshot.data();
+        return fetchedData;
+    };
+
+    const handleAddMatch = async () => {
+        let hasError = false;
+
+        if (!matchTitle.trim()) {
+            setErrors(prevState => ({
+                ...prevState,
+                matchTitle: 'Please enter match title.',
+            }));
+            hasError = true;
+        } else {
+            setErrors(prevState => ({
+                ...prevState,
+                matchTitle: '',
+            }));
+        }
+
+        if (selectedDate === null) {
+            setErrors(prevState => ({
+                ...prevState,
+                date: 'Please select match date.',
+            }));
+            hasError = true;
+        } else {
+            setErrors(prevState => ({
+                ...prevState,
+                date: '',
+            }));
+        }
+
+        if (selectedTime === null) {
+            setErrors(prevState => ({
+                ...prevState,
+                time: 'Please select match time.',
+            }));
+            hasError = true;
+        } else {
+            setErrors(prevState => ({
+                ...prevState,
+                time: '',
+            }));
+        }
+
+        if (selectedTeam1 === '') {
+            setErrors(prevState => ({
+                ...prevState,
+                team1: 'Please select team 1.',
+            }));
+            hasError = true;
+        } else {
+            setErrors(prevState => ({
+                ...prevState,
+                team1: '',
+            }));
+        }
+
+        if (selectedTeam2 === '') {
+            setErrors(prevState => ({
+                ...prevState,
+                team2: 'Please select team 2.',
+            }));
+            hasError = true;
+        } else {
+            setErrors(prevState => ({
+                ...prevState,
+                team2: '',
+            }));
+        }
+
+        if (hasError) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+
+            const matchData = {
+                title: matchTitle.trim(),
+                date: selectedDate,
+                time: selectedTime,
+                status: 'Upcoming',
+                teams: {
+                    team1: selectedTeam1,
+                    team2: selectedTeam2,
+                },
+                result: {
+                    scoreTeam1: 0,
+                    scoreTeam2: 0,
+                },
+            };
+
+            await firestore()
+                .collection('tournaments')
+                .doc(data.id)
+                .update({
+                    matches: firestore.FieldValue.arrayUnion(matchData),
+                });
+
+            navigation.goBack();
+
+            ToastAndroid.show('Match added successfully!', ToastAndroid.LONG);
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+            ToastAndroid.show(error.message, ToastAndroid.LONG);
         }
     };
 
@@ -64,6 +185,9 @@ const AddMatch = ({navigation, route}) => {
                     style={styles.input1}
                     outlineStyle={styles.outline}
                 />
+                {errors.matchTitle ? (
+                    <Text style={styles.errorText}>{errors.matchTitle}</Text>
+                ) : null}
             </View>
 
             <View style={styles.dateView}>
@@ -74,45 +198,66 @@ const AddMatch = ({navigation, route}) => {
                     buttonColor="#cfdfe8"
                     onPress={() => setShowPicker1(true)}>
                     {selectedDate !== null ? (
-                        <Text style={styles.dateText}>{selectedDate}</Text>
+                        <Text style={styles.dateText}>
+                            {selectedDate.toLocaleDateString('en-GB')}
+                        </Text>
                     ) : (
                         <Text style={styles.datePlaceholder}>Select Date</Text>
                     )}
                 </Button>
+
                 {showPicker1 && (
                     <DateTimePicker
-                        value={nextDay}
+                        value={minDate}
                         mode="date"
                         display="compact"
-                        minimumDate={nextDay}
+                        onpre
+                        minimumDate={minDate}
                         maximumDate={maxDate}
                         onChange={handleDateChange}
                     />
                 )}
             </View>
+            {errors.date ? (
+                <Text style={styles.dateError}>{errors.date}</Text>
+            ) : null}
 
-            <View style={styles.dateView}>
-                <Text style={styles.dateLabel}>Match time:</Text>
-                <Button
-                    mode="contained-tonal"
-                    buttonColor="#cfdfe8"
-                    style={styles.dateBox}
-                    onPress={() => setShowPicker2(true)}>
-                    {selectedTime !== null ? (
-                        <Text style={styles.dateText}>{selectedTime}</Text>
-                    ) : (
-                        <Text style={styles.datePlaceholder}>Select time</Text>
+            {selectedDate !== null && (
+                <View style={styles.dateView}>
+                    <Text style={styles.dateLabel}>Match time:</Text>
+                    <Button
+                        mode="contained-tonal"
+                        buttonColor="#cfdfe8"
+                        style={styles.dateBox}
+                        onPress={() => setShowPicker2(true)}>
+                        {selectedTime !== null ? (
+                            <Text style={styles.dateText}>
+                                {selectedTime.toLocaleTimeString([], {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                })}
+                            </Text>
+                        ) : (
+                            <Text style={styles.datePlaceholder}>
+                                Select time
+                            </Text>
+                        )}
+                    </Button>
+
+                    {showPicker2 && (
+                        <DateTimePicker
+                            value={selectedDate}
+                            mode="time"
+                            display="default"
+                            onChange={handleTimeChange}
+                        />
                     )}
-                </Button>
-                {showPicker2 && (
-                    <DateTimePicker
-                        value={currentDate}
-                        mode="time"
-                        display="default"
-                        onChange={handleTimeChange}
-                    />
-                )}
-            </View>
+                </View>
+            )}
+
+            {selectedDate !== null && errors.time ? (
+                <Text style={styles.dateError}>{errors.time}</Text>
+            ) : null}
 
             <View style={styles.dropView}>
                 <Text style={styles.dropLabel}>Team 1:</Text>
@@ -121,14 +266,17 @@ const AddMatch = ({navigation, route}) => {
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
                     iconStyle={styles.iconStyle}
-                    data={tournamentTeams}
+                    data={filteredTeams(selectedTeam2)}
                     maxHeight={300}
                     labelField="label"
                     valueField="value"
                     placeholder={'Select team 1'}
                     value={selectedTeam1}
-                    onChange={item => setSelectedTeam1(item)}
+                    onChange={item => setSelectedTeam1(item.value)}
                 />
+                {errors.team1 ? (
+                    <Text style={styles.errorText}>{errors.team1}</Text>
+                ) : null}
             </View>
 
             <View style={styles.dropView}>
@@ -138,30 +286,38 @@ const AddMatch = ({navigation, route}) => {
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
                     iconStyle={styles.iconStyle}
-                    data={tournamentTeams}
+                    data={filteredTeams(selectedTeam1)}
                     maxHeight={300}
                     labelField="label"
                     valueField="value"
                     placeholder={'Select team 2'}
                     value={selectedTeam2}
-                    onChange={item => setSelectedTeam2(item)}
+                    onChange={item => setSelectedTeam2(item.value)}
                 />
+                {errors.team2 ? (
+                    <Text style={styles.errorText}>{errors.team2}</Text>
+                ) : null}
             </View>
 
-            <Button
-                style={{marginTop: 50}}
-                mode="contained"
-                buttonColor="#119677"
-                onPress={{}}>
-                <Text
-                    style={{
-                        fontSize: 18,
-                        color: 'white',
-                        paddingTop: 1,
-                    }}>
-                    Add match
-                </Text>
-            </Button>
+            <View style={{marginTop: 50}}>
+                {loading ? (
+                    <ActivityIndicator size="large" color="#0000ff" />
+                ) : (
+                    <Button
+                        mode="contained"
+                        buttonColor="#1cad73"
+                        onPress={() => handleAddMatch()}>
+                        <Text
+                            style={{
+                                fontSize: 18,
+                                color: 'white',
+                                paddingTop: 1,
+                            }}>
+                            Add match
+                        </Text>
+                    </Button>
+                )}
+            </View>
         </SafeAreaView>
     );
 };
@@ -190,6 +346,17 @@ const styles = StyleSheet.create({
         fontSize: 17,
         fontWeight: '500',
         color: 'black',
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 14,
+        marginTop: 5,
+    },
+    dateError: {
+        color: 'red',
+        fontSize: 14,
+        textAlign: 'right',
+        width: '75%',
     },
     input1: {
         backgroundColor: 'white',

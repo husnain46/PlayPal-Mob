@@ -1,30 +1,126 @@
 import {SafeAreaView, StyleSheet, Text, View} from 'react-native';
 import React, {useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
-import getTeamData from '../Functions/getTeamData';
-import {Button, Surface, TextInput} from 'react-native-paper';
+import {Button, Surface} from 'react-native-paper';
+import {ToastAndroid} from 'react-native';
+import firestore from '@react-native-firebase/firestore';
 
 const StartMatch = ({navigation, route}) => {
-    const {match} = route.params;
-    const team1 = getTeamData(match.teams.team1);
-    const team2 = getTeamData(match.teams.team2);
+    const {match, team1, team2, matchNum, tournamentId} = route.params;
 
-    const [scoreT1, setScoreT1] = useState(0);
-    const [scoreT2, setScoreT2] = useState(0);
+    const [scoreT1, setScoreT1] = useState(match.result.scoreTeam1);
+    const [scoreT2, setScoreT2] = useState(match.result.scoreTeam2);
 
-    const increaseScore = (score, setScore) => {
+    const increaseScore = (team, score, setScore) => {
         setScore(score + 1);
+        updateScoreInFirestore(team, score + 1);
     };
 
-    const decreaseScore = (score, setScore) => {
+    const decreaseScore = (team, score, setScore) => {
         if (score > 0) {
             setScore(score - 1);
+            updateScoreInFirestore(team, score - 1);
+        }
+    };
+
+    const updateScoreInFirestore = async (team, newScore) => {
+        try {
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(tournamentId);
+            const tournamentDoc = await tournamentRef.get();
+
+            if (tournamentDoc.exists) {
+                const tournamentData = tournamentDoc.data();
+
+                const updatedMatches = tournamentData.matches.map(item => {
+                    if (
+                        item.title === match.title &&
+                        item.date.isEqual(match.date) &&
+                        item.time.isEqual(match.time)
+                    ) {
+                        const updatedResult = {
+                            scoreTeam1: item.result.scoreTeam1,
+                            scoreTeam2: item.result.scoreTeam2,
+                        };
+
+                        if (team === item.teams.team1) {
+                            updatedResult.scoreTeam1 = newScore;
+                        } else if (team === item.teams.team2) {
+                            updatedResult.scoreTeam2 = newScore;
+                        }
+
+                        return {
+                            title: item.title,
+                            date: item.date,
+                            time: item.time,
+                            teams: {
+                                team1: item.teams.team1,
+                                team2: item.teams.team2,
+                            },
+                            result: updatedResult,
+                            status: item.status,
+                        };
+                    } else {
+                        return item;
+                    }
+                });
+
+                await tournamentRef.update({matches: updatedMatches});
+            }
+        } catch (error) {
+            console.error('Error updating score:', error);
+        }
+    };
+
+    const handleEndMatch = async () => {
+        try {
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(tournamentId);
+
+            const tournamentDoc = await tournamentRef.get();
+            const matchesArray = tournamentDoc.data().matches;
+
+            const updatedStatus = matchesArray.map(item => {
+                if (
+                    item.title === match.title &&
+                    item.date.isEqual(match.date) &&
+                    item.time.isEqual(match.time)
+                ) {
+                    let matchStatus;
+                    if (scoreT1 > scoreT2) {
+                        matchStatus = `${team1.name} won!`;
+                    } else if (scoreT2 > scoreT1) {
+                        matchStatus = `${team2.name} won!`;
+                    } else if (scoreT1 === scoreT2) {
+                        matchStatus = `Match drawn!`;
+                    }
+                    return {
+                        title: item.title,
+                        date: item.date,
+                        time: item.time,
+                        teams: {
+                            team1: item.teams.team1,
+                            team2: item.teams.team2,
+                        },
+                        result: item.result,
+                        status: matchStatus,
+                    };
+                } else {
+                    return item;
+                }
+            });
+
+            await tournamentRef.update({matches: updatedStatus});
+        } catch (error) {
+            ToastAndroid.show(error.message, ToastAndroid.LONG);
         }
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.titleScreen}>Match 1</Text>
+            <Text style={styles.titleScreen}>{`Match ${matchNum}`}</Text>
             <Divider style={styles.divider} width={2} color="grey" />
 
             <View style={styles.teamView}>
@@ -37,7 +133,9 @@ const StartMatch = ({navigation, route}) => {
                             color={'#B95252'}
                             size={30}
                             type="Icons"
-                            onPress={() => decreaseScore(scoreT1, setScoreT1)}
+                            onPress={() =>
+                                decreaseScore(team1.id, scoreT1, setScoreT1)
+                            }
                         />
                         <Surface style={styles.surface} elevation={4}>
                             <Text style={styles.scoreText}>{scoreT1}</Text>
@@ -47,7 +145,9 @@ const StartMatch = ({navigation, route}) => {
                             color={'royalblue'}
                             size={30}
                             type="Icons"
-                            onPress={() => increaseScore(scoreT1, setScoreT1)}
+                            onPress={() =>
+                                increaseScore(team1.id, scoreT1, setScoreT1)
+                            }
                         />
                     </View>
                 </View>
@@ -63,7 +163,9 @@ const StartMatch = ({navigation, route}) => {
                             color={'#B95252'}
                             size={30}
                             type="Icons"
-                            onPress={() => decreaseScore(scoreT2, setScoreT2)}
+                            onPress={() =>
+                                decreaseScore(team2.id, scoreT2, setScoreT2)
+                            }
                         />
                         <Surface style={styles.surface} elevation={4}>
                             <Text style={styles.scoreText}>{scoreT2}</Text>
@@ -73,7 +175,9 @@ const StartMatch = ({navigation, route}) => {
                             color={'royalblue'}
                             size={30}
                             type="Icons"
-                            onPress={() => increaseScore(scoreT2, setScoreT2)}
+                            onPress={() =>
+                                increaseScore(team2.id, scoreT2, setScoreT2)
+                            }
                         />
                     </View>
                 </View>
@@ -83,7 +187,10 @@ const StartMatch = ({navigation, route}) => {
                 style={{
                     marginTop: 100,
                 }}>
-                <Button mode="contained" buttonColor="#B95252" onPress={{}}>
+                <Button
+                    mode="contained"
+                    buttonColor="#B95252"
+                    onPress={() => handleEndMatch()}>
                     <Text
                         style={{
                             fontSize: 18,

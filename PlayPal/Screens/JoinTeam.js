@@ -283,6 +283,17 @@ const JoinTeam = ({navigation}) => {
                         renderItem={renderItem}
                         keyExtractor={item => item.teamId}
                         contentContainerStyle={{paddingBottom: 180}}
+                        ListEmptyComponent={() => (
+                            <Text
+                                style={{
+                                    marginTop: 20,
+                                    fontSize: 18,
+                                    color: '#c22710',
+                                    fontWeight: '500',
+                                }}>
+                                No team found!
+                            </Text>
+                        )}
                     />
                 </View>
             )}

@@ -36,6 +36,7 @@ const ViewTeam = ({navigation, route}) => {
     const [teamRequests, setTeamRequests] = useState([]);
     const [reqLoading, setReqLoading] = useState(false);
     const [fetchTrigger, setFetchTrigger] = useState(false);
+    const isJoined = team.playersId.includes(myId);
 
     const gotoViewProfile = user => {
         let myId = auth().currentUser.uid;
@@ -51,6 +52,28 @@ const ViewTeam = ({navigation, route}) => {
             myTeam: team,
             playersList: playersData,
         });
+    };
+
+    const leaveAlertRef = useRef([]);
+
+    const handleLeaveTeam = async () => {
+        try {
+            leaveAlertRef.current.close();
+            setIsLoading(true);
+
+            await firestore()
+                .collection('teams')
+                .doc(team.teamId)
+                .update({playersId: firestore.FieldValue.arrayRemove(myId)});
+
+            setIsLoading(false);
+
+            navigation.navigate('BottomTab', {screen: 'Team'});
+        } catch (error) {
+            leaveAlertRef.current.close();
+            setIsLoading(false);
+            ToastAndroid.show(error.message, ToastAndroid.LONG);
+        }
     };
 
     const handleAcceptRequest = async uid => {
@@ -396,6 +419,26 @@ const ViewTeam = ({navigation, route}) => {
                 </Modal>
 
                 <AlertPro
+                    ref={ref => (leaveAlertRef.current = ref)}
+                    title={isCaptain ? 'Captain restriction!' : 'Leave Team!'}
+                    message={
+                        isCaptain
+                            ? 'You cannot leave team without assigning some other captain. Change captain in edit team!'
+                            : 'Are you sure you want to leave this team?'
+                    }
+                    onCancel={() => leaveAlertRef.current.close()}
+                    textCancel={isCaptain ? 'Ok' : 'No'}
+                    showConfirm={isCaptain ? false : true}
+                    onConfirm={() => handleLeaveTeam()}
+                    textConfirm="Yes"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: 'red'},
+                        buttonCancel: {backgroundColor: '#64bbde'},
+                        container: {borderWidth: 2, borderColor: 'lightgrey'},
+                    }}
+                />
+
+                <AlertPro
                     ref={ref => (alertRefs.current = ref)}
                     title={'Team is full!'}
                     message={
@@ -600,8 +643,23 @@ const ViewTeam = ({navigation, route}) => {
 
                 <View style={styles.playersView}>
                     <Text style={styles.playerTitle}>Players:</Text>
-                    {isCaptain ? (
-                        <></>
+                    {isJoined ? (
+                        <Button
+                            title={'Leave'}
+                            icon={() => (
+                                <Icon
+                                    name="logout"
+                                    color={'white'}
+                                    size={20}
+                                    style={{marginLeft: 5}}
+                                />
+                            )}
+                            iconRight={true}
+                            titleStyle={{fontSize: 18, letterSpacing: 1}}
+                            color={'red'}
+                            containerStyle={styles.leaveButton}
+                            onPress={() => leaveAlertRef.current.open()}
+                        />
                     ) : (
                         <Button
                             title={request ? 'Requested' : 'Join'}
@@ -791,6 +849,10 @@ const styles = StyleSheet.create({
         color: 'black',
         textDecorationLine: 'underline',
         letterSpacing: 1,
+    },
+    leaveButton: {
+        borderRadius: 15,
+        width: 110,
     },
     joinButton: {
         borderRadius: 15,

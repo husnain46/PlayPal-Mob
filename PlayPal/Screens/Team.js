@@ -10,7 +10,7 @@ import {
     FlatList,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
+    ToastAndroid,
 } from 'react-native';
 import {Divider, Title} from 'react-native-paper';
 import getSportsByIds from '../Functions/getSportsByIds';
@@ -58,26 +58,26 @@ const Team = ({navigation}) => {
                     if (querySnapshot.empty) {
                         // No team found with the given playerId
                         setLoading(false);
-                        return null;
+                        setTeams([]);
+                    } else {
+                        // Extract team data from the query result
+                        querySnapshot.forEach(doc => {
+                            const team = {
+                                teamId: doc.id,
+                                ...doc.data(),
+                            };
+                            fetchedTeams.push(team);
+                        });
+
+                        setTeams(fetchedTeams);
+
+                        setLoading(false);
                     }
-
-                    // Extract team data from the query result
-                    querySnapshot.forEach(doc => {
-                        const team = {
-                            teamId: doc.id,
-                            ...doc.data(),
-                        };
-                        fetchedTeams.push(team);
-                    });
-                    setTeams(fetchedTeams);
-
-                    setLoading(false);
                 } catch (error) {
                     setLoading(false);
-                    alert('Error getting teams', error.message);
+                    ToastAndroid.show(error.message, ToastAndroid.LONG);
                 }
             };
-
             fetchMyTeams();
         }, []),
     );
@@ -134,7 +134,7 @@ const Team = ({navigation}) => {
                 }}
                 style={{width: '100%'}}>
                 <View style={styles.yourTeamView}>
-                    <Text style={styles.text1}>My team</Text>
+                    <Text style={styles.text1}>My teams</Text>
                     <Divider style={styles.divider} />
                     <View style={styles.listView}>
                         {loading ? (
@@ -143,10 +143,6 @@ const Team = ({navigation}) => {
                                 size="large"
                                 color="#4A5B96"
                             />
-                        ) : teams.length === 0 ? (
-                            <Text style={styles.text2}>
-                                You are not in a team yet
-                            </Text>
                         ) : (
                             <FlatList
                                 showsVerticalScrollIndicator={false}
@@ -155,6 +151,11 @@ const Team = ({navigation}) => {
                                 keyExtractor={item => item.teamId}
                                 contentContainerStyle={{paddingBottom: 10}}
                                 scrollEnabled={false}
+                                ListEmptyComponent={() => (
+                                    <Text style={styles.text2}>
+                                        You are not in a team yet
+                                    </Text>
+                                )}
                             />
                         )}
                     </View>
@@ -236,7 +237,7 @@ const styles = StyleSheet.create({
     text2: {
         fontSize: 18,
         fontWeight: '600',
-        marginTop: 40,
+        marginTop: 30,
     },
     divider: {
         marginTop: 10,
