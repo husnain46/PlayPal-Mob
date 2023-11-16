@@ -6,8 +6,6 @@ import {
     Text,
     View,
     FlatList,
-    Alert,
-    ToastAndroid,
     ActivityIndicator,
     Modal,
 } from 'react-native';
@@ -17,7 +15,7 @@ import cityData from '../Assets/cityData.json';
 import {Divider, Icon} from '@rneui/themed';
 import AlertPro from 'react-native-alert-pro';
 import firestore from '@react-native-firebase/firestore';
-import {StackActions} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 const EditTournament = ({navigation, route}) => {
     const {data, teamsData} = route.params;
@@ -114,16 +112,21 @@ const EditTournament = ({navigation, route}) => {
                 .doc(data.id)
                 .update(tournamentData);
 
-            ToastAndroid.show(
-                'Tournament updated successfully!',
-                ToastAndroid.LONG,
-            );
+            Toast.show({
+                type: 'success',
+                text1: 'Tournament updated successfully!',
+                visibilityTime: 3000,
+            });
 
             navigation.goBack();
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            ToastAndroid.show(error.message, ToastAndroid.TOP);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -137,12 +140,21 @@ const EditTournament = ({navigation, route}) => {
 
             await tournamentRef.delete();
 
+            Toast.show({
+                type: 'success',
+                text1: 'Tournament removed!',
+            });
+
             navigation.navigate('BottomTab', {screen: 'Tournament'});
 
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            ToastAndroid.show(error.message, ToastAndroid.TOP);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 

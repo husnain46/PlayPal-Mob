@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
     StyleSheet,
     View,
@@ -9,18 +9,39 @@ import {
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
+import {Badge} from '@rneui/themed';
+import {useFocusEffect} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 export default function Header({navigation}) {
     const [userData, setUserData] = useState();
 
+    const [badgeCount, setBadgeCount] = useState(false);
+    const myId = auth().currentUser.uid;
+
+    useFocusEffect(
+        useCallback(() => {
+            // Set up real-time listener for new notifications
+            const unsubscribe = firestore()
+                .collection('notifications')
+                .where('receiverId', '==', myId)
+                .onSnapshot(snapshot => {
+                    setBadgeCount(snapshot.docChanges().length);
+                });
+
+            return () => {
+                unsubscribe();
+            };
+        }, [navigation]),
+    );
+
     useEffect(() => {
         // Fetch user data from Firestore
         const fetchUserData = async () => {
-            const uid = auth().currentUser.uid;
             try {
                 const userDoc = await firestore()
                     .collection('users')
-                    .doc(uid)
+                    .doc(myId)
                     .get();
                 if (userDoc.exists) {
                     setUserData(userDoc.data());
@@ -34,7 +55,7 @@ export default function Header({navigation}) {
                                 text: 'Reload',
                                 onPress: () => {
                                     // Reload the app
-                                    navigation.navigate('App', {
+                                    navigation.navigate('BottomTab', {
                                         screen: 'Home',
                                     });
                                 },
@@ -52,7 +73,7 @@ export default function Header({navigation}) {
                             text: 'Reload',
                             onPress: () => {
                                 // Reload the app
-                                navigation.navigate('App', {
+                                navigation.navigate('BottomTab', {
                                     screen: 'Home',
                                 });
                             },
@@ -78,12 +99,20 @@ export default function Header({navigation}) {
 
             <View style={styles.rightView}>
                 <TouchableOpacity
-                    onPress={() => navigation.navigate('Notifications')}>
+                    onPress={() => navigation.navigate('Notifications')}
+                    style={{flexDirection: 'row'}}>
                     <Image
                         source={require('../Assets/Icons/bell.png')}
                         style={styles.bell}
                         resizeMode="contain"
                     />
+                    {badgeCount > 0 && (
+                        <Badge
+                            status="error"
+                            value={badgeCount}
+                            containerStyle={{marginLeft: -10}}
+                        />
+                    )}
                 </TouchableOpacity>
                 <View style={styles.divider} />
 

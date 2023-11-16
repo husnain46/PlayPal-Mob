@@ -1,7 +1,6 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Picker} from '@react-native-picker/picker';
 import {SearchBar} from '@rneui/themed';
-
 import {
     Image,
     Modal,
@@ -10,21 +9,25 @@ import {
     View,
     StyleSheet,
     FlatList,
+    ActivityIndicator,
 } from 'react-native';
 import {Button, Card, Title, Text, Divider} from 'react-native-paper';
 import DropDownPicker from 'react-native-dropdown-picker';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
-import tournamentData from '../Assets/tournamentData.json';
 import cityData from '../Assets/cityData.json';
+import Toast from 'react-native-toast-message';
+import firestore from '@react-native-firebase/firestore';
 
 const ExploreTournament = ({navigation}) => {
+    const [tournamentsData, setTournamentsData] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [sportsFilter, setSportsFilter] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState(cityData);
+    const [isLoading, setIsLoading] = useState(true);
 
     const searchCity = query => {
         const filteredItems = items.filter(item =>
@@ -33,33 +36,48 @@ const ExploreTournament = ({navigation}) => {
         return filteredItems;
     };
 
-    const gotoViewTournament = (data, sportName, startDate, endDate) => {
+    const gotoViewTournament = (tournamentId, sportName) => {
         navigation.navigate('ViewTournament', {
-            data,
+            tournamentId,
             sportName,
-            startDate,
-            endDate,
         });
     };
 
-    const getTournamentDates = tournament => {
-        const matches = tournament.matches;
-        if (matches.length === 0) {
-            return {startDate: null, lastDate: null};
-        }
+    useEffect(() => {
+        const fetchTournaments = async () => {
+            try {
+                const tournamentRef = await firestore()
+                    .collection('tournaments')
+                    .get();
 
-        const sortedMatches = matches.sort((a, b) => {
-            return a.date.localeCompare(b.date);
-        });
+                if (!tournamentRef.empty) {
+                    const tData = tournamentRef.docs.map(doc => {
+                        return {id: doc.id, ...doc.data()};
+                    });
 
-        const startDate = sortedMatches[0].date;
-        const lastDate = sortedMatches[sortedMatches.length - 1].date;
+                    setTournamentsData(tData);
+                    setFilteredData(tData);
+                    setIsLoading(false);
+                } else {
+                    setIsLoading(false);
 
-        return {
-            startDate: startDate,
-            endDate: lastDate,
+                    setTournamentsData([]);
+                }
+            } catch (error) {
+                setIsLoading(false);
+
+                Toast.show({
+                    type: 'error',
+                    text1: 'An error occurred!',
+                    text2: error.message,
+                });
+            }
         };
-    };
+
+        fetchTournaments();
+
+        return () => {};
+    }, []);
 
     const sportIcons = {
         Cricket: require('../Assets/Icons/cricket.png'),
@@ -76,15 +94,12 @@ const ExploreTournament = ({navigation}) => {
     const resetFilters = () => {
         setSportsFilter(null);
         setSelectedCity('');
-        setSelectedProvince('');
     };
 
     const handleSearch = text => {
         setSearchQuery(text);
 
-        const searchFilteredData = Object.keys(tournamentData).map(
-            key => tournamentData[key],
-        );
+        const searchFilteredData = tournamentsData;
 
         const filtered = searchFilteredData.filter(data => {
             const isNameMatched = data.name
@@ -103,16 +118,10 @@ const ExploreTournament = ({navigation}) => {
         setFilteredData(filtered);
     };
 
-    const [filteredData, setFilteredData] = useState(
-        Object.keys(tournamentData).map(key => tournamentData[key]),
-    );
+    const [filteredData, setFilteredData] = useState([]);
 
     const applyFilters = () => {
-        const searchFilteredData = Object.keys(tournamentData).map(
-            key => tournamentData[key],
-        );
-
-        const filtered = searchFilteredData.filter(data => {
+        const filtered = tournamentsData.filter(data => {
             const isNameMatched = data.name
                 .toLowerCase()
                 .includes(searchQuery.toLowerCase());
@@ -131,7 +140,17 @@ const ExploreTournament = ({navigation}) => {
     };
 
     const renderItem = ({item}) => {
-        const {startDate, endDate} = getTournamentDates(item);
+        const startDate = item.start_date.toDate().toLocaleDateString('en-GB', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+        const endDate = item.end_date.toDate().toLocaleDateString('en-GB', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+
         const sportName = getSportsByIds([item.sport]);
 
         const iconPath = sportIcons[sportName] || sportIcons.default;
@@ -139,9 +158,7 @@ const ExploreTournament = ({navigation}) => {
         return (
             <TouchableOpacity
                 style={styles.cardView}
-                onPress={() =>
-                    gotoViewTournament(item, sportName, startDate, endDate)
-                }>
+                onPress={() => gotoViewTournament(item.id, sportName)}>
                 <Card style={styles.card}>
                     <Card.Content
                         style={{
@@ -166,11 +183,15 @@ const ExploreTournament = ({navigation}) => {
                                     paddingVertical: 10,
                                 }}>
                                 <Text style={styles.dateText}>Start date:</Text>
-                                <Text style={styles.info1}>{startDate} </Text>
+                                <Text
+                                    style={
+                                        styles.info1
+                                    }>{` ${startDate}`}</Text>
                             </View>
                             <View style={{flexDirection: 'row'}}>
                                 <Text>End date: </Text>
-                                <Text style={styles.info2}>{endDate} </Text>
+                                <Text
+                                    style={styles.info2}>{` ${endDate}`}</Text>
                             </View>
                         </View>
                         <View style={styles.sportIconView}>
@@ -302,16 +323,35 @@ const ExploreTournament = ({navigation}) => {
                     </View>
                 </View>
             </Modal>
-
-            <View style={styles.listView}>
-                <FlatList
-                    showsVerticalScrollIndicator={false}
-                    data={filteredData}
-                    renderItem={renderItem}
-                    keyExtractor={filteredData.tournamentId}
-                    contentContainerStyle={{paddingBottom: 180}}
-                />
-            </View>
+            {isLoading ? (
+                <View style={{alignSelf: 'center'}}>
+                    <ActivityIndicator
+                        style={{top: 100}}
+                        size={50}
+                        color="#11867F"
+                    />
+                </View>
+            ) : (
+                <View style={styles.listView}>
+                    <FlatList
+                        showsVerticalScrollIndicator={false}
+                        data={filteredData}
+                        renderItem={renderItem}
+                        keyExtractor={filteredData.id}
+                        ListEmptyComponent={() => (
+                            <Text
+                                style={{
+                                    fontSize: 18,
+                                    color: '#124163',
+                                    textAlign: 'center',
+                                }}>
+                                No tournament found!
+                            </Text>
+                        )}
+                        contentContainerStyle={{paddingBottom: 180}}
+                    />
+                </View>
+            )}
         </SafeAreaView>
     );
 };

@@ -10,7 +10,6 @@ import {
     FlatList,
     TouchableOpacity,
     ActivityIndicator,
-    ToastAndroid,
 } from 'react-native';
 import {Divider, Title} from 'react-native-paper';
 import getSportsByIds from '../Functions/getSportsByIds';
@@ -18,6 +17,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';
 import AlertPro from 'react-native-alert-pro';
+import Toast from 'react-native-toast-message';
 
 const Team = ({navigation}) => {
     const [teams, setTeams] = useState([]);
@@ -75,7 +75,11 @@ const Team = ({navigation}) => {
                     }
                 } catch (error) {
                     setLoading(false);
-                    ToastAndroid.show(error.message, ToastAndroid.LONG);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Error',
+                        text2: error.message,
+                    });
                 }
             };
             fetchMyTeams();

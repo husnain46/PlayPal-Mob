@@ -10,8 +10,6 @@ import {
     TouchableOpacity,
     Modal,
     ActivityIndicator,
-    Alert,
-    ToastAndroid,
 } from 'react-native';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Button, Divider, Icon} from '@rneui/themed';
@@ -20,6 +18,7 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import {useFocusEffect} from '@react-navigation/native';
 import AlertPro from 'react-native-alert-pro';
+import Toast from 'react-native-toast-message';
 
 const ViewTeam = ({navigation, route}) => {
     const {team, sportName} = route.params;
@@ -69,10 +68,19 @@ const ViewTeam = ({navigation, route}) => {
             setIsLoading(false);
 
             navigation.navigate('BottomTab', {screen: 'Team'});
+            Toast.show({
+                type: 'info',
+                text1: 'You left the team!',
+            });
         } catch (error) {
             leaveAlertRef.current.close();
             setIsLoading(false);
-            ToastAndroid.show(error.message, ToastAndroid.LONG);
+
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -88,25 +96,32 @@ const ViewTeam = ({navigation, route}) => {
                     prevUsers.filter(user => user.id !== uid),
                 );
 
-                const userReq = firestore()
+                const teamRef = firestore()
                     .collection('teams')
                     .doc(team.teamId);
 
-                await userReq.update({
+                await teamRef.update({
                     playersId: firestore.FieldValue.arrayUnion(uid),
                 });
 
-                await firestore()
-                    .collection('teams')
-                    .doc(team.teamId)
-                    .update({requests: firestore.FieldValue.arrayRemove(uid)});
+                await teamRef.update({
+                    requests: firestore.FieldValue.arrayRemove(uid),
+                });
 
                 setReqLoading(false);
                 team.playersId.push(uid);
-                ToastAndroid.show(`Request accepted!`, ToastAndroid.SHORT);
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'The player is added to your team!',
+                });
             } catch (error) {
                 setReqLoading(false);
-                Alert.alert('Error', error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: error.message,
+                });
             }
         }
     };
@@ -124,10 +139,13 @@ const ViewTeam = ({navigation, route}) => {
                 .update({requests: firestore.FieldValue.arrayRemove(uid)});
 
             setReqLoading(false);
-            ToastAndroid.show(`Request deleted!`, ToastAndroid.SHORT);
         } catch (error) {
             setReqLoading(false);
-            Alert.alert('Error', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -149,9 +167,16 @@ const ViewTeam = ({navigation, route}) => {
 
                     setRequest(true);
 
-                    ToastAndroid.show(`Request sent!`, ToastAndroid.SHORT);
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Request sent!',
+                    });
                 } catch (error) {
-                    Alert.alert('Error', error.message);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Error',
+                        text2: error.message,
+                    });
                 }
             }
         } else {
@@ -165,9 +190,16 @@ const ViewTeam = ({navigation, route}) => {
 
                 setRequest(false);
 
-                ToastAndroid.show(`Request deleted!`, ToastAndroid.SHORT);
+                Toast.show({
+                    type: 'info',
+                    text1: 'Request deleted!',
+                });
             } catch (error) {
-                Alert.alert('Error', error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: error.message,
+                });
             }
         }
     };
@@ -200,7 +232,11 @@ const ViewTeam = ({navigation, route}) => {
                 setReqLoading(false);
             } catch (error) {
                 setReqLoading(false);
-                Alert.alert('Error', error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: error.message,
+                });
             }
         };
         fetchReqUsersData();
@@ -244,10 +280,13 @@ const ViewTeam = ({navigation, route}) => {
 
                 setPlayersData(playerInfo);
             } catch (error) {
-                Alert.alert('Error fetching team data:', error.message);
-                // Handle errors here
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error loading data!',
+                    text2: error.message,
+                });
             } finally {
-                setIsLoading(false); // Set isLoading to false after data is fetched or an error occurs
+                setIsLoading(false);
             }
         };
 
@@ -273,7 +312,11 @@ const ViewTeam = ({navigation, route}) => {
                 setReqLoading(false);
             } catch (error) {
                 setReqLoading(false);
-                ToastAndroid.show(error.message, ToastAndroid.LONG);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Requests loading error!',
+                    text2: error.message,
+                });
             }
         };
         fetchRequests();

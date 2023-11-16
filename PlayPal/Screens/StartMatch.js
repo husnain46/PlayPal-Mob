@@ -2,8 +2,8 @@ import {SafeAreaView, StyleSheet, Text, View} from 'react-native';
 import React, {useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
 import {Button, Surface} from 'react-native-paper';
-import {ToastAndroid} from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import Toast from 'react-native-toast-message';
 
 const StartMatch = ({navigation, route}) => {
     const {match, team1, team2, matchNum, tournamentId} = route.params;
@@ -69,7 +69,10 @@ const StartMatch = ({navigation, route}) => {
                 await tournamentRef.update({matches: updatedMatches});
             }
         } catch (error) {
-            console.error('Error updating score:', error);
+            Toast.show({
+                type: 'error',
+                text2: error.message,
+            });
         }
     };
 
@@ -113,8 +116,16 @@ const StartMatch = ({navigation, route}) => {
             });
 
             await tournamentRef.update({matches: updatedStatus});
+            Toast.show({
+                type: 'success',
+                text1: 'Match ended!',
+            });
         } catch (error) {
-            ToastAndroid.show(error.message, ToastAndroid.LONG);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 

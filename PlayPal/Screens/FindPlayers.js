@@ -23,6 +23,7 @@ import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
 import {useFocusEffect} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
+import Toast from 'react-native-toast-message';
 
 const FindPlayers = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -39,22 +40,25 @@ const FindPlayers = ({navigation}) => {
 
             const usersCollection = firestore().collection('users');
             const snapshot = await usersCollection.get();
+            if (!snapshot.empty) {
+                const userData = snapshot.docs.map(doc => {
+                    return {...doc.data(), id: doc.id};
+                });
 
-            const userData = snapshot.docs.map(doc => {
-                return {...doc.data(), id: doc.id};
-            });
+                const newUsersData = userData.filter(user => user.id !== myId);
 
-            const newUsersData = userData.filter(user => user.id !== myId);
-
-            setFilteredUsers(newUsersData);
-            setPlayersData(userData);
-            setIsLoading(false);
+                setFilteredUsers(newUsersData);
+                setPlayersData(userData);
+                setIsLoading(false);
+            }
         } catch (error) {
             setIsLoading(false);
-            Alert.alert(
-                'Error',
-                'An error occurred while fetching players. Please reload app.',
-            );
+
+            Toast.show({
+                type: 'error',
+                text1: 'Error loading players data!',
+                text2: error.message,
+            });
         }
     };
 

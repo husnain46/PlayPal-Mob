@@ -18,6 +18,7 @@ import auth from '@react-native-firebase/auth';
 import {Button} from '@rneui/themed';
 import firestore from '@react-native-firebase/firestore';
 import {ActivityIndicator} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const SignUp = ({navigation}) => {
     const [backDate, setBackDate] = useState(new Date());
@@ -143,11 +144,18 @@ const SignUp = ({navigation}) => {
                         gotoVerify();
                     } else {
                         // Handle the case where user is null
-                        alert('Error! Some input may be empty.');
+                        Toast.show({
+                            type: 'error',
+                            text1: 'An error occurred! Please try again.',
+                        });
                     }
                 })
                 .catch(error => {
-                    alert(error);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Error',
+                        text2: error.message,
+                    });
                 })
                 .finally(() => {
                     // Set loading to false when the signup process is complete

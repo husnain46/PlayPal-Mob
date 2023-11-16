@@ -9,7 +9,6 @@ import {
     Image,
     TouchableOpacity,
     ActivityIndicator,
-    Alert,
 } from 'react-native';
 import {Button, IconButton, TextInput} from 'react-native-paper';
 import AlertPro from 'react-native-alert-pro';
@@ -18,6 +17,7 @@ import {Dropdown} from 'react-native-element-dropdown';
 import firestore from '@react-native-firebase/firestore';
 import cityData from '../Assets/cityData.json';
 import storage from '@react-native-firebase/storage';
+import Toast from 'react-native-toast-message';
 
 const EditTeam = ({navigation, route}) => {
     const {myTeam, playersList} = route.params;
@@ -57,7 +57,11 @@ const EditTeam = ({navigation, route}) => {
                     .filter(player => player !== null);
                 setPlayersData(initialPlayersData);
             } catch (error) {
-                Alert.alert('Error fetching players data!', error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error loading players data',
+                    text2: error.message,
+                });
             } finally {
                 setListLoading(false);
             }
@@ -90,7 +94,11 @@ const EditTeam = ({navigation, route}) => {
                 errorMessage = 'The selected file size is too large.';
             }
 
-            Alert.alert('Error', errorMessage);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: errorMessage,
+            });
         }
     };
 
@@ -177,10 +185,21 @@ const EditTeam = ({navigation, route}) => {
                 .update(teamData);
 
             navigation.navigate('BottomTab', {screen: 'Team'});
+
+            Toast.show({
+                type: 'success',
+                text1: 'Team updated successfully!',
+            });
+
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            Alert.alert('Error updating data!', error.message);
+
+            Toast.show({
+                type: 'error',
+                text1: 'Error updating data!',
+                text2: error.message,
+            });
         }
     };
 

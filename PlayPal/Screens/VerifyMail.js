@@ -3,6 +3,7 @@ import {View, Text, StyleSheet, AppState} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import {Button} from '@rneui/themed';
 import {BackHandler} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const VerifyMail = ({navigation}) => {
     const [reloadKey, setReloadKey] = useState(0);
@@ -30,9 +31,10 @@ const VerifyMail = ({navigation}) => {
                 newUser.getIdToken(true);
                 const isEmailVerified = auth().currentUser.emailVerified;
                 if (!isEmailVerified) {
-                    alert(
-                        'Email verification has been sent, check your email and verify',
-                    );
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Email verification has been sent. Please check your email and verify!',
+                    });
                 }
             }
         });
@@ -64,6 +66,10 @@ const VerifyMail = ({navigation}) => {
 
     const handleResendVerification = async () => {
         await user.sendEmailVerification();
+        Toast.show({
+            type: 'success',
+            text1: 'Email verification sent. Please check your email and verify!',
+        });
     };
 
     const gotoLogin = async () => {

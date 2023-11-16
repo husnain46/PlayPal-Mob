@@ -1,12 +1,6 @@
 import {Icon} from '@rneui/themed';
 import React, {useRef, useState, useEffect} from 'react';
-import {
-    Alert,
-    Image,
-    KeyboardAvoidingView,
-    SafeAreaView,
-    ToastAndroid,
-} from 'react-native';
+import {Alert, Image, KeyboardAvoidingView, SafeAreaView} from 'react-native';
 import {
     View,
     FlatList,
@@ -17,6 +11,7 @@ import {
 } from 'react-native';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import firestore from '@react-native-firebase/firestore';
+import Toast from 'react-native-toast-message';
 
 const ChatScreen = ({navigation, route}) => {
     const {user, chatId, senderId} = route.params;
@@ -48,7 +43,10 @@ const ChatScreen = ({navigation, route}) => {
                         }
                     }
                 } catch (error) {
-                    ToastAndroid.show(error.message, ToastAndroid.SHORT);
+                    Toast.show({
+                        type: 'error',
+                        text2: error.message,
+                    });
                 }
             });
 
@@ -75,7 +73,11 @@ const ChatScreen = ({navigation, route}) => {
 
             setMessages([]);
         } catch (error) {
-            Alert.alert('Error deleting chat: ', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Error deleting chat!',
+                text2: error.message,
+            });
         }
     };
 
@@ -85,7 +87,7 @@ const ChatScreen = ({navigation, route}) => {
         }
 
         const message = {
-            sender: senderId, // or get sender information from authentication
+            sender: senderId,
             text: inputMessage,
             timestamp: new Date().toISOString(),
         };
@@ -100,7 +102,11 @@ const ChatScreen = ({navigation, route}) => {
                     messages: firestore.FieldValue.arrayUnion(message),
                 });
         } catch (error) {
-            Alert.alert('Message not sent!: ', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Message not sent!',
+                text2: error.message,
+            });
         }
     };
 

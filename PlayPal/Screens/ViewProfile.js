@@ -5,13 +5,11 @@ import {
     ScrollView,
     Image,
     TouchableOpacity,
-    Alert,
     ActivityIndicator,
-    ToastAndroid,
     SafeAreaView,
     Modal,
 } from 'react-native';
-import {Avatar, Text, ListItem, Divider, Button} from '@rneui/themed';
+import {Avatar, Text, ListItem, Divider} from '@rneui/themed';
 import getAge from '../Functions/getAge';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import getSportsByIds from '../Functions/getSportsByIds';
@@ -19,6 +17,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';
 import AlertPro from 'react-native-alert-pro';
+import Toast from 'react-native-toast-message';
 
 const ViewProfile = ({navigation, route}) => {
     const {user} = route.params;
@@ -52,8 +51,6 @@ const ViewProfile = ({navigation, route}) => {
                             )
                             .map(doc => doc.id)[0];
 
-                        console.log(chatId);
-
                         if (!chatId) {
                             // No chat found, create a new chat
                             const newChat = await firestore()
@@ -69,7 +66,11 @@ const ViewProfile = ({navigation, route}) => {
                             setChatId(chatId);
                         }
                     } catch (error) {
-                        Alert.alert('Error initiating chat', error.message);
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Error initiating chat!',
+                            text2: error.message,
+                        });
                     }
                 };
 
@@ -120,7 +121,11 @@ const ViewProfile = ({navigation, route}) => {
                 setIsLoading(false);
             } catch (error) {
                 setIsLoading(false);
-                Alert.alert('Error', error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: error.message,
+                });
             }
         };
 
@@ -159,17 +164,30 @@ const ViewProfile = ({navigation, route}) => {
 
                 await reqSnapshot.docs[0].ref.delete();
 
+                const notifyRef = await firestore()
+                    .collection('notifications')
+                    .where('senderId', '==', playerId)
+                    .where('receiverId', '==', myId)
+                    .where('type', '==', 'friend_request')
+                    .get();
+
+                await notifyRef.docs[0].ref.delete();
+
                 setIsFriend(true);
                 setIsAccepted(true);
                 setReqLoading(false);
 
-                ToastAndroid.show(
-                    `${user.firstName} ${user.lastName} has been added to your friends.`,
-                    ToastAndroid.LONG,
-                );
+                Toast.show({
+                    type: 'success',
+                    text1: `${user.firstName} ${user.lastName} has been added to your friends.`,
+                });
             }
         } catch (error) {
-            Alert.alert('Error', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -185,13 +203,30 @@ const ViewProfile = ({navigation, route}) => {
                 .get();
 
             await requestSnapshot.docs[0].ref.delete();
+
+            const notifyRef = await firestore()
+                .collection('notifications')
+                .where('senderId', '==', playerId)
+                .where('receiverId', '==', myId)
+                .where('type', '==', 'friend_request')
+                .get();
+
+            await notifyRef.docs[0].ref.delete();
+
             setReqLoading(false);
 
             setIsAccepted(true);
 
-            ToastAndroid.show(`Friend request removed!`, ToastAndroid.SHORT);
+            Toast.show({
+                type: 'info',
+                text1: 'Friend request removed!',
+            });
         } catch (error) {
-            Alert.alert('Error', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -219,14 +254,20 @@ const ViewProfile = ({navigation, route}) => {
             await firestore().collection('chats').doc(chatId).delete();
 
             setIsFriend(false);
-            ToastAndroid.show(
-                `You unfriended ${user.firstName} ${user.lastName}`,
-                ToastAndroid.TOP,
-            );
+
+            Toast.show({
+                type: 'info',
+                text1: `You unfriended ${user.firstName} ${user.lastName}`,
+            });
+
             setRemoveLoading(false);
             alertProRef.current.close();
         } catch (error) {
-            Alert.alert('Error', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -249,13 +290,23 @@ const ViewProfile = ({navigation, route}) => {
                 // If the friend request exists, remove it
                 if (requestSent && !requestSnapshot.empty) {
                     await requestSnapshot.docs[0].ref.delete();
+
+                    const notifyRef = await firestore()
+                        .collection('notifications')
+                        .where('senderId', '==', myId)
+                        .where('receiverId', '==', playerId)
+                        .where('type', '==', 'friend_request')
+                        .get();
+
+                    await notifyRef.docs[0].ref.delete();
+
                     setReqLoading(false);
                     setRequestSent(false);
 
-                    ToastAndroid.show(
-                        `Friend request cancelled`,
-                        ToastAndroid.SHORT,
-                    );
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Friend request cancelled!',
+                    });
                 } else {
                     // If the friend request doesn't exist, add it
                     await firestore().collection('friendRequests').add({
@@ -264,20 +315,31 @@ const ViewProfile = ({navigation, route}) => {
                         status: 'pending',
                     });
 
-                    setReqLoading(false);
+                    const notification = {
+                        senderId: myId,
+                        receiverId: playerId,
+                        message: 'You have received a friend request from ',
+                        type: 'friend_request',
+                    };
+                    await firestore()
+                        .collection('notifications')
+                        .add(notification);
 
+                    setReqLoading(false);
                     setRequestSent(true);
 
-                    ToastAndroid.show(
-                        `Friend request sent to ${user.firstName} ${user.lastName}`,
-                        ToastAndroid.SHORT,
-                    );
+                    Toast.show({
+                        type: 'success',
+                        text1: `Friend request sent to ${user.firstName} ${user.lastName}`,
+                    });
                 }
-
-                // Toggle requestSent state
             }
         } catch (error) {
-            Alert.alert('Error', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -327,6 +389,10 @@ const ViewProfile = ({navigation, route}) => {
                         message={`Are you sure you want to remove ${user.firstName} ${user.lastName} from your friends?`}
                         textCancel="No"
                         textConfirm="Yes"
+                        customStyles={{
+                            buttonConfirm: {backgroundColor: 'red'},
+                            buttonCancel: {backgroundColor: '#0084ff'},
+                        }}
                     />
                 )}
 

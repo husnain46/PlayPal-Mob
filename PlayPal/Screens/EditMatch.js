@@ -4,7 +4,6 @@ import {
     Text,
     View,
     SafeAreaView,
-    ToastAndroid,
     Modal,
     ActivityIndicator,
 } from 'react-native';
@@ -13,6 +12,7 @@ import {Divider} from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {Dropdown} from 'react-native-element-dropdown';
 import firestore from '@react-native-firebase/firestore';
+import Toast from 'react-native-toast-message';
 
 const EditMatch = ({navigation, route}) => {
     const {tournamentId, match, teamsData} = route.params;
@@ -90,13 +90,12 @@ const EditMatch = ({navigation, route}) => {
                     }
                 });
 
-                // Update the tournament document with the modified matches array
                 await tournamentRef.update({matches: updatedMatches});
 
-                ToastAndroid.show(
-                    'Match updated successfully!',
-                    ToastAndroid.LONG,
-                );
+                Toast.show({
+                    type: 'success',
+                    text1: 'Match updated successfully!',
+                });
 
                 setIsLoading(false);
 
@@ -104,7 +103,11 @@ const EditMatch = ({navigation, route}) => {
             }
         } catch (error) {
             setIsLoading(false);
-            ToastAndroid.show(error.message, ToastAndroid.TOP);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 
@@ -134,12 +137,16 @@ const EditMatch = ({navigation, route}) => {
                     );
 
                     await tournamentRef.update({matches: updatedMatches});
-                    ToastAndroid.show('Match deleted!', ToastAndroid.LONG);
+
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Match removed!',
+                    });
                 } else {
-                    ToastAndroid.show(
-                        'Match could not be deleted!',
-                        ToastAndroid.LONG,
-                    );
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Match could not be deleted!',
+                    });
                 }
             }
 
@@ -147,7 +154,11 @@ const EditMatch = ({navigation, route}) => {
             navigation.goBack();
         } catch (error) {
             setIsLoading(false);
-            ToastAndroid.show(error.message, ToastAndroid.TOP);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 

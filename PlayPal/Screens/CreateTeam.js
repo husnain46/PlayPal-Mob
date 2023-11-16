@@ -8,7 +8,7 @@ import {
     StyleSheet,
     Alert,
 } from 'react-native';
-import {Text, Button, ButtonGroup} from '@rneui/themed';
+import {Text, Button} from '@rneui/themed';
 import {RadioButton, TextInput} from 'react-native-paper';
 import ImagePicker from 'react-native-image-crop-picker';
 import sportsList from '../Assets/sportsList.json';
@@ -17,7 +17,7 @@ import cityData from '../Assets/cityData.json';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import {ActivityIndicator} from 'react-native';
-import {ToastAndroid} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const CreateTeam = ({navigation}) => {
     const [teamName, setTeamName] = useState('');
@@ -63,21 +63,16 @@ const CreateTeam = ({navigation}) => {
                 errorMessage = 'The selected file size is too large.';
             }
 
-            Alert.alert('Error', errorMessage);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: errorMessage,
+            });
         }
     };
 
     const handleCreateTeam = async () => {
         let capId = auth().currentUser.uid;
-        console.log(
-            teamName,
-            teamDetail,
-            teamCity,
-            sportValue,
-            teamSize,
-            imageSelected,
-            capId,
-        );
 
         const tName = teamName.trim().toLowerCase();
 
@@ -95,6 +90,7 @@ const CreateTeam = ({navigation}) => {
 
             if (matchName) {
                 setLoading(false);
+
                 Alert.alert(
                     'Error',
                     'A team with this name already exists! Change your team name and try again.',
@@ -132,17 +128,24 @@ const CreateTeam = ({navigation}) => {
 
                 await firestore().collection('teams').add(teamData);
                 setLoading(false);
-                ToastAndroid.show(
-                    `Your team ${teamName} created successfully!`,
-                    ToastAndroid.TOP,
-                );
+
+                Toast.show({
+                    type: 'success',
+                    text1: `Your team ${teamName} created successfully!`,
+                });
+
                 setLoading(false);
 
-                navigation.navigate('Team');
+                navigation.navigate('BottomTab', {screen: 'Team'});
             }
         } catch (error) {
             setLoading(false);
-            Alert.alert('Error creating team', error.message);
+
+            Toast.show({
+                type: 'error',
+                text1: 'Error creating team!',
+                text2: error.message,
+            });
         }
     };
 

@@ -6,7 +6,6 @@ import {
     TextInput,
     Image,
     Text,
-    Alert,
     ScrollView,
     ActivityIndicator,
 } from 'react-native';
@@ -19,6 +18,7 @@ import auth from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
 import sportsList from '../Assets/sportsList.json';
 import {StackActions} from '@react-navigation/native';
+import Toast from 'react-native-toast-message';
 
 const Welcome = ({navigation}) => {
     const [selectedSports, setSelectedSports] = useState([]);
@@ -44,7 +44,11 @@ const Welcome = ({navigation}) => {
                 setUserFirstName(firstName);
             }
         } catch (error) {
-            console.error('Error fetching user data:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Error loading user data!',
+                text2: error.message,
+            });
         }
     };
 
@@ -99,7 +103,10 @@ const Welcome = ({navigation}) => {
             !selectedSports ||
             !imageSelected
         ) {
-            Alert.alert('Error', 'Please fill/select all the fields!');
+            Toast.show({
+                type: 'error',
+                text1: 'Please fill/select all the fields!',
+            });
             return;
         }
 
@@ -114,10 +121,19 @@ const Welcome = ({navigation}) => {
             // Update user data in Firestore
             await firestore().collection('users').doc(uid).update(userData);
 
-            navigation.dispatch(StackActions.replace('BottomTab')); // Navigate to home screen
+            Toast.show({
+                type: 'success',
+                text1: 'Profile completed!',
+            });
+
+            navigation.dispatch(StackActions.replace('BottomTab'));
         } catch (error) {
             setIsLoading(false);
-            Alert.alert('Error', error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'An error occurred!',
+                text2: error.message,
+            });
         }
     };
 
@@ -148,8 +164,6 @@ const Welcome = ({navigation}) => {
                 throw new Error('Image upload cancelled');
             }
         } catch (error) {
-            console.log(error); // Log the error for debugging purposes
-
             let errorMessage = 'Failed to upload the image. Please try again.';
 
             // Check specific error conditions and update error message accordingly
@@ -161,7 +175,11 @@ const Welcome = ({navigation}) => {
                 errorMessage = 'The selected file size is too large.';
             }
 
-            Alert.alert('Error', errorMessage);
+            Toast.show({
+                type: 'error',
+                text1: 'Error loading user data!',
+                text2: errorMessage,
+            });
         }
     };
 

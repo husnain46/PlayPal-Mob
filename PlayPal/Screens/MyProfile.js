@@ -231,13 +231,18 @@ const MyProfile = ({navigation, route}) => {
                     justifyContent: 'center',
                 }}
                 onPress={() => showLogoutAlert()}>
-                <Icon name="logout" type="Feather" size={23} color={'red'} />
+                <Icon
+                    name="logout"
+                    style={{marginRight: 10}}
+                    type="Feather"
+                    size={23}
+                    color={'red'}
+                />
                 <Text
                     style={{
                         fontSize: 18,
                         color: 'red',
                         fontWeight: '700',
-                        marginLeft: 10,
                     }}>
                     Logout
                 </Text>
@@ -255,7 +260,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)', // Semi-transparent background
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
     activityIndicatorWrapper: {
         backgroundColor: 'white',

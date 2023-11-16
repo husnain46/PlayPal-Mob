@@ -11,8 +11,8 @@ import {Button, Divider, Icon} from '@rneui/themed';
 import {useFocusEffect} from '@react-navigation/native';
 import {IconButton, Card} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
-import {ToastAndroid} from 'react-native';
 import AlertPro from 'react-native-alert-pro';
+import Toast from 'react-native-toast-message';
 
 const Matches = ({navigation, route}) => {
     const {data, teamsData, isOrganizer} = route.params;
@@ -36,7 +36,11 @@ const Matches = ({navigation, route}) => {
                     }
                 },
                 error => {
-                    ToastAndroid.show(error.message, ToastAndroid.LONG);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Error',
+                        text2: error.message,
+                    });
                 },
             );
 
@@ -75,7 +79,10 @@ const Matches = ({navigation, route}) => {
                 matches: matchesArray,
             });
 
-            ToastAndroid.show('Match has been started!', ToastAndroid.LONG);
+            Toast.show({
+                type: 'info',
+                text1: 'Match has been started!',
+            });
         }
 
         const matchNum = matchIndex + 1;

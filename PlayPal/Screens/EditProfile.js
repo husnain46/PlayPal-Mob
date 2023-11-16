@@ -12,7 +12,6 @@ import {
     StyleSheet,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
-import {Picker} from '@react-native-picker/picker';
 import cityData from '../Assets/cityData.json';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
@@ -21,6 +20,7 @@ import sportsList from '../Assets/sportsList.json';
 import {StackActions} from '@react-navigation/native';
 import {Dropdown} from 'react-native-element-dropdown';
 import {Avatar} from 'react-native-paper';
+import Toast from 'react-native-toast-message';
 
 const EditProfile = ({navigation, route}) => {
     const {
@@ -91,10 +91,22 @@ const EditProfile = ({navigation, route}) => {
             // Update user data in Firestore
             await firestore().collection('users').doc(uid).update(userData);
 
-            navigation.dispatch(StackActions.replace('BottomTab')); // Navigate to home screen
+            Toast.show({
+                type: 'success',
+                text1: 'Your profile updated successfully!',
+            });
+
+            navigation.dispatch(StackActions.replace('BottomTab'));
+
+            setIsLoading(false);
         } catch (error) {
             setIsLoading(false);
-            Alert.alert('Error', error.message);
+
+            Toast.show({
+                type: 'error',
+                text1: 'Error updating profile!',
+                text2: error.message,
+            });
         }
     };
 
@@ -135,7 +147,11 @@ const EditProfile = ({navigation, route}) => {
                 errorMessage = 'The selected file size is too large.';
             }
 
-            Alert.alert('Error', errorMessage);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: errorMessage,
+            });
         }
     };
 

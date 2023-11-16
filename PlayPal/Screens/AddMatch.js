@@ -1,11 +1,17 @@
 import React, {useState} from 'react';
-import {StyleSheet, Text, View, SafeAreaView, ToastAndroid} from 'react-native';
+import {
+    StyleSheet,
+    Text,
+    View,
+    SafeAreaView,
+    ActivityIndicator,
+} from 'react-native';
 import {Button, TextInput} from 'react-native-paper';
 import {Divider} from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {Dropdown} from 'react-native-element-dropdown';
 import firestore from '@react-native-firebase/firestore';
-import {ActivityIndicator} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const AddMatch = ({navigation, route}) => {
     const {data, teamsData} = route.params;
@@ -49,16 +55,6 @@ const AddMatch = ({navigation, route}) => {
 
     const filteredTeams = teamSelected => {
         return tournamentTeams.filter(team => team.value !== teamSelected);
-    };
-
-    const fetchUpdatedData = async () => {
-        const snapshot = await firestore()
-            .collection('tournaments')
-            .doc(data.id)
-            .get();
-
-        const fetchedData = snapshot.data();
-        return fetchedData;
     };
 
     const handleAddMatch = async () => {
@@ -160,11 +156,19 @@ const AddMatch = ({navigation, route}) => {
 
             navigation.goBack();
 
-            ToastAndroid.show('Match added successfully!', ToastAndroid.LONG);
+            Toast.show({
+                type: 'success',
+                text1: 'A new match added successfully!',
+            });
+
             setLoading(false);
         } catch (error) {
             setLoading(false);
-            ToastAndroid.show(error.message, ToastAndroid.LONG);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
         }
     };
 

@@ -11,13 +11,13 @@ import {
     StyleSheet,
     Text,
     ImageBackground,
-    Alert,
     ActivityIndicator,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {StackActions} from '@react-navigation/native';
 import {Button} from '@rneui/themed';
+import Toast from 'react-native-toast-message';
 
 const Login = ({navigation}) => {
     const [email, setEmail] = useState('');
@@ -37,34 +37,47 @@ const Login = ({navigation}) => {
                     } else {
                         setIsLoading(false);
                         await user.sendEmailVerification();
-                        Alert.alert(
-                            'Email verification',
-                            'Your email is not verified, Check your email and verify.',
-                        );
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Email not verified!',
+                            text2: 'Please check your email inbox and verify.',
+                        });
+
                         await auth().signOut();
                     }
                 })
                 .catch(error => {
                     setIsLoading(false);
                     if (error.code === 'auth/user-not-found') {
-                        Alert.alert('Error', 'No user found with this email.');
+                        Toast.show({
+                            type: 'error',
+                            text1: 'No user found with this email.',
+                        });
                     } else if (error.code === 'auth/wrong-password') {
-                        Alert.alert('Error', 'Incorrect password.');
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Incorrect password.',
+                        });
                     } else if (error.code === 'auth/invalid-email') {
-                        Alert.alert(
-                            'Error',
-                            'Invalid email format. Please enter a valid email address.',
-                        );
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Invalid email format. Please enter a valid email address.',
+                        });
                     } else {
-                        Alert.alert(
-                            'Error',
-                            'An error occurred during login.',
-                            error.code,
-                        );
+                        console.log(error.message);
+                        // Toast.show({
+                        //     type: 'error',
+                        //     text1: 'Error',
+                        //     text2: error.message,
+                        // });
                     }
                 });
         } else {
-            Alert.alert('Empty fields', 'Please enter email/password to login');
+            Toast.show({
+                type: 'error',
+                text1: 'Empty fields',
+                text2: 'Please enter email/password to login.',
+            });
         }
     };
 
@@ -85,7 +98,11 @@ const Login = ({navigation}) => {
                 }
             })
             .catch(error => {
-                Alert.alert('Error', error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error',
+                    text2: error.message,
+                });
             });
     };
 

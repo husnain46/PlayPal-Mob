@@ -10,13 +10,13 @@ import {
     View,
     Text,
     FlatList,
-    Alert,
+    ActivityIndicator,
 } from 'react-native';
 import {Button, Card, Title, Divider} from 'react-native-paper';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
 import firestore from '@react-native-firebase/firestore';
-import {ActivityIndicator} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const JoinTeam = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -51,7 +51,11 @@ const JoinTeam = ({navigation}) => {
                 setIsLoading(false);
             } catch (error) {
                 setIsLoading(false);
-                Alert.alert('Error fetching teams: ', error.message);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Error loading teams!',
+                    text2: error.message,
+                });
             }
         };
 

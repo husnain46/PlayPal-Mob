@@ -8,7 +8,6 @@ import {
     Text,
     Image,
     TouchableOpacity,
-    ToastAndroid,
     SectionList,
     ActivityIndicator,
 } from 'react-native';
@@ -17,10 +16,12 @@ import getSportsByIds from '../Functions/getSportsByIds';
 import {useFocusEffect} from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
+import Toast from 'react-native-toast-message';
 
 const Tournament = ({navigation}) => {
     const myId = auth().currentUser.uid;
     const [loading, setLoading] = useState(true);
+    const [myTeam, setMyTeam] = useState();
 
     const [myTournaments, setMyTournaments] = useState([]);
 
@@ -66,7 +67,11 @@ const Tournament = ({navigation}) => {
                     setLoading(false);
                 } catch (error) {
                     setLoading(false);
-                    ToastAndroid.show(error.message, ToastAndroid.LONG);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'An error occurred!',
+                        text2: error.message,
+                    });
                 }
             };
 
@@ -75,6 +80,28 @@ const Tournament = ({navigation}) => {
             return () => {};
         }, []),
     );
+
+    useEffect(() => {
+        const fetchMyTeam = async () => {
+            const teamRef = firestore().collection('teams');
+
+            const myTeamDoc = await teamRef
+                .where('captainId', '==', myId)
+                .get();
+
+            if (!myTeamDoc.empty) {
+                const teamDoc = myTeamDoc.docs[0].data();
+                const name = teamDoc.name;
+                const id = myTeamDoc.docs[0].id;
+
+                setMyTeam({id, name});
+            } else {
+                setMyTeam(null);
+            }
+        };
+
+        fetchMyTeam();
+    }, []);
 
     const sportIcons = {
         Cricket: require('../Assets/Icons/cricket.png'),
@@ -96,7 +123,7 @@ const Tournament = ({navigation}) => {
     };
 
     const gotoOrganizeTournament = () => {
-        navigation.navigate('OrganizeTournament');
+        navigation.navigate('OrganizeTournament', {myTeam});
     };
 
     const gotoExploreTournament = () => {
