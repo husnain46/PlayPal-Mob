@@ -12,7 +12,7 @@ import {
     ActivityIndicator,
 } from 'react-native';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Button, Divider, Icon} from '@rneui/themed';
+import {Badge, Button, Divider, Icon} from '@rneui/themed';
 import {Card, IconButton, Paragraph} from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
@@ -34,8 +34,8 @@ const ViewTeam = ({navigation, route}) => {
     const [reqUsers, setReqUsers] = useState([]);
     const [teamRequests, setTeamRequests] = useState([]);
     const [reqLoading, setReqLoading] = useState(false);
-    const [fetchTrigger, setFetchTrigger] = useState(false);
     const isJoined = team.playersId.includes(myId);
+    const [badgeCount, setBadgeCount] = useState(0);
 
     const gotoViewProfile = user => {
         let myId = auth().currentUser.uid;
@@ -70,7 +70,7 @@ const ViewTeam = ({navigation, route}) => {
             navigation.navigate('BottomTab', {screen: 'Team'});
             Toast.show({
                 type: 'info',
-                text1: 'You left the team!',
+                text1: `You left ${team.name}!`,
             });
         } catch (error) {
             leaveAlertRef.current.close();
@@ -89,7 +89,6 @@ const ViewTeam = ({navigation, route}) => {
             alertRefs.current.open();
         } else {
             try {
-                setFetchTrigger(prev => !prev);
                 setReqLoading(true);
 
                 setReqUsers(prevUsers =>
@@ -107,6 +106,25 @@ const ViewTeam = ({navigation, route}) => {
                 await teamRef.update({
                     requests: firestore.FieldValue.arrayRemove(uid),
                 });
+
+                const notifyRef = await firestore()
+                    .collection('notifications')
+                    .where('senderId', '==', uid)
+                    .where('receiverId', '==', myId)
+                    .where('type', '==', 'team_request')
+                    .get();
+
+                await notifyRef.docs[0].ref.delete();
+
+                const notification = {
+                    senderId: myId,
+                    receiverId: uid,
+                    message: `Your request to join ${team.name} has been accepted!`,
+                    type: 'team_accept_request',
+                    read: false,
+                };
+
+                await firestore().collection('notifications').add(notification);
 
                 setReqLoading(false);
                 team.playersId.push(uid);
@@ -128,7 +146,6 @@ const ViewTeam = ({navigation, route}) => {
 
     const handleRemoveRequest = async uid => {
         try {
-            setFetchTrigger(prev => !prev);
             setReqLoading(true);
 
             setReqUsers(prevUsers => prevUsers.filter(user => user.id !== uid));
@@ -137,6 +154,15 @@ const ViewTeam = ({navigation, route}) => {
                 .collection('teams')
                 .doc(team.teamId)
                 .update({requests: firestore.FieldValue.arrayRemove(uid)});
+
+            const notifyRef = await firestore()
+                .collection('notifications')
+                .where('senderId', '==', uid)
+                .where('receiverId', '==', myId)
+                .where('type', '==', 'team_request')
+                .get();
+
+            await notifyRef.docs[0].ref.delete();
 
             setReqLoading(false);
         } catch (error) {
@@ -165,6 +191,18 @@ const ViewTeam = ({navigation, route}) => {
                         .doc(team.teamId)
                         .update(teamReq);
 
+                    const notification = {
+                        senderId: myId,
+                        receiverId: team.captainId,
+                        message: ' has requested to join your team ',
+                        type: 'team_request',
+                        teamName: team.name,
+                        read: false,
+                    };
+                    await firestore()
+                        .collection('notifications')
+                        .add(notification);
+
                     setRequest(true);
 
                     Toast.show({
@@ -188,6 +226,15 @@ const ViewTeam = ({navigation, route}) => {
                         requests: firestore.FieldValue.arrayRemove(myId),
                     });
 
+                const notifyRef = await firestore()
+                    .collection('notifications')
+                    .where('senderId', '==', myId)
+                    .where('receiverId', '==', team.captainId)
+                    .where('type', '==', 'team_request')
+                    .get();
+
+                await notifyRef.docs[0].ref.delete();
+
                 setRequest(false);
 
                 Toast.show({
@@ -202,10 +249,6 @@ const ViewTeam = ({navigation, route}) => {
                 });
             }
         }
-    };
-
-    const openTeamReqModal = async () => {
-        setReqModal(true);
     };
 
     useEffect(() => {
@@ -305,6 +348,7 @@ const ViewTeam = ({navigation, route}) => {
                 if (reqQuery.exists) {
                     const req = reqQuery.data();
                     setTeamRequests(req.requests);
+                    setBadgeCount(req.requests.length);
                     const isRequest = req.requests.includes(myId);
 
                     setRequest(isRequest);
@@ -636,7 +680,7 @@ const ViewTeam = ({navigation, route}) => {
                                         height: 450,
                                         justifyContent: 'center',
                                     }}>
-                                    <ActivityIndicator size={40} style={{}} />
+                                    <ActivityIndicator size={40} />
                                 </View>
                             ) : (
                                 <FlatList
@@ -663,7 +707,7 @@ const ViewTeam = ({navigation, route}) => {
                     <>
                         <TouchableOpacity
                             style={styles.teamReqBtn}
-                            onPress={() => openTeamReqModal()}>
+                            onPress={() => setReqModal(true)}>
                             <Text
                                 style={{
                                     fontSize: 18,
@@ -672,6 +716,17 @@ const ViewTeam = ({navigation, route}) => {
                                 }}>
                                 Team requests
                             </Text>
+                            {badgeCount > 0 && (
+                                <Badge
+                                    status="error"
+                                    value={badgeCount}
+                                    containerStyle={{
+                                        marginRight: -30,
+                                        right: 10,
+                                        marginBottom: 40,
+                                    }}
+                                />
+                            )}
                         </TouchableOpacity>
 
                         <Divider
@@ -855,7 +910,6 @@ const styles = StyleSheet.create({
         width: 180,
         height: 130,
     },
-
     reqModalView: {
         flex: 1,
         justifyContent: 'center',
@@ -872,9 +926,10 @@ const styles = StyleSheet.create({
     teamReqBtn: {
         width: 150,
         height: 50,
+        flexDirection: 'row',
         backgroundColor: '#4a5a96',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-evenly',
         borderRadius: 15,
         marginTop: 20,
         marginBottom: 5,

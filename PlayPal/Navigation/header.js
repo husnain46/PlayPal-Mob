@@ -16,17 +16,20 @@ import Toast from 'react-native-toast-message';
 export default function Header({navigation}) {
     const [userData, setUserData] = useState();
 
-    const [badgeCount, setBadgeCount] = useState(false);
+    const [badgeCount, setBadgeCount] = useState(0);
     const myId = auth().currentUser.uid;
 
     useFocusEffect(
         useCallback(() => {
-            // Set up real-time listener for new notifications
+            // Set up real-time listener for new unread notifications
             const unsubscribe = firestore()
                 .collection('notifications')
                 .where('receiverId', '==', myId)
+                .where('read', '==', false)
                 .onSnapshot(snapshot => {
-                    setBadgeCount(snapshot.docChanges().length);
+                    const unreadNotifications = snapshot.docs.length;
+
+                    setBadgeCount(unreadNotifications);
                 });
 
             return () => {
@@ -43,8 +46,11 @@ export default function Header({navigation}) {
                     .collection('users')
                     .doc(myId)
                     .get();
+
                 if (userDoc.exists) {
-                    setUserData(userDoc.data());
+                    const myData = userDoc.data();
+                    myData.id = userDoc.id;
+                    setUserData(myData);
                 } else {
                     // User data not found, display an error message
                     Alert.alert(
@@ -99,7 +105,9 @@ export default function Header({navigation}) {
 
             <View style={styles.rightView}>
                 <TouchableOpacity
-                    onPress={() => navigation.navigate('Notifications')}
+                    onPress={() =>
+                        navigation.navigate('Notifications', {user: userData})
+                    }
                     style={{flexDirection: 'row'}}>
                     <Image
                         source={require('../Assets/Icons/bell.png')}
@@ -118,7 +126,7 @@ export default function Header({navigation}) {
 
                 <TouchableOpacity
                     onPress={() =>
-                        navigation.navigate('MyProfile', {userData})
+                        navigation.navigate('MyProfile', {user: userData})
                     }>
                     <Image
                         source={require('../Assets/Icons/account.png')}

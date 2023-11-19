@@ -108,7 +108,8 @@ const FindPlayers = ({navigation}) => {
             const isNameMatched = searchWords.every(
                 word =>
                     user.firstName.toLowerCase().includes(word) ||
-                    user.lastName.toLowerCase().includes(word),
+                    user.lastName.toLowerCase().includes(word) ||
+                    user.username.toLowerCase().includes(word),
             );
 
             const isSportsMatched =
@@ -254,7 +255,8 @@ const FindPlayers = ({navigation}) => {
         <SafeAreaView style={styles.container}>
             <View style={styles.searchView}>
                 <SearchBar
-                    placeholder="Search name"
+                    placeholder="Search name/username"
+                    style={{fontSize: 16}}
                     onChangeText={handleSearch}
                     value={searchQuery}
                     containerStyle={styles.searchBar}

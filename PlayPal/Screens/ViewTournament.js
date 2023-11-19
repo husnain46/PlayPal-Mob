@@ -34,6 +34,7 @@ const ViewTournament = ({navigation, route}) => {
     const [reqTeams, setReqTeams] = useState([]);
     const [teamsCount, setTeamsCount] = useState();
     const [myTeamId, setMyTeamId] = useState(null);
+    const [hasJoined, setHasJoined] = useState(false);
 
     const alertRefs = useRef([]);
 
@@ -97,6 +98,8 @@ const ViewTournament = ({navigation, route}) => {
                                 }
                             }
 
+                            let joined = false;
+
                             const promises = tData.teamIds.map(async tId => {
                                 const docSnapshot = await firestore()
                                     .collection('teams')
@@ -104,9 +107,17 @@ const ViewTournament = ({navigation, route}) => {
                                     .get();
 
                                 if (docSnapshot.exists) {
-                                    const tData = docSnapshot.data();
-                                    tData.id = tId;
-                                    return tData;
+                                    const newTeamData = docSnapshot.data();
+                                    newTeamData.id = tId;
+                                    if (!joined) {
+                                        joined =
+                                            newTeamData.playersId.includes(
+                                                myId,
+                                            );
+                                        setHasJoined(joined);
+                                    }
+
+                                    return newTeamData;
                                 } else {
                                     return null;
                                 }
@@ -151,7 +162,7 @@ const ViewTournament = ({navigation, route}) => {
     }, [tournamentId, navigation]);
 
     useEffect(() => {
-        const fetchReqUsersData = async () => {
+        const fetchReqTeamsData = async () => {
             try {
                 setReqLoading(true);
                 const teamPromises = requests.map(async teamId => {
@@ -181,7 +192,7 @@ const ViewTournament = ({navigation, route}) => {
                 });
             }
         };
-        fetchReqUsersData();
+        fetchReqTeamsData();
     }, [requests]);
 
     const handleAcceptRequest = async tId => {
@@ -414,6 +425,8 @@ const ViewTournament = ({navigation, route}) => {
                             Edit Tournament
                         </Text>
                     </Button>
+                ) : hasJoined ? (
+                    <></>
                 ) : (
                     <Button
                         icon={isRequested ? 'check-circle' : ''}

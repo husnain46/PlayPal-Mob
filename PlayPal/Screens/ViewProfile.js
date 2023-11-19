@@ -31,6 +31,10 @@ const ViewProfile = ({navigation, route}) => {
     const [sender, setSender] = useState('');
     const [receiver, setReceiver] = useState('');
     const [isAccepted, setIsAccepted] = useState(false);
+    const [isInvited, setIsInvited] = useState(false);
+    const [isCaptain, setIsCaptain] = useState(false);
+    const [myTeam, setMyTeam] = useState({});
+    const [isTeamMate, setIsTeamMate] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -86,6 +90,42 @@ const ViewProfile = ({navigation, route}) => {
                     .collection('users')
                     .doc(myId)
                     .get();
+
+                const playerDoc = await firestore()
+                    .collection('users')
+                    .doc(playerId)
+                    .get();
+
+                // check if the current is captain of a team
+                const myTeamRef = firestore()
+                    .collection('teams')
+                    .where('captainId', '==', myId);
+
+                const myTeamDoc = await myTeamRef.get();
+                if (myTeamDoc.empty) {
+                    setIsCaptain(false);
+                } else {
+                    setIsCaptain(true);
+                }
+
+                // check if player is already in your team
+                const teamPlayers = myTeamDoc.docs[0].data().playersId;
+                const inTeam = teamPlayers.includes(playerId);
+                setIsTeamMate(inTeam);
+
+                const team = {
+                    id: myTeamDoc.docs[0].id,
+                    name: myTeamDoc.docs[0].data().name,
+                };
+
+                setMyTeam(team);
+
+                // check if player is invited
+                const isPlayerInvited = playerDoc
+                    .data()
+                    .teamReq.includes(team.id);
+
+                setIsInvited(isPlayerInvited);
 
                 if (userDoc.exists) {
                     const {friends} = userDoc.data();
@@ -320,6 +360,7 @@ const ViewProfile = ({navigation, route}) => {
                         receiverId: playerId,
                         message: 'You have received a friend request from ',
                         type: 'friend_request',
+                        read: false,
                     };
                     await firestore()
                         .collection('notifications')
@@ -343,11 +384,88 @@ const ViewProfile = ({navigation, route}) => {
         }
     };
 
+    const inviteAlertRef = useRef();
+
+    const handleTeamInvite = async () => {
+        try {
+            if (isInvited) {
+                await firestore()
+                    .collection('users')
+                    .doc(playerId)
+                    .update({
+                        teamReq: firestore.FieldValue.arrayRemove(myTeam.id),
+                    });
+
+                const notifyRef = await firestore()
+                    .collection('notifications')
+                    .where('senderId', '==', myId)
+                    .where('receiverId', '==', playerId)
+                    .where('type', '==', 'team_invite')
+                    .get();
+
+                await notifyRef.docs[0].ref.delete();
+
+                Toast.show({
+                    type: 'info',
+                    text1: 'Team invitation cancelled!',
+                });
+
+                setIsInvited(false);
+            } else {
+                if (isTeamMate) {
+                    inviteAlertRef.current.open();
+                } else {
+                    await firestore()
+                        .collection('users')
+                        .doc(playerId)
+                        .update({
+                            teamReq: firestore.FieldValue.arrayUnion(myTeam.id),
+                        });
+
+                    const notification = {
+                        senderId: myId,
+                        receiverId: playerId,
+                        message: ` has invited you to join his team ${myTeam.name}`,
+                        type: 'team_invite',
+                        teamId: myTeam.id,
+                        read: false,
+                    };
+                    await firestore()
+                        .collection('notifications')
+                        .add(notification);
+                    Toast.show({
+                        type: 'info',
+                        text1: 'Team invitation sent!',
+                    });
+
+                    setIsInvited(true);
+                }
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: error.message,
+            });
+        }
+    };
+
     if (isLoading) {
         return (
-            <View style={{flex: 1, justifyContent: 'center'}}>
-                <ActivityIndicator size={40} style={{alignSelf: 'center'}} />
-            </View>
+            <Modal
+                transparent={true}
+                animationType={'none'}
+                visible={isLoading}>
+                <View style={styles.modalBackground}>
+                    <View style={styles.activityIndicatorWrapper}>
+                        <ActivityIndicator
+                            size="large"
+                            color="#0000ff"
+                            animating={isLoading}
+                        />
+                    </View>
+                </View>
+            </Modal>
         );
     }
 
@@ -355,19 +473,56 @@ const ViewProfile = ({navigation, route}) => {
         <SafeAreaView style={styles.container}>
             <ScrollView>
                 <View style={styles.topView}>
-                    <Avatar
-                        rounded
-                        source={{uri: user.profilePic}}
-                        size="xlarge"
-                        containerStyle={styles.avatar}
-                    />
-                    <Text
-                        style={
-                            styles.nameText
-                        }>{`${user.firstName} ${user.lastName}`}</Text>
+                    <View>
+                        <Avatar
+                            rounded
+                            source={{uri: user.profilePic}}
+                            size="xlarge"
+                            containerStyle={styles.avatar}
+                        />
+                    </View>
+                    <View style={{marginLeft: 30}}>
+                        <Text
+                            style={
+                                styles.nameText
+                            }>{`${user.firstName} ${user.lastName}`}</Text>
 
-                    <Text
-                        style={styles.usernameText}>{`@${user.username}`}</Text>
+                        <Text
+                            style={
+                                styles.usernameText
+                            }>{`@${user.username}`}</Text>
+
+                        <TouchableOpacity
+                            style={[
+                                !isInvited
+                                    ? styles.inviteBtn
+                                    : styles.invitedBtn,
+                            ]}
+                            onPress={() => handleTeamInvite()}>
+                            <Text
+                                style={[
+                                    !isInvited
+                                        ? styles.inviteText
+                                        : styles.invitedText,
+                                ]}>
+                                {!isInvited ? 'Invite' : 'Invited'}
+                            </Text>
+
+                            {!isInvited ? (
+                                <Image
+                                    source={require('../Assets/Icons/send.png')}
+                                    resizeMode="contain"
+                                    style={styles.inviteIcon}
+                                />
+                            ) : (
+                                <Image
+                                    source={require('../Assets/Icons/tick.png')}
+                                    resizeMode="contain"
+                                    style={styles.invitedIcon}
+                                />
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {removeLoading ? (
@@ -395,6 +550,20 @@ const ViewProfile = ({navigation, route}) => {
                         }}
                     />
                 )}
+
+                <AlertPro
+                    ref={ref => (inviteAlertRef.current = ref)}
+                    onConfirm={() => inviteAlertRef.current.close()}
+                    title={''}
+                    message={'This player is your team member already!'}
+                    showCancel={false}
+                    textConfirm="Ok"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#4a5a96'},
+                        message: {marginTop: -30},
+                        container: {borderWidth: 2, borderColor: 'lightgrey'},
+                    }}
+                />
 
                 <View style={styles.detailsContainer}>
                     <ListItem containerStyle={styles.listTop}>

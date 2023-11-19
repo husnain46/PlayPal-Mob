@@ -9,6 +9,7 @@ import {
     Image,
     TouchableOpacity,
     ActivityIndicator,
+    Modal,
 } from 'react-native';
 import {Button, IconButton, TextInput} from 'react-native-paper';
 import AlertPro from 'react-native-alert-pro';
@@ -18,6 +19,8 @@ import firestore from '@react-native-firebase/firestore';
 import cityData from '../Assets/cityData.json';
 import storage from '@react-native-firebase/storage';
 import Toast from 'react-native-toast-message';
+import {Divider} from '@rneui/themed';
+import {de} from 'date-fns/locale';
 
 const EditTeam = ({navigation, route}) => {
     const {myTeam, playersList} = route.params;
@@ -116,6 +119,7 @@ const EditTeam = ({navigation, route}) => {
     };
 
     const alertRefs = useRef([]);
+
     const showAlert = index => {
         if (alertRefs.current[index]) {
             alertRefs.current[index].open();
@@ -203,6 +207,44 @@ const EditTeam = ({navigation, route}) => {
         }
     };
 
+    const deleteAlertRef = useRef([]);
+
+    const handleDeleteTeam = async () => {
+        setLoading(true);
+        try {
+            const tournamentSnap = await firestore()
+                .collection('tournaments')
+                .where('teamIds', 'array-contains', myTeam.teamId)
+                .get();
+
+            if (tournamentSnap.empty) {
+                await firestore()
+                    .collection('teams')
+                    .doc(myTeam.teamId)
+                    .delete();
+
+                navigation.navigate('BottomTab', {screen: 'Team'});
+
+                Toast.show({
+                    type: 'success',
+                    text1: `Your team ${myTeam.name} deleted!`,
+                });
+            } else {
+                deleteAlertRef.current.open();
+            }
+
+            setLoading(false);
+        } catch (error) {
+            setLoading(false);
+
+            Toast.show({
+                type: 'error',
+                text1: 'Error deleting team!',
+                text2: error.message,
+            });
+        }
+    };
+
     const renderItem = ({item, index}) => {
         const num = index + 1;
         return (
@@ -241,7 +283,18 @@ const EditTeam = ({navigation, route}) => {
             <ScrollView
                 contentContainerStyle={styles.scrollView}
                 style={{width: '100%'}}>
-                <Text style={styles.titleScreen}>Edit Team</Text>
+                <View style={styles.titleView}>
+                    <Text style={styles.titleScreen}>Edit Team</Text>
+                    <Button
+                        mode="outlined"
+                        style={styles.saveBtn}
+                        buttonColor="#11ab7a"
+                        onPress={() => updateTeam()}>
+                        <Text style={styles.saveText}>Save</Text>
+                    </Button>
+                </View>
+
+                <Divider style={styles.divider} width={2} color="grey" />
 
                 <View style={styles.inputView1}>
                     <Text style={styles.labelText}>Team name:</Text>
@@ -270,6 +323,35 @@ const EditTeam = ({navigation, route}) => {
                         outlineColor="black"
                     />
                 </View>
+
+                <Modal
+                    transparent={true}
+                    animationType={'none'}
+                    visible={loading}>
+                    <View style={styles.modalBackground}>
+                        <View style={styles.activityIndicatorWrapper}>
+                            <ActivityIndicator
+                                size="large"
+                                color="#0000ff"
+                                animating={loading}
+                            />
+                        </View>
+                    </View>
+                </Modal>
+
+                <AlertPro
+                    ref={ref => (deleteAlertRef.current = ref)}
+                    title={''}
+                    message={
+                        'Your team is in a tournament right now. You cannot delete this team!'
+                    }
+                    showCancel={false}
+                    textConfirm="Ok"
+                    onConfirm={() => deleteAlertRef.current.close()}
+                    customStyles={{
+                        message: {marginTop: -20, marginBottom: 10},
+                    }}
+                />
 
                 <View style={{width: 300, marginTop: 20}}>
                     <Text style={styles.labelText}>Team photo:</Text>
@@ -349,28 +431,15 @@ const EditTeam = ({navigation, route}) => {
                         paddingHorizontal: 10,
                     }}
                 />
-                <View
-                    style={{
-                        marginTop: 40,
-                        width: 200,
-                        height: 50,
-                        alignItems: 'center',
-                    }}>
-                    {loading ? (
-                        <ActivityIndicator size={30} color="#0000ff" />
-                    ) : (
-                        <Button
-                            mode="outlined"
-                            style={{
-                                width: 120,
-                                borderRadius: 12,
-                                elevation: 20,
-                            }}
-                            buttonColor="#11ab7a"
-                            onPress={() => updateTeam()}>
-                            <Text style={styles.updateTxt}>Update</Text>
-                        </Button>
-                    )}
+
+                <View style={styles.deleteView}>
+                    <Button
+                        style={{borderRadius: 10}}
+                        mode="contained"
+                        buttonColor="red"
+                        onPress={() => handleDeleteTeam()}>
+                        <Text style={styles.deletText}>Delete team</Text>
+                    </Button>
                 </View>
             </ScrollView>
         </SafeAreaView>
@@ -382,17 +451,50 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
     },
-
+    modalBackground: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    activityIndicatorWrapper: {
+        backgroundColor: 'white',
+        padding: 20,
+        borderRadius: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+    },
     scrollView: {
         alignItems: 'center',
         paddingBottom: 50,
+    },
+    titleView: {
+        width: '90%',
+        marginTop: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     titleScreen: {
         fontSize: 26,
         fontWeight: '700',
         color: '#4a5a96',
-        marginVertical: 30,
-        marginBottom: 40,
+    },
+    saveBtn: {
+        borderRadius: 10,
+        elevation: 20,
+    },
+    saveText: {
+        fontSize: 17,
+        color: 'white',
+        fontWeight: '600',
+    },
+    divider: {
+        alignSelf: 'center',
+        width: '90%',
+        marginTop: 10,
+        marginBottom: 30,
     },
     inputView1: {
         marginVertical: 5,
@@ -405,12 +507,10 @@ const styles = StyleSheet.create({
     inputOutline: {
         borderRadius: 10,
     },
-
     inputText: {
         fontSize: 17,
         height: 55,
     },
-
     labelText: {
         fontSize: 18,
         marginBottom: 10,
@@ -510,8 +610,14 @@ const styles = StyleSheet.create({
     removeIcon: {
         marginRight: 5,
     },
-    updateTxt: {
-        fontSize: 18,
+    deleteView: {
+        marginTop: 40,
+        width: 200,
+        height: 50,
+        alignItems: 'center',
+    },
+    deletText: {
+        fontSize: 17,
         color: 'white',
         fontWeight: '600',
     },

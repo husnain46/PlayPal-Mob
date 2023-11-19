@@ -36,7 +36,7 @@ const EditProfile = ({navigation, route}) => {
         city,
         preferredSports,
         profilePic,
-    } = route.params.userData;
+    } = route.params.user;
 
     const [selectedSports, setSelectedSports] = useState(preferredSports);
     const [imageSelected, setImageSelected] = useState(profilePic);

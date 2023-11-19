@@ -9,6 +9,7 @@ import {useFocusEffect} from '@react-navigation/native';
 import {useCallback} from 'react';
 
 const Notifications = ({navigation, route}) => {
+    const {user} = route.params;
     const [notifications, setNotifications] = useState([]);
     const [userData, setUserData] = useState([]);
     const myId = auth().currentUser.uid;
@@ -16,6 +17,21 @@ const Notifications = ({navigation, route}) => {
 
     const checkNotification = user => {
         navigation.navigate('ViewProfile', {user});
+    };
+
+    const gotoTeams = () => {
+        navigation.navigate('BottomTab', {screen: 'Team'});
+    };
+
+    const gotoMyProfile = () => {
+        navigation.navigate('MyProfile', {user});
+    };
+
+    const markAsRead = async nId => {
+        await firestore()
+            .collection('notifications')
+            .doc(nId)
+            .update({read: true});
     };
 
     useFocusEffect(
@@ -47,15 +63,53 @@ const Notifications = ({navigation, route}) => {
                             const lastName = userRef.data().lastName;
                             const senderName = `${firstName} ${lastName}`;
 
-                            const newMessage =
-                                notification.message + senderName;
+                            if (notification.type === 'friend_request') {
+                                const newMessage =
+                                    notification.message + senderName;
 
-                            return {
-                                id: doc.id,
-                                senderId: notification.senderId,
-                                receiverId: notification.receiverId,
-                                newMessage,
-                            };
+                                return {
+                                    id: doc.id,
+                                    senderId: notification.senderId,
+                                    receiverId: notification.receiverId,
+                                    newMessage,
+                                    type: notification.type,
+                                };
+                            } else if (notification.type === 'team_request') {
+                                const newMessage =
+                                    senderName +
+                                    notification.message +
+                                    notification.teamName;
+
+                                return {
+                                    id: doc.id,
+                                    senderId: notification.senderId,
+                                    receiverId: notification.receiverId,
+                                    newMessage,
+                                    type: notification.type,
+                                };
+                            } else if (
+                                notification.type === 'team_accept_request'
+                            ) {
+                                return {
+                                    id: doc.id,
+                                    senderId: notification.senderId,
+                                    receiverId: notification.receiverId,
+                                    newMessage: notification.message,
+                                    type: notification.type,
+                                };
+                            } else if (notification.type === 'team_invite') {
+                                const newMessage =
+                                    senderName + notification.message;
+
+                                return {
+                                    id: doc.id,
+                                    senderId: notification.senderId,
+                                    receiverId: notification.receiverId,
+                                    newMessage,
+                                    type: notification.type,
+                                    teamId: notification.teamId,
+                                };
+                            }
                         }),
                     );
 
@@ -84,7 +138,17 @@ const Notifications = ({navigation, route}) => {
                     icon={'arrow-right-circle-outline'}
                     size={32}
                     style={{height: 40}}
-                    onPress={() => checkNotification(senderUserData)}
+                    onPress={() => {
+                        if (item.type === 'friend_request') {
+                            checkNotification(senderUserData);
+                        } else if (item.type === 'team_request') {
+                            gotoTeams();
+                        } else if (item.type === 'team_invite') {
+                            gotoMyProfile();
+                        }
+
+                        markAsRead(item.id);
+                    }}
                 />
             </View>
         );
