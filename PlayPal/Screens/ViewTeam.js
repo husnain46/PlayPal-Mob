@@ -42,7 +42,7 @@ const ViewTeam = ({navigation, route}) => {
         setReqModal(false);
         const {id, ...newUser} = user;
         user.id === myId
-            ? navigation.navigate('MyProfile', {userData: newUser})
+            ? navigation.navigate('MyProfile', {user})
             : navigation.navigate('ViewProfile', {user});
     };
 

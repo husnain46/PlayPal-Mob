@@ -1,15 +1,18 @@
 import {SafeAreaView, StyleSheet, Text, View} from 'react-native';
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
 import {Button, Surface} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
+import AlertPro from 'react-native-alert-pro';
+import {ActivityIndicator} from 'react-native';
 
 const StartMatch = ({navigation, route}) => {
     const {match, team1, team2, matchNum, tournamentId} = route.params;
-
+    const [loading, setLoading] = useState(false);
     const [scoreT1, setScoreT1] = useState(match.result.scoreTeam1);
     const [scoreT2, setScoreT2] = useState(match.result.scoreTeam2);
+    const alertRefs = useRef([]);
 
     const increaseScore = (team, score, setScore) => {
         setScore(score + 1);
@@ -78,6 +81,9 @@ const StartMatch = ({navigation, route}) => {
 
     const handleEndMatch = async () => {
         try {
+            alertRefs.current.close();
+            setLoading(true);
+
             const tournamentRef = firestore()
                 .collection('tournaments')
                 .doc(tournamentId);
@@ -116,11 +122,15 @@ const StartMatch = ({navigation, route}) => {
             });
 
             await tournamentRef.update({matches: updatedStatus});
+            setLoading(false);
+            navigation.goBack();
             Toast.show({
                 type: 'success',
                 text1: 'Match ended!',
             });
         } catch (error) {
+            setLoading(false);
+
             Toast.show({
                 type: 'error',
                 text1: 'Error',
@@ -141,7 +151,7 @@ const StartMatch = ({navigation, route}) => {
                     <View style={styles.subView}>
                         <Icon
                             name="remove-circle"
-                            color={'#B95252'}
+                            color={'#c22115'}
                             size={30}
                             type="Icons"
                             onPress={() =>
@@ -164,6 +174,21 @@ const StartMatch = ({navigation, route}) => {
                 </View>
             </View>
 
+            <AlertPro
+                ref={ref => (alertRefs.current = ref)}
+                title={'End match?'}
+                message={'Are you sure you want to end the match now?'}
+                onCancel={() => alertRefs.current.close()}
+                textCancel={'No'}
+                onConfirm={() => handleEndMatch()}
+                textConfirm={'Yes'}
+                customStyles={{
+                    buttonCancel: {backgroundColor: '#00acef'},
+                    buttonConfirm: {backgroundColor: '#f53d3d'},
+                    container: {borderWidth: 2, borderColor: 'lightgrey'},
+                }}
+            />
+
             <View style={styles.teamView}>
                 <Text style={styles.teamLabel}>{team2.name}:</Text>
                 <View style={styles.scoreView}>
@@ -171,7 +196,7 @@ const StartMatch = ({navigation, route}) => {
                     <View style={styles.subView}>
                         <Icon
                             name="remove-circle"
-                            color={'#B95252'}
+                            color={'#c22115'}
                             size={30}
                             type="Icons"
                             onPress={() =>
@@ -196,21 +221,26 @@ const StartMatch = ({navigation, route}) => {
 
             <View
                 style={{
-                    marginTop: 100,
+                    marginTop: 80,
                 }}>
-                <Button
-                    mode="contained"
-                    buttonColor="#B95252"
-                    onPress={() => handleEndMatch()}>
-                    <Text
-                        style={{
-                            fontSize: 18,
-                            color: 'white',
-                            paddingTop: 1,
-                        }}>
-                        End Match
-                    </Text>
-                </Button>
+                {loading ? (
+                    <ActivityIndicator size={35} />
+                ) : (
+                    <Button
+                        style={{borderRadius: 12}}
+                        mode="contained"
+                        buttonColor="red"
+                        onPress={() => alertRefs.current.open()}>
+                        <Text
+                            style={{
+                                fontSize: 18,
+                                color: 'white',
+                                paddingTop: 1,
+                            }}>
+                            End Match
+                        </Text>
+                    </Button>
+                )}
             </View>
         </SafeAreaView>
     );
@@ -241,6 +271,7 @@ const styles = StyleSheet.create({
         width: '90%',
         height: 130,
         marginTop: 30,
+        marginBottom: 10,
     },
     scoreView: {
         marginTop: 30,
@@ -270,5 +301,15 @@ const styles = StyleSheet.create({
     scoreText: {
         fontSize: 18,
         color: 'black',
+    },
+    updateBtn: {
+        borderRadius: 12,
+        width: '70%',
+        alignSelf: 'center',
+        marginTop: 30,
+    },
+    updateLabel: {
+        fontWeight: '600',
+        fontSize: 18,
     },
 });

@@ -24,7 +24,7 @@ const Login = ({navigation}) => {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleSignIn = () => {
+    const handleSignIn = async () => {
         if (email && password) {
             setIsLoading(true);
 
@@ -64,12 +64,11 @@ const Login = ({navigation}) => {
                             text1: 'Invalid email format. Please enter a valid email address.',
                         });
                     } else {
-                        console.log(error.message);
-                        // Toast.show({
-                        //     type: 'error',
-                        //     text1: 'Error',
-                        //     text2: error.message,
-                        // });
+                        Toast.show({
+                            type: 'error',
+                            text1: 'Error',
+                            text2: error.message,
+                        });
                     }
                 });
         } else {

@@ -164,7 +164,6 @@ const MyProfile = ({navigation, route}) => {
         const fetchInvitesData = async () => {
             try {
                 setInviteLoading(true);
-                console.log(teamInvites);
 
                 const teamPromises = teamInvites.map(async tId => {
                     const teamDoc = await firestore()

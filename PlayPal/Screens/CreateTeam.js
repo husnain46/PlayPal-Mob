@@ -18,6 +18,7 @@ import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import {ActivityIndicator} from 'react-native';
 import Toast from 'react-native-toast-message';
+import storage from '@react-native-firebase/storage';
 
 const CreateTeam = ({navigation}) => {
     const [teamName, setTeamName] = useState('');
@@ -71,6 +72,21 @@ const CreateTeam = ({navigation}) => {
         }
     };
 
+    const uploadImage = async imageUri => {
+        const teamId = firestore().collection('teams').doc().id;
+
+        const storageRef = storage().ref(`team_images/${teamId}`);
+        const task = storageRef.putFile(imageUri);
+
+        // Wait for the upload to complete
+        await task;
+
+        // Get the download URL of the uploaded image
+        const downloadURL = await storageRef.getDownloadURL();
+
+        return {downloadURL, teamId};
+    };
+
     const handleCreateTeam = async () => {
         let capId = auth().currentUser.uid;
 
@@ -108,6 +124,7 @@ const CreateTeam = ({navigation}) => {
 
                 Alert.alert('Error', 'Please fill in all fields.');
             } else {
+                const {downloadURL, teamId} = await uploadImage(imageSelected);
                 // Team with the same name does not exist, create the team
                 const teamData = {
                     name: teamName,
@@ -115,7 +132,7 @@ const CreateTeam = ({navigation}) => {
                     size: teamSize,
                     city: teamCity,
                     description: teamDetail,
-                    teamPic: imageSelected,
+                    teamPic: downloadURL,
                     playersId: [capId],
                     captainId: capId,
                     requests: [],
@@ -125,8 +142,8 @@ const CreateTeam = ({navigation}) => {
                     loses: 0,
                     draws: 0,
                 };
+                await firestore().collection('teams').doc(teamId).set(teamData);
 
-                await firestore().collection('teams').add(teamData);
                 setLoading(false);
 
                 Toast.show({
@@ -151,7 +168,9 @@ const CreateTeam = ({navigation}) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{alignItems: 'center'}}>
                 <Text h3 style={styles.title}>
                     Create your team
                 </Text>
@@ -162,7 +181,7 @@ const CreateTeam = ({navigation}) => {
                         labelStyle={{color: 'black', bottom: 10, fontSize: 18}}
                         value={teamName}
                         onChangeText={text => setTeamName(text)}
-                        style={{backgroundColor: 'white'}}
+                        style={{backgroundColor: 'white', width: 280}}
                     />
                 </View>
 
@@ -175,7 +194,7 @@ const CreateTeam = ({navigation}) => {
                         labelStyle={{color: 'black', bottom: 10, fontSize: 18}}
                         value={teamDetail}
                         onChangeText={text => setTeamDetail(text)}
-                        style={{backgroundColor: 'white'}}
+                        style={{backgroundColor: 'white', width: 280}}
                     />
                 </View>
 
@@ -247,7 +266,7 @@ const CreateTeam = ({navigation}) => {
                     <View style={{width: 280}}></View>
                 )}
 
-                <View>
+                <View style={{width: 280}}>
                     <Text style={styles.subtitle}>Upload team photo:</Text>
                     <TouchableOpacity
                         style={styles.imageView}
@@ -256,6 +275,7 @@ const CreateTeam = ({navigation}) => {
                             <Image
                                 style={styles.teamImage}
                                 source={{uri: imageSelected}}
+                                resizeMode="contain"
                             />
                         ) : (
                             <Image
@@ -341,7 +361,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     dropView: {
-        width: 300,
+        width: 280,
         marginTop: 20,
     },
     dropdown1: {

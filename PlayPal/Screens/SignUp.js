@@ -124,9 +124,8 @@ const SignUp = ({navigation}) => {
                 profilePic: '',
                 skillLevel: 'Beginner',
                 friends: [],
-                friendReqSent: [],
-                friendReqReceived: [],
                 teamReq: [],
+                points: 0,
             };
 
             auth()

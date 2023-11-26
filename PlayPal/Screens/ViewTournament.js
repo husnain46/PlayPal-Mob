@@ -10,7 +10,7 @@ import {
     Modal,
 } from 'react-native';
 import React, {useState, useEffect, useCallback} from 'react';
-import {Divider} from '@rneui/themed';
+import {Badge, Divider} from '@rneui/themed';
 import {Button, Card, IconButton, Paragraph} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
@@ -35,19 +35,29 @@ const ViewTournament = ({navigation, route}) => {
     const [teamsCount, setTeamsCount] = useState();
     const [myTeamId, setMyTeamId] = useState(null);
     const [hasJoined, setHasJoined] = useState(false);
+    const [isCricket, setIsCricket] = useState(false);
+    const [badgeCount, setBadgeCount] = useState(0);
+    const [myPlayers, setMyPlayers] = useState([]);
+    const [isClash, setIsClash] = useState(false);
 
     const alertRefs = useRef([]);
+    const noTeamAlertRef = useRef([]);
 
     const gotoEditTournament = () => {
         navigation.navigate('EditTournament', {data, teamsData});
     };
 
     const gotoMatches = () => {
-        navigation.navigate('Matches', {data, teamsData, isOrganizer});
+        navigation.navigate('Matches', {
+            data,
+            teamsData,
+            isOrganizer,
+            isCricket,
+        });
     };
 
     const gotoViewTeam = () => {
-        navigation.navigate('ViewTeam', {organizer, sportName});
+        navigation.navigate('ViewTeam', {team: organizer, sportName});
     };
 
     useEffect(() => {
@@ -60,6 +70,9 @@ const ViewTournament = ({navigation, route}) => {
                 if (snapshot.exists) {
                     const tData = snapshot.data();
                     tData.id = snapshot.id;
+                    const sport = tData.sport === 'sport2';
+
+                    setIsCricket(sport);
                     setData(tData);
                     setTeamsCount(tData.teamIds.length);
 
@@ -71,12 +84,14 @@ const ViewTournament = ({navigation, route}) => {
                                 .doc(tData.organizer)
                                 .get();
 
-                            const tName = teamDoc.data().name;
+                            const orgTeam = teamDoc.data();
                             const isCaptain = myId === teamDoc.data().captainId;
                             setIsOrganizer(isCaptain);
-                            setOrganizer(tName);
+                            setOrganizer(orgTeam);
 
                             // requests fetching
+                            setBadgeCount(tData.requests.length);
+
                             setRequests(tData.requests);
 
                             if (!isCaptain) {
@@ -86,6 +101,10 @@ const ViewTournament = ({navigation, route}) => {
 
                                 if (!myTeamDoc.empty) {
                                     const myTeam = myTeamDoc.docs[0].id;
+                                    const myTeamPlayers =
+                                        myTeamDoc.docs[0].data().playersId;
+
+                                    setMyPlayers(myTeamPlayers);
                                     setMyTeamId(myTeam);
 
                                     // if requested already by my team
@@ -109,6 +128,14 @@ const ViewTournament = ({navigation, route}) => {
                                 if (docSnapshot.exists) {
                                     const newTeamData = docSnapshot.data();
                                     newTeamData.id = tId;
+
+                                    // getting my team players clashes
+                                    const hasCommonId =
+                                        newTeamData.playersId.some(id =>
+                                            myPlayers.includes(id),
+                                        );
+                                    setIsClash(hasCommonId);
+
                                     if (!joined) {
                                         joined =
                                             newTeamData.playersId.includes(
@@ -261,6 +288,11 @@ const ViewTournament = ({navigation, route}) => {
         if (!isRequested) {
             if (teamsCount === data.size) {
                 alertRefs.current.open();
+            } else if (myTeamId === null) {
+                noTeamAlertRef.current.open();
+            } else if (isClash) {
+                // alert for having clash of players in team to avoid joining
+                noTeamAlertRef.current.open();
             } else {
                 try {
                     const teamReq = {
@@ -291,7 +323,7 @@ const ViewTournament = ({navigation, route}) => {
                     .collection('tournaments')
                     .doc(tournamentId)
                     .update({
-                        requests: firestore.FieldValue.arrayRemove(myId),
+                        requests: firestore.FieldValue.arrayRemove(myTeamId),
                     });
 
                 setIsRequested(false);
@@ -506,6 +538,23 @@ const ViewTournament = ({navigation, route}) => {
                     }}
                 />
 
+                <AlertPro
+                    ref={ref => (noTeamAlertRef.current = ref)}
+                    title={isClash ? 'Players Clash!' : 'Not a Captain!'}
+                    message={
+                        isClash
+                            ? 'Some of your team players may have joined this tournament with other teams.'
+                            : 'You cannot join any tournament, because you are not captain of any team.'
+                    }
+                    onConfirm={() => noTeamAlertRef.current.close()}
+                    showCancel={false}
+                    textConfirm="Ok"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#4a5a96'},
+                        container: {borderWidth: 2, borderColor: 'lightgrey'},
+                    }}
+                />
+
                 <View style={styles.cardView}>
                     <Card style={styles.card}>
                         <Card.Content style={{marginTop: -5}}>
@@ -518,7 +567,7 @@ const ViewTournament = ({navigation, route}) => {
 
                             <TouchableOpacity onPress={() => gotoViewTeam()}>
                                 <Text style={styles.organizer}>
-                                    {organizer}
+                                    {organizer.name}
                                 </Text>
                             </TouchableOpacity>
                         </Card.Content>
@@ -614,21 +663,34 @@ const ViewTournament = ({navigation, route}) => {
                         justifyContent: 'space-evenly',
                     }}>
                     {isOrganizer ? (
-                        <Button
-                            mode="contained"
-                            style={{
-                                borderRadius: 12,
-                                width: 150,
-                                marginRight: 30,
-                            }}
-                            icon={'android-messages'}
-                            textColor="#374c62"
-                            buttonColor="#bdd0d9"
-                            onPress={() => setReqModal(true)}>
-                            <Text style={{fontSize: 16, color: '#374c62'}}>
-                                Requests
-                            </Text>
-                        </Button>
+                        <>
+                            <Button
+                                mode="contained"
+                                style={{
+                                    borderRadius: 12,
+                                    width: 150,
+                                    marginRight: 30,
+                                }}
+                                icon={'android-messages'}
+                                textColor="#374c62"
+                                buttonColor="#bdd0d9"
+                                onPress={() => setReqModal(true)}>
+                                <Text style={{fontSize: 16, color: '#374c62'}}>
+                                    Requests
+                                </Text>
+                            </Button>
+
+                            {badgeCount > 0 && (
+                                <Badge
+                                    status="error"
+                                    value={badgeCount}
+                                    containerStyle={{
+                                        position: 'absolute',
+                                        flexDirection: 'row-reverse',
+                                    }}
+                                />
+                            )}
+                        </>
                     ) : (
                         <></>
                     )}

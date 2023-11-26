@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     StyleSheet,
     Text,
@@ -14,7 +14,7 @@ import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
 
 const AddMatch = ({navigation, route}) => {
-    const {data, teamsData} = route.params;
+    const {data, teamsData, isCricket} = route.params;
     const [matchTitle, setMatchTitle] = useState('');
     const [selectedDate, setSelectedDate] = useState(null);
     const [showPicker1, setShowPicker1] = useState(false);
@@ -23,7 +23,8 @@ const AddMatch = ({navigation, route}) => {
     const [selectedTeam1, setSelectedTeam1] = useState('');
     const [selectedTeam2, setSelectedTeam2] = useState('');
     const [loading, setLoading] = useState(false);
-    const minDate = data.start_date.toDate();
+    const [minDate, setMinDate] = useState(data.start_date.toDate());
+
     const maxDate = data.end_date.toDate();
 
     const [errors, setErrors] = useState({
@@ -33,6 +34,15 @@ const AddMatch = ({navigation, route}) => {
         team1: '',
         team2: '',
     });
+
+    useEffect(() => {
+        const currentDate = new Date();
+        if (currentDate > data.start_date.toDate()) {
+            setMinDate(currentDate);
+        } else {
+            setMinDate(data.start_date.toDate());
+        }
+    }, []);
 
     const tournamentTeams = teamsData.map(team => ({
         label: team.name,
@@ -131,21 +141,40 @@ const AddMatch = ({navigation, route}) => {
 
         try {
             setLoading(true);
-
-            const matchData = {
-                title: matchTitle.trim(),
-                date: selectedDate,
-                time: selectedTime,
-                status: 'Upcoming',
-                teams: {
-                    team1: selectedTeam1,
-                    team2: selectedTeam2,
-                },
-                result: {
-                    scoreTeam1: 0,
-                    scoreTeam2: 0,
-                },
-            };
+            let matchData;
+            if (isCricket) {
+                matchData = {
+                    title: matchTitle.trim(),
+                    date: selectedDate,
+                    time: selectedTime,
+                    status: 'Upcoming',
+                    teams: {
+                        team1: selectedTeam1,
+                        team2: selectedTeam2,
+                    },
+                    result: {
+                        scoreTeam1: 0,
+                        wicketsT1: 0,
+                        scoreTeam2: 0,
+                        wicketsT2: 0,
+                    },
+                };
+            } else {
+                matchData = {
+                    title: matchTitle.trim(),
+                    date: selectedDate,
+                    time: selectedTime,
+                    status: 'Upcoming',
+                    teams: {
+                        team1: selectedTeam1,
+                        team2: selectedTeam2,
+                    },
+                    result: {
+                        scoreTeam1: 0,
+                        scoreTeam2: 0,
+                    },
+                };
+            }
 
             await firestore()
                 .collection('tournaments')
@@ -215,7 +244,6 @@ const AddMatch = ({navigation, route}) => {
                         value={minDate}
                         mode="date"
                         display="compact"
-                        onpre
                         minimumDate={minDate}
                         maximumDate={maxDate}
                         onChange={handleDateChange}
@@ -253,6 +281,7 @@ const AddMatch = ({navigation, route}) => {
                             value={selectedDate}
                             mode="time"
                             display="default"
+                            minimumDate={selectedDate}
                             onChange={handleTimeChange}
                         />
                     )}

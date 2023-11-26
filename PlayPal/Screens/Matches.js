@@ -15,7 +15,7 @@ import AlertPro from 'react-native-alert-pro';
 import Toast from 'react-native-toast-message';
 
 const Matches = ({navigation, route}) => {
-    const {data, teamsData, isOrganizer} = route.params;
+    const {data, teamsData, isOrganizer, isCricket} = route.params;
     const [matches, setMatches] = useState(data.matches);
     const alertRefs = useRef([]);
 
@@ -51,7 +51,7 @@ const Matches = ({navigation, route}) => {
     );
 
     const gotoAddMatch = () => {
-        navigation.navigate('AddMatch', {data, teamsData});
+        navigation.navigate('AddMatch', {data, teamsData, isCricket});
     };
 
     const gotoEditMatch = match => {
@@ -87,13 +87,21 @@ const Matches = ({navigation, route}) => {
 
         const matchNum = matchIndex + 1;
 
-        navigation.navigate('StartMatch', {
-            match,
-            team1,
-            team2,
-            matchNum,
-            tournamentId: data.id,
-        });
+        isCricket
+            ? navigation.navigate('CricketMatch', {
+                  match,
+                  team1,
+                  team2,
+                  matchNum,
+                  tournamentId: data.id,
+              })
+            : navigation.navigate('StartMatch', {
+                  match,
+                  team1,
+                  team2,
+                  matchNum,
+                  tournamentId: data.id,
+              });
     };
 
     const renderAlert = (item, index, team1, team2) => {
@@ -165,12 +173,16 @@ const Matches = ({navigation, route}) => {
                                 <Text style={styles.scoreText}>
                                     {item.status === 'Upcoming'
                                         ? '-'
+                                        : isCricket
+                                        ? `${item.result.scoreTeam1}-${item.result.wicketsT1}`
                                         : item.result.scoreTeam1}
                                 </Text>
                                 <Text style={styles.vsText}>VS</Text>
                                 <Text style={styles.scoreText}>
                                     {item.status === 'Upcoming'
                                         ? '-'
+                                        : isCricket
+                                        ? `${item.result.scoreTeam2}-${item.result.wicketsT2}`
                                         : item.result.scoreTeam2}
                                 </Text>
                             </View>
@@ -373,17 +385,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         width: 160,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-evenly',
         marginBottom: 16,
     },
     scoreText: {
-        fontSize: 20,
+        fontSize: 19,
         fontWeight: 'bold',
         marginHorizontal: 25,
         color: '#31b571',
     },
     vsText: {
-        fontSize: 18,
+        fontSize: 14,
     },
     cardDivider: {
         alignSelf: 'center',
