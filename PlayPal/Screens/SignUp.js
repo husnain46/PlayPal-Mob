@@ -9,7 +9,6 @@ import {
     Image,
     Text,
     ImageBackground,
-    Alert,
 } from 'react-native';
 import {RadioButton} from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -19,6 +18,7 @@ import {Button} from '@rneui/themed';
 import firestore from '@react-native-firebase/firestore';
 import {ActivityIndicator} from 'react-native';
 import Toast from 'react-native-toast-message';
+import {KeyboardAvoidingView} from 'react-native';
 
 const SignUp = ({navigation}) => {
     const [backDate, setBackDate] = useState(new Date());
@@ -35,8 +35,10 @@ const SignUp = ({navigation}) => {
     const phonePattern = /^03[0-4][0-9]{8}$/;
     const [isPhoneValid, setIsPhoneValid] = useState(false);
     const [isUsernameAvailable, setIsUsernameAvailable] = useState(false);
+    const [isEmailValid, setIsEmailValid] = useState(false);
     const usernamePattern = /^[a-zA-Z0-9_.]{6,20}$/;
     const [passError, setPassError] = useState('');
+    const emailPattern = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 
     useEffect(() => {
         const currentDate = new Date();
@@ -70,7 +72,10 @@ const SignUp = ({navigation}) => {
                 setIsUsernameAvailable(false);
             }
         } catch (error) {
-            Alert.alert('Error checking username availability:', error);
+            Toast.show({
+                type: 'error',
+                text2: 'An error occurred!',
+            });
             return false;
         }
     };
@@ -101,11 +106,30 @@ const SignUp = ({navigation}) => {
             !phone ||
             !username
         ) {
-            Alert.alert('Error', 'Please fill in all fields.');
+            Toast.show({
+                type: 'error',
+                text2: 'Please fill in all fields!',
+            });
+        } else if (!isEmailValid) {
+            Toast.show({
+                type: 'error',
+                text2: 'Enter a valid email',
+            });
         } else if (!isPhoneValid) {
-            Alert.alert('Error', 'Phone number is not valid!');
-        } else if (passError !== '' || !isUsernameAvailable) {
-            alert('Username/Password not valid!');
+            Toast.show({
+                type: 'error',
+                text2: 'Enter a valid phone number',
+            });
+        } else if (!isUsernameAvailable) {
+            Toast.show({
+                type: 'error',
+                text2: 'Enter a valid username',
+            });
+        } else if (passError !== '') {
+            Toast.show({
+                type: 'error',
+                text2: 'Enter a valid password',
+            });
         } else {
             setLoading(true);
 
@@ -177,15 +201,16 @@ const SignUp = ({navigation}) => {
                     source={require('../Assets/BGs/blurPic.jpg')}
                     style={styles.bgImage}
                     resizeMode="cover">
-                    <View>
-                        <View style={styles.logoView}>
-                            <Image
-                                source={require('../Assets/Icons/Logo.png')}
-                                style={styles.logoImg}
-                                resizeMode="contain"
-                            />
-                        </View>
+                    <View style={styles.logoView}>
+                        <Image
+                            source={require('../Assets/Icons/Logo.png')}
+                            style={styles.logoImg}
+                            resizeMode="contain"
+                        />
+                    </View>
 
+                    <KeyboardAvoidingView
+                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                             <View style={styles.inner}>
                                 <View style={styles.nameView}>
@@ -267,9 +292,29 @@ const SignUp = ({navigation}) => {
                                     <TextInput
                                         placeholder="Email"
                                         style={styles.textInput3}
-                                        onChangeText={text => setEmail(text)}
+                                        onChangeText={text => {
+                                            setEmail(text);
+                                            if (emailPattern.test(text)) {
+                                                setIsEmailValid(true);
+                                            } else {
+                                                setIsEmailValid(false);
+                                            }
+                                        }}
                                         placeholderTextColor={'darkgrey'}
                                     />
+                                    {email.length > 0 && !isEmailValid ? (
+                                        <Text
+                                            style={{
+                                                color: 'red',
+                                                bottom: 18,
+                                                right: 12,
+                                                textAlign: 'right',
+                                            }}>
+                                            Email address is not valid!
+                                        </Text>
+                                    ) : (
+                                        <></>
+                                    )}
                                     <TextInput
                                         placeholder="Mobile no. (e.g. 03xxxxxxxxx)"
                                         style={styles.textInput3}
@@ -283,6 +328,19 @@ const SignUp = ({navigation}) => {
                                         }}
                                         placeholderTextColor={'darkgrey'}
                                     />
+                                    {phone.length > 0 && !isPhoneValid ? (
+                                        <Text
+                                            style={{
+                                                color: 'red',
+                                                bottom: 18,
+                                                right: 12,
+                                                textAlign: 'right',
+                                            }}>
+                                            Phone number is not valid!
+                                        </Text>
+                                    ) : (
+                                        <></>
+                                    )}
                                     <TextInput
                                         placeholder="Username"
                                         style={styles.textInput3}
@@ -350,7 +408,7 @@ const SignUp = ({navigation}) => {
                                 </View>
                             </View>
                         </TouchableWithoutFeedback>
-                    </View>
+                    </KeyboardAvoidingView>
                 </ImageBackground>
             </View>
         </SafeAreaView>

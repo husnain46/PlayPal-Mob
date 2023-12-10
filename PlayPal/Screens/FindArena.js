@@ -1,5 +1,5 @@
 import styles from '../Styles/findArenaStyles';
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {SearchBar, Card, Divider} from '@rneui/themed';
 import {
     SafeAreaView,
@@ -9,13 +9,16 @@ import {
     TouchableOpacity,
     FlatList,
     Modal,
+    ActivityIndicator,
 } from 'react-native';
-import arenasData from '../Assets/arenasData.json';
+
 import {Dropdown} from 'react-native-element-dropdown';
 import sportsList from '../Assets/sportsList.json';
 import {Button, Chip} from 'react-native-paper';
 import cityData from '../Assets/cityData.json';
 import getSportsByIds from '../Functions/getSportsByIds';
+import firestore from '@react-native-firebase/firestore';
+import {useFocusEffect} from '@react-navigation/native';
 
 const FindArena = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -23,6 +26,68 @@ const FindArena = ({navigation}) => {
     const [sportFilter, setSportFilter] = useState('');
     const [cityFilter, setCityFilter] = useState('');
     const [isFocus, setIsFocus] = useState(false);
+    const [arenasData, setArenasData] = useState([]);
+
+    // filter data resets on refresh.............................................................
+
+    // ..........................................................................................
+    const [filteredData, setFilteredData] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchArenas = async () => {
+            try {
+                const arenaRef = await firestore()
+                    .collection('arenas')
+                    .where('holiday', '==', false)
+                    .get();
+
+                if (!arenaRef.empty) {
+                    const aData = arenaRef.docs.map(doc => {
+                        return {id: doc.id, ...doc.data()};
+                    });
+
+                    const filtered = aData.filter(data => {
+                        const isNameMatched = data.name
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase());
+
+                        const isCityMatched =
+                            !cityFilter || data.city.includes(cityFilter);
+
+                        const isSportsMatched =
+                            !sportFilter ||
+                            data.sports.some(sport =>
+                                sport.includes(sportFilter),
+                            );
+
+                        return (
+                            isNameMatched && isCityMatched && isSportsMatched
+                        );
+                    });
+
+                    setArenasData(aData);
+                    setFilteredData(filtered);
+                    setIsLoading(false);
+                } else {
+                    setIsLoading(false);
+
+                    setArenasData([]);
+                }
+            } catch (error) {
+                setIsLoading(false);
+
+                Toast.show({
+                    type: 'error',
+                    text2: 'Error loading arenas data!',
+                });
+            }
+        };
+
+        fetchArenas();
+
+        return () => {};
+    }, []);
 
     const gotoViewArena = (arena, arenaRating, ratingCount, arenaId) => {
         navigation.navigate('ViewArena', {
@@ -31,13 +96,6 @@ const FindArena = ({navigation}) => {
             ratingCount,
             arenaId,
         });
-    };
-
-    const getArenaId = arenaName => {
-        const arenaId = Object.keys(arenasData).find(
-            key => arenasData[key].name === arenaName,
-        );
-        return arenaId;
     };
 
     const cityList = cityData.map(item => ({
@@ -120,11 +178,7 @@ const FindArena = ({navigation}) => {
     const handleSearch = text => {
         setSearchQuery(text);
 
-        const searchFilteredData = Object.keys(arenasData).map(
-            key => arenasData[key],
-        );
-
-        const filtered = searchFilteredData.filter(data => {
+        const filtered = arenasData.filter(data => {
             const isNameMatched = data.name
                 .toLowerCase()
                 .includes(text.toLowerCase());
@@ -141,27 +195,20 @@ const FindArena = ({navigation}) => {
         setFilteredData(filtered);
     };
 
-    const [filteredData, setFilteredData] = useState(
-        Object.keys(arenasData).map(key => arenasData[key]),
-    );
-
     const applyFilters = () => {
-        const filtered = Object.keys(arenasData)
-            .map(key => arenasData[key])
-            .filter(data => {
-                const isNameMatched = data.name
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase());
+        const filtered = arenasData.filter(data => {
+            const isNameMatched = data.name
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase());
 
-                const isCityMatched =
-                    !cityFilter || data.city.includes(cityFilter);
+            const isCityMatched = !cityFilter || data.city.includes(cityFilter);
 
-                const isSportsMatched =
-                    !sportFilter ||
-                    data.sports.some(sport => sport.includes(sportFilter));
+            const isSportsMatched =
+                !sportFilter ||
+                data.sports.some(sport => sport.includes(sportFilter));
 
-                return isNameMatched && isCityMatched && isSportsMatched;
-            });
+            return isNameMatched && isCityMatched && isSportsMatched;
+        });
         setFilteredData(filtered);
         setModalVisible(false);
     };
@@ -172,14 +219,11 @@ const FindArena = ({navigation}) => {
         let sportsList = getSportsByIds(item.sports);
         let startingPrice = getStartingPrice(item.slots);
 
-        let arenaId = getArenaId(item.name);
-
         return (
             <TouchableOpacity
                 onPress={() =>
-                    gotoViewArena(item, arenaRating, ratingCount, arenaId)
-                }
-                style={{width: '85%', alignSelf: 'center'}}>
+                    gotoViewArena(item, arenaRating, ratingCount, item.id)
+                }>
                 <Card containerStyle={styles.cardContainer}>
                     <Card.Image
                         source={{uri: item.arenaPics[0]}}
@@ -227,6 +271,7 @@ const FindArena = ({navigation}) => {
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleScreen}>Sports Arenas</Text>
+
             <View style={styles.searchView}>
                 <SearchBar
                     placeholder="Search name"
@@ -266,6 +311,7 @@ const FindArena = ({navigation}) => {
                                 itemContainerStyle={styles.dropItem}
                                 iconStyle={styles.iconStyle}
                                 inputSearchStyle={styles.dropSearch}
+                                placeholderStyle={{color: 'darkgrey'}}
                                 data={cityList}
                                 maxHeight={200}
                                 labelField="label"
@@ -293,6 +339,8 @@ const FindArena = ({navigation}) => {
                                 selectedTextStyle={styles.selectedTextStyle}
                                 containerStyle={styles.dropContainer}
                                 iconStyle={styles.iconStyle}
+                                itemTextStyle={styles.dropItemText}
+                                placeholderStyle={{color: 'darkgrey'}}
                                 data={sportsData}
                                 maxHeight={180}
                                 labelField="label"
@@ -308,31 +356,49 @@ const FindArena = ({navigation}) => {
                                 onPress={() => resetFilters()}>
                                 Reset
                             </Button>
-
-                            <TouchableOpacity
-                                style={[styles.button, styles.buttonClose]}
-                                onPress={() => setModalVisible(!modalVisible)}>
-                                <Text style={styles.textStyle}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.button, styles.buttonOpen]}
-                                onPress={() => applyFilters()}>
-                                <Text style={styles.textStyle}>Apply</Text>
-                            </TouchableOpacity>
+                            <View style={{flexDirection: 'row'}}>
+                                <TouchableOpacity
+                                    style={[styles.button, styles.buttonClose]}
+                                    onPress={() =>
+                                        setModalVisible(!modalVisible)
+                                    }>
+                                    <Text style={styles.textStyle}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.button, styles.buttonOpen]}
+                                    onPress={() => applyFilters()}>
+                                    <Text style={styles.textStyle}>Apply</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
             </Modal>
 
-            <View style={styles.listView}>
-                <FlatList
-                    showsVerticalScrollIndicator={false}
-                    data={filteredData}
-                    renderItem={renderItem}
-                    keyExtractor={filteredData.arenaId}
-                    contentContainerStyle={{paddingBottom: 210}}
-                />
-            </View>
+            {isLoading ? (
+                <View style={{alignSelf: 'center'}}>
+                    <ActivityIndicator
+                        style={{top: 100}}
+                        size={50}
+                        color="#11867F"
+                    />
+                </View>
+            ) : (
+                <View style={styles.listView}>
+                    <FlatList
+                        showsVerticalScrollIndicator={false}
+                        data={filteredData}
+                        renderItem={renderItem}
+                        keyExtractor={filteredData.id}
+                        contentContainerStyle={{paddingBottom: 210}}
+                        ListEmptyComponent={() => (
+                            <Text style={styles.emptyListText}>
+                                No arena found!
+                            </Text>
+                        )}
+                    />
+                </View>
+            )}
         </SafeAreaView>
     );
 };

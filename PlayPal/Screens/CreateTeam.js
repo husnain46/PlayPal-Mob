@@ -6,7 +6,6 @@ import {
     Image,
     TouchableOpacity,
     StyleSheet,
-    Alert,
 } from 'react-native';
 import {Text, Button} from '@rneui/themed';
 import {RadioButton, TextInput} from 'react-native-paper';
@@ -20,7 +19,8 @@ import {ActivityIndicator} from 'react-native';
 import Toast from 'react-native-toast-message';
 import storage from '@react-native-firebase/storage';
 
-const CreateTeam = ({navigation}) => {
+const CreateTeam = ({navigation, route}) => {
+    const {myTeamSports} = route.params;
     const [teamName, setTeamName] = useState('');
     const [teamDetail, setTeamDetail] = useState('');
     const [sportValue, setSportValue] = useState('');
@@ -29,6 +29,8 @@ const CreateTeam = ({navigation}) => {
     const [isFocus, setIsFocus] = useState(false);
     const [teamCity, setTeamCity] = useState('');
     const [loading, setLoading] = useState(false);
+    const [nameError, setNameError] = useState('');
+    const [sportError, setSportError] = useState('');
 
     const cityList = cityData.map(item => ({
         label: item.city,
@@ -94,6 +96,9 @@ const CreateTeam = ({navigation}) => {
 
         try {
             setLoading(true);
+
+            setNameError('');
+
             // Fetch teams from Firestore
             const teamsQuery = await firestore().collection('teams').get();
 
@@ -106,10 +111,12 @@ const CreateTeam = ({navigation}) => {
 
             if (matchName) {
                 setLoading(false);
+                setNameError('A team with this name already exists!');
+            } else if (myTeamSports.includes(sportValue)) {
+                setLoading(false);
 
-                Alert.alert(
-                    'Error',
-                    'A team with this name already exists! Change your team name and try again.',
+                setSportError(
+                    'You are already in a team with same sport. Select different sport!',
                 );
             } else if (
                 !teamName ||
@@ -122,7 +129,10 @@ const CreateTeam = ({navigation}) => {
             ) {
                 setLoading(false);
 
-                Alert.alert('Error', 'Please fill in all fields.');
+                Toast.show({
+                    type: 'error',
+                    text2: 'Please fill/select all fields.',
+                });
             } else {
                 const {downloadURL, teamId} = await uploadImage(imageSelected);
                 // Team with the same name does not exist, create the team
@@ -143,8 +153,6 @@ const CreateTeam = ({navigation}) => {
                     draws: 0,
                 };
                 await firestore().collection('teams').doc(teamId).set(teamData);
-
-                setLoading(false);
 
                 Toast.show({
                     type: 'success',
@@ -170,11 +178,17 @@ const CreateTeam = ({navigation}) => {
         <SafeAreaView style={styles.container}>
             <ScrollView
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={{alignItems: 'center'}}>
+                contentContainerStyle={{alignItems: 'center'}}
+                style={{width: '100%'}}>
                 <Text h3 style={styles.title}>
                     Create your team
                 </Text>
-                <View style={{marginTop: 70}}>
+                <View
+                    style={{
+                        marginTop: 70,
+                        width: '100%',
+                        alignItems: 'center',
+                    }}>
                     <TextInput
                         mode="outlined"
                         label="Team name"
@@ -183,6 +197,13 @@ const CreateTeam = ({navigation}) => {
                         onChangeText={text => setTeamName(text)}
                         style={{backgroundColor: 'white', width: 280}}
                     />
+                    {nameError ? (
+                        <Text style={{color: 'red', width: '86%'}}>
+                            {nameError}
+                        </Text>
+                    ) : (
+                        <></>
+                    )}
                 </View>
 
                 <View style={{marginTop: 30}}>
@@ -214,6 +235,7 @@ const CreateTeam = ({navigation}) => {
                         search={true}
                         valueField="value"
                         placeholder={!isFocus ? 'Select city' : '...'}
+                        placeholderStyle={{color: 'grey'}}
                         searchPlaceholder={'Search...'}
                         searchField=""
                         value={teamCity}
@@ -234,13 +256,31 @@ const CreateTeam = ({navigation}) => {
                         containerStyle={styles.dropContainer}
                         iconStyle={styles.iconStyle}
                         data={sportsData}
+                        itemTextStyle={{color: 'black'}}
                         maxHeight={300}
                         labelField="label"
                         valueField="value"
                         placeholder={'Select sports'}
+                        placeholderStyle={{color: 'grey'}}
                         value={sportValue}
-                        onChange={item => setSportValue(item.value)}
+                        onChange={item => {
+                            setSportValue(item.value);
+                            if (myTeamSports.includes(item.value)) {
+                                setSportError(
+                                    'You are already in a team with same sport. Select different sport!',
+                                );
+                            } else {
+                                setSportError('');
+                            }
+                        }}
                     />
+                    {sportError ? (
+                        <Text style={{color: 'red', width: '95%'}}>
+                            {sportError}
+                        </Text>
+                    ) : (
+                        <></>
+                    )}
                 </View>
 
                 {sportValue ? (

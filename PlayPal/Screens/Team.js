@@ -22,6 +22,7 @@ import Toast from 'react-native-toast-message';
 const Team = ({navigation}) => {
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [myTeamSports, setMyTeamSports] = useState([]);
     const myId = auth().currentUser.uid;
     const alertRefs = useRef([]);
 
@@ -31,12 +32,12 @@ const Team = ({navigation}) => {
         if (isCaptain) {
             alertRefs.current.open();
         } else {
-            navigation.navigate('CreateTeam');
+            navigation.navigate('CreateTeam', {myTeamSports});
         }
     };
 
     const gotoViewTeam = (team, sportName) => {
-        navigation.navigate('ViewTeam', {team, sportName});
+        navigation.navigate('ViewTeam', {team});
     };
 
     const gotoJoinTeam = () => {
@@ -49,6 +50,7 @@ const Team = ({navigation}) => {
                 try {
                     let playerId = auth().currentUser.uid;
                     const fetchedTeams = [];
+                    const mySportsIds = [];
 
                     const querySnapshot = await firestore()
                         .collection('teams')
@@ -66,11 +68,12 @@ const Team = ({navigation}) => {
                                 teamId: doc.id,
                                 ...doc.data(),
                             };
+                            mySportsIds.push(doc.data().sportId);
                             fetchedTeams.push(team);
                         });
 
                         setTeams(fetchedTeams);
-
+                        setMyTeamSports(mySportsIds);
                         setLoading(false);
                     }
                 } catch (error) {
@@ -88,6 +91,7 @@ const Team = ({navigation}) => {
 
     const renderItem = ({item}) => {
         const sportName = getSportsByIds([item.sportId]);
+
         const playerCount = item.playersId.length;
 
         return (
@@ -113,15 +117,9 @@ const Team = ({navigation}) => {
                                 </Text>
                             </View>
                         </View>
-                        <View style={styles.cardSubView}>
-                            <View style={styles.cardDetailView}>
-                                <Text style={styles.cardText}>{item.rank}</Text>
-                            </View>
-                            <View style={styles.cardDetailView}>
-                                <Text style={styles.cardText}>
-                                    {item.ageCategory}
-                                </Text>
-                            </View>
+
+                        <View style={styles.cardDetailView}>
+                            <Text style={styles.rankText}>({item.rank})</Text>
                         </View>
                     </View>
                 </Card>
@@ -138,7 +136,7 @@ const Team = ({navigation}) => {
                 }}
                 style={{width: '100%'}}>
                 <View style={styles.yourTeamView}>
-                    <Text style={styles.text1}>My teams</Text>
+                    <Text style={styles.text1}>My Teams</Text>
                     <Divider style={styles.divider} />
                     <View style={styles.listView}>
                         {loading ? (
@@ -234,14 +232,14 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     text1: {
-        fontSize: 22,
-        fontWeight: '700',
+        fontSize: 20,
+        fontWeight: '500',
         color: '#4A5B96',
     },
     text2: {
-        fontSize: 18,
-        fontWeight: '600',
+        fontSize: 16,
         marginTop: 30,
+        color: 'grey',
     },
     divider: {
         marginTop: 10,
@@ -251,7 +249,6 @@ const styles = StyleSheet.create({
     },
     listView: {
         width: '100%',
-        alignItems: 'center',
         marginBottom: 10,
     },
     loader: {
@@ -260,12 +257,10 @@ const styles = StyleSheet.create({
     },
     card: {
         borderRadius: 10,
-        elevation: 3,
-        width: 310,
+        width: '90%',
         margin: 9,
-        borderWidth: 2,
-        borderColor: 'lightgrey',
         marginTop: 25,
+        alignSelf: 'center',
     },
     cardImage: {
         width: '100%',
@@ -279,16 +274,24 @@ const styles = StyleSheet.create({
     cardDetailView: {
         flexDirection: 'row',
         marginTop: 10,
+        alignSelf: 'center',
+        alignItems: 'center',
     },
     cardLabel: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '600',
         color: 'black',
-        marginEnd: 10,
+        marginEnd: 5,
     },
     cardText: {
         fontSize: 16,
-        fontWeight: '700',
+        fontWeight: '400',
+        color: 'grey',
+    },
+    rankText: {
+        fontSize: 16,
+        fontWeight: '500',
+        color: 'darkblue',
     },
     content: {
         marginTop: 20,
@@ -306,8 +309,8 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         elevation: 5,
         width: '80%',
-        borderWidth: 2,
-        borderColor: 'lightgrey',
+        borderWidth: 1,
+        borderColor: 'darkgrey',
         marginTop: 30,
     },
     header: {
@@ -319,6 +322,7 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         textAlign: 'center',
         paddingHorizontal: 30,
+        color: 'grey',
     },
     button: {
         backgroundColor: '#4A5B96',

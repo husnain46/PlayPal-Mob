@@ -13,7 +13,7 @@ const Tab = createBottomTabNavigator();
 const BottomTab = ({navigation}) => {
     return (
         <Tab.Navigator
-            initialRouteName="Players"
+            initialRouteName="FindArena"
             screenOptions={{
                 headerTitle: () => <Header navigation={navigation} />,
                 tabBarHideOnKeyboard: true,
@@ -23,15 +23,15 @@ const BottomTab = ({navigation}) => {
                 tabBarStyle: {
                     position: 'absolute',
                     bottom: 10,
-                    left: 12,
-                    right: 12,
+                    left: 10,
+                    right: 10,
                     elevation: 5,
-                    backgroundColor: '#ffffff',
+                    backgroundColor: 'white',
                     borderRadius: 15,
-                    borderWidth: 2,
-                    borderTopWidth: 2,
-                    borderTopColor: 'darkgrey',
-                    borderColor: 'darkgrey',
+                    borderWidth: 1,
+                    borderTopWidth: 1,
+                    borderTopColor: 'grey',
+                    borderColor: 'grey',
                     height: 75,
                 },
             }}>
@@ -60,7 +60,7 @@ const BottomTab = ({navigation}) => {
                                         height: 25,
                                         tintColor: focused
                                             ? 'white'
-                                            : '#A1A1A1',
+                                            : 'darkgrey',
                                     }}
                                 />
                             </View>
@@ -68,7 +68,8 @@ const BottomTab = ({navigation}) => {
                                 style={{
                                     textAlign: 'center',
                                     fontSize: 13,
-                                    fontWeight: 'bold',
+                                    fontWeight: '500',
+                                    color: focused ? '#4A5B96' : 'darkgrey',
                                 }}>
                                 Home
                             </Text>
@@ -101,7 +102,7 @@ const BottomTab = ({navigation}) => {
                                         height: 25,
                                         tintColor: focused
                                             ? 'white'
-                                            : '#A1A1A1',
+                                            : 'darkgrey',
                                     }}
                                 />
                             </View>
@@ -109,7 +110,8 @@ const BottomTab = ({navigation}) => {
                                 style={{
                                     textAlign: 'center',
                                     fontSize: 13,
-                                    fontWeight: 'bold',
+                                    fontWeight: '500',
+                                    color: focused ? '#4A5B96' : 'darkgrey',
                                 }}>
                                 Players
                             </Text>
@@ -142,7 +144,7 @@ const BottomTab = ({navigation}) => {
                                         height: 25,
                                         tintColor: focused
                                             ? 'white'
-                                            : '#A1A1A1',
+                                            : 'darkgrey',
                                     }}
                                 />
                             </View>
@@ -150,7 +152,8 @@ const BottomTab = ({navigation}) => {
                                 style={{
                                     textAlign: 'center',
                                     fontSize: 13,
-                                    fontWeight: 'bold',
+                                    fontWeight: '500',
+                                    color: focused ? '#4A5B96' : 'darkgrey',
                                 }}>
                                 Team
                             </Text>
@@ -189,7 +192,7 @@ const BottomTab = ({navigation}) => {
                                         height: 25,
                                         tintColor: focused
                                             ? 'white'
-                                            : '#A1A1A1',
+                                            : 'darkgrey',
                                     }}
                                 />
                             </View>
@@ -197,7 +200,8 @@ const BottomTab = ({navigation}) => {
                                 style={{
                                     textAlign: 'center',
                                     fontSize: 13,
-                                    fontWeight: 'bold',
+                                    fontWeight: '500',
+                                    color: focused ? '#4A5B96' : 'darkgrey',
                                 }}>
                                 Tournament
                             </Text>
@@ -230,7 +234,7 @@ const BottomTab = ({navigation}) => {
                                         height: 26,
                                         tintColor: focused
                                             ? 'white'
-                                            : '#A1A1A1',
+                                            : 'darkgrey',
                                     }}
                                 />
                             </View>
@@ -238,7 +242,8 @@ const BottomTab = ({navigation}) => {
                                 style={{
                                     alignSelf: 'center',
                                     fontSize: 13,
-                                    fontWeight: 'bold',
+                                    fontWeight: '500',
+                                    color: focused ? '#4A5B96' : 'darkgrey',
                                 }}>
                                 Arenas
                             </Text>

@@ -106,26 +106,26 @@ const ViewProfile = ({navigation, route}) => {
                     setIsCaptain(false);
                 } else {
                     setIsCaptain(true);
+                    // check if player is already in your team
+                    const teamPlayers = myTeamDoc.docs[0].data().playersId;
+
+                    const inTeam = teamPlayers.includes(playerId);
+                    setIsTeamMate(inTeam);
+
+                    const team = {
+                        id: myTeamDoc.docs[0].id,
+                        name: myTeamDoc.docs[0].data().name,
+                    };
+
+                    setMyTeam(team);
+
+                    // check if player is invited
+                    const isPlayerInvited = playerDoc
+                        .data()
+                        .teamReq.includes(team.id);
+
+                    setIsInvited(isPlayerInvited);
                 }
-
-                // check if player is already in your team
-                const teamPlayers = myTeamDoc.docs[0].data().playersId;
-                const inTeam = teamPlayers.includes(playerId);
-                setIsTeamMate(inTeam);
-
-                const team = {
-                    id: myTeamDoc.docs[0].id,
-                    name: myTeamDoc.docs[0].data().name,
-                };
-
-                setMyTeam(team);
-
-                // check if player is invited
-                const isPlayerInvited = playerDoc
-                    .data()
-                    .teamReq.includes(team.id);
-
-                setIsInvited(isPlayerInvited);
 
                 if (userDoc.exists) {
                     const {friends} = userDoc.data();
@@ -161,6 +161,7 @@ const ViewProfile = ({navigation, route}) => {
                 setIsLoading(false);
             } catch (error) {
                 setIsLoading(false);
+
                 Toast.show({
                     type: 'error',
                     text1: 'Error',
@@ -211,7 +212,17 @@ const ViewProfile = ({navigation, route}) => {
                     .where('type', '==', 'friend_request')
                     .get();
 
-                await notifyRef.docs[0].ref.delete();
+                // await notifyRef.docs[0].ref.delete();
+
+                const notification = {
+                    senderId: myId,
+                    receiverId: playerId,
+                    message: ' accepted your friend request!',
+                    type: 'friend_accepted',
+                    read: false,
+                };
+
+                await notifyRef.docs[0].ref.update(notification);
 
                 setIsFriend(true);
                 setIsAccepted(true);
@@ -414,6 +425,8 @@ const ViewProfile = ({navigation, route}) => {
             } else {
                 if (isTeamMate) {
                     inviteAlertRef.current.open();
+                } else if (!isCaptain) {
+                    inviteAlertRef.current.open();
                 } else {
                     await firestore()
                         .collection('users')
@@ -473,19 +486,21 @@ const ViewProfile = ({navigation, route}) => {
         <SafeAreaView style={styles.container}>
             <ScrollView>
                 <View style={styles.topView}>
-                    <View>
-                        <Avatar
-                            rounded
-                            source={{uri: user.profilePic}}
-                            size="xlarge"
-                            containerStyle={styles.avatar}
-                        />
-                    </View>
-                    <View style={{marginLeft: 30}}>
-                        <Text
-                            style={
-                                styles.nameText
-                            }>{`${user.firstName} ${user.lastName}`}</Text>
+                    <Avatar
+                        rounded
+                        source={{uri: user.profilePic}}
+                        size={'xlarge'}
+                        containerStyle={styles.avatar}
+                    />
+                    <View
+                        style={{
+                            marginLeft: 20,
+                            top: 10,
+                            flex: 1,
+                        }}>
+                        <Text style={styles.nameText}>
+                            {`${user.firstName} ${user.lastName}`}
+                        </Text>
 
                         <Text
                             style={
@@ -555,7 +570,11 @@ const ViewProfile = ({navigation, route}) => {
                     ref={ref => (inviteAlertRef.current = ref)}
                     onConfirm={() => inviteAlertRef.current.close()}
                     title={''}
-                    message={'This player is your team member already!'}
+                    message={
+                        !isCaptain
+                            ? 'You are not captain of a team, so you cannot invite a player!'
+                            : 'This player is your team member already!'
+                    }
                     showCancel={false}
                     textConfirm="Ok"
                     customStyles={{

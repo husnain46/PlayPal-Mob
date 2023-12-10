@@ -1,5 +1,5 @@
 import {Picker} from '@react-native-picker/picker';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
     ActivityIndicator,
     SafeAreaView,
@@ -8,33 +8,37 @@ import {
     Text,
     View,
 } from 'react-native';
-import {RadioButton, TextInput, Button} from 'react-native-paper';
+import {TextInput, Button} from 'react-native-paper';
 import sportsList from '../Assets/sportsList.json';
-import DropDownPicker from 'react-native-dropdown-picker';
 import cityData from '../Assets/cityData.json';
-import arenasData from '../Assets/arenasData.json';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import {Divider} from '@rneui/themed';
+import {Dropdown} from 'react-native-element-dropdown';
+import {getDate} from 'date-fns';
+import AlertPro from 'react-native-alert-pro';
 
 const OrganizeTournament = ({navigation, route}) => {
     const {myTeam} = route.params;
     const [tourName, setTourName] = useState('');
-    const [sportId, setSportId] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
-    const [open, setOpen] = useState(false);
-    const [items, setItems] = useState(cityData);
     const [tourDetail, setTourDetail] = useState('');
     const [venueName, setVenueName] = useState('');
     const [venueAddress, setVenueAddress] = useState('');
     const [tourSize, setTourSize] = useState(3);
-    const myId = auth().currentUser.uid;
     const [loading, setLoading] = useState(false);
     const [showPicker1, setShowPicker1] = useState(false);
     const [showPicker2, setShowPicker2] = useState(false);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [isFocus, setIsFocus] = useState(false);
+    const [clashTourName, setClashTourName] = useState('');
+
+    const alertRefs = useRef([]);
+
+    const mySport = sportsList[myTeam.mySportId].name;
 
     const minDate = new Date();
     minDate.setDate(minDate.getDate() + 1);
@@ -47,10 +51,16 @@ const OrganizeTournament = ({navigation, route}) => {
 
     const numbers = Array.from({length: 6}, (_, index) => index + 3);
 
+    const cityList = cityData.map(item => ({
+        label: item.city,
+        value: item.city,
+    }));
+
     const handleStartDate = (event, selected) => {
         setShowPicker1(false);
         if (selected) {
             setStartDate(selected);
+            setEndDate('');
         }
     };
 
@@ -59,20 +69,6 @@ const OrganizeTournament = ({navigation, route}) => {
         if (selected) {
             setEndDate(selected);
         }
-    };
-
-    const searchCity = query => {
-        const filteredItems = items.filter(item =>
-            item.label.toLowerCase().includes(query.toLowerCase()),
-        );
-        return filteredItems;
-    };
-
-    const searchVenue = query => {
-        const filteredItems = items.filter(item =>
-            item.label.toLowerCase().includes(query.toLowerCase()),
-        );
-        return filteredItems;
     };
 
     const handleCreateTournament = async () => {
@@ -102,7 +98,6 @@ const OrganizeTournament = ({navigation, route}) => {
                 !tourName ||
                 !tourDetail ||
                 !selectedCity ||
-                !sportId ||
                 !tourSize ||
                 !startDate ||
                 !endDate ||
@@ -116,32 +111,48 @@ const OrganizeTournament = ({navigation, route}) => {
                     text2: 'Please fill in all fields',
                 });
             } else {
-                const tourData = {
-                    name: tourName,
-                    sport: sportId,
-                    size: tourSize,
-                    city: selectedCity,
-                    detail: tourDetail,
-                    teamIds: [myTeam.id],
-                    organizer: myTeam.id,
-                    requests: [],
-                    start_date: startDate,
-                    end_date: endDate,
-                    matches: [],
-                    address: venueAddress,
-                    venue: venueName,
-                };
+                const tourRef = await firestore()
+                    .collection('tournaments')
+                    .where('teamIds', 'array-contains', myTeam.id)
+                    .where('end_date', '>=', startDate)
+                    .get();
 
-                await firestore().collection('tournaments').add(tourData);
+                //condition to check clashes
+                if (tourRef.empty) {
+                    const tourData = {
+                        name: tourName,
+                        sport: myTeam.mySportId,
+                        size: tourSize,
+                        city: selectedCity,
+                        detail: tourDetail,
+                        teamIds: [myTeam.id],
+                        organizer: myTeam.id,
+                        requests: [],
+                        start_date: startDate,
+                        end_date: endDate,
+                        matches: [],
+                        address: venueAddress,
+                        venue: venueName,
+                        status: 'Upcoming',
+                        winner: '',
+                    };
 
-                Toast.show({
-                    type: 'success',
-                    text1: `Tournament ${tourName} created successfully!`,
-                });
+                    await firestore().collection('tournaments').add(tourData);
 
-                setLoading(false);
+                    Toast.show({
+                        type: 'success',
+                        text1: `Tournament ${tourName} created successfully!`,
+                    });
 
-                navigation.navigate('BottomTab', {screen: 'Tournament'});
+                    setLoading(false);
+
+                    navigation.navigate('BottomTab', {screen: 'Tournament'});
+                } else {
+                    setLoading(false);
+                    const tName = tourRef.docs[0].data().name;
+                    setClashTourName(tName);
+                    alertRefs.current.open();
+                }
             }
         } catch (error) {
             setLoading(false);
@@ -160,6 +171,23 @@ const OrganizeTournament = ({navigation, route}) => {
                 contentContainerStyle={styles.scrollView}
                 style={{width: '100%'}}>
                 <Text style={styles.titleScreen}>Create Tournament</Text>
+                <Divider width={1} color="darkgrey" style={{width: '90%'}} />
+
+                <AlertPro
+                    ref={ref => (alertRefs.current = ref)}
+                    title={'Tournament clash!'}
+                    message={`There is a date clash with ${clashTourName}`}
+                    onConfirm={() => alertRefs.current.close()}
+                    showCancel={false}
+                    textConfirm="Ok"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#4a5a96'},
+                        container: {
+                            borderRadius: 10,
+                        },
+                    }}
+                />
+
                 <View style={styles.inputView1}>
                     <Text style={styles.labelText}>Your Team:</Text>
 
@@ -174,97 +202,15 @@ const OrganizeTournament = ({navigation, route}) => {
                 </View>
 
                 <View style={styles.inputView2}>
-                    <Text style={styles.labelText}>Tournament title:</Text>
+                    <Text style={styles.labelText}>Your team sport:</Text>
 
                     <TextInput
-                        style={styles.textInput2}
-                        outlineStyle={styles.inputOutline}
-                        contentStyle={styles.inputText2}
-                        mode="outlined"
-                        label="Title"
-                        value={tourName}
-                        onChangeText={text => setTourName(text)}
-                        outlineColor="black"
-                    />
-                </View>
-
-                <View style={styles.pickerView}>
-                    <Text style={styles.labelText}>Tournament sport:</Text>
-                    <View style={styles.pickerStyle}>
-                        <Picker
-                            style={{width: 250}}
-                            selectedValue={sportId}
-                            onValueChange={setSportId}
-                            mode="dropdown"
-                            dropdownIconColor={'#143B63'}
-                            dropdownIconRippleColor={'#11867F'}>
-                            <Picker.Item
-                                style={styles.pickerBox}
-                                label="Select sports"
-                                value=""
-                                enabled={false}
-                                color="#11867F"
-                            />
-                            {Object.keys(sportsList).map((sportId, index) => (
-                                <Picker.Item
-                                    key={index}
-                                    style={styles.pickerBox}
-                                    label={sportsList[sportId].name}
-                                    value={sportId}
-                                    color="black"
-                                />
-                            ))}
-                        </Picker>
-                    </View>
-                </View>
-
-                <View style={styles.pickerView}>
-                    <Text style={styles.labelText}>No. of teams:</Text>
-
-                    <View style={styles.pickerStyle}>
-                        <Picker
-                            style={{width: 250}}
-                            selectedValue={tourSize}
-                            onValueChange={setTourSize}
-                            mode="dropdown"
-                            dropdownIconColor={'#143B63'}
-                            dropdownIconRippleColor={'#11867F'}>
-                            {numbers.map(number => (
-                                <Picker.Item
-                                    style={styles.pickerBox}
-                                    key={number}
-                                    label={`${number}`}
-                                    value={number}
-                                    color="black"
-                                />
-                            ))}
-                        </Picker>
-                    </View>
-                </View>
-
-                <View style={styles.dropView}>
-                    <Text style={styles.labelText}>Tournament city:</Text>
-                    <DropDownPicker
-                        style={styles.dropDown}
-                        labelStyle={{fontSize: 17}}
-                        open={open}
-                        value={selectedCity}
-                        items={items.map(item => ({
-                            label: item.city,
-                            value: item.city,
-                        }))}
-                        textStyle={{fontSize: 17}}
-                        setOpen={setOpen}
-                        setValue={setSelectedCity}
-                        listMode="MODAL"
-                        searchable={true}
-                        searchPlaceholder="Type city name"
-                        placeholder="Select city"
-                        placeholderStyle={{color: '#11867F'}}
-                        searchableError={() => <Text>City not found</Text>}
-                        dropDownContainerStyle={{width: 250}}
-                        onChangeSearch={query => searchCity(query)}
-                        onClose={() => setOpen(false)}
+                        style={styles.textInput1}
+                        contentStyle={styles.inputText1}
+                        value={mySport}
+                        editable={false}
+                        textColor="white"
+                        outlineStyle={{borderRadius: 10}}
                     />
                 </View>
 
@@ -272,7 +218,11 @@ const OrganizeTournament = ({navigation, route}) => {
                     <Text style={styles.dateLabel}>Start date:</Text>
                     <Button
                         mode="contained-tonal"
-                        style={styles.dateBox}
+                        style={
+                            clashTourName === ''
+                                ? styles.dateBox
+                                : styles.errorDateBox
+                        }
                         buttonColor="#cfdfe8"
                         onPress={() => setShowPicker1(true)}>
                         {startDate ? (
@@ -299,34 +249,118 @@ const OrganizeTournament = ({navigation, route}) => {
                     )}
                 </View>
 
-                <View style={styles.dateView}>
-                    <Text style={styles.dateLabel}>End date:</Text>
-                    <Button
-                        mode="contained-tonal"
-                        style={styles.dateBox}
-                        buttonColor="#cfdfe8"
-                        onPress={() => setShowPicker2(true)}>
-                        {endDate ? (
-                            <Text style={styles.dateText}>
-                                {endDate.toLocaleDateString('en-GB')}
-                            </Text>
-                        ) : (
-                            <Text style={styles.datePlaceholder}>
-                                Select Date
-                            </Text>
-                        )}
-                    </Button>
+                {startDate !== '' && (
+                    <View style={styles.dateView}>
+                        <Text style={styles.dateLabel}>End date:</Text>
+                        <Button
+                            mode="contained-tonal"
+                            style={
+                                clashTourName === ''
+                                    ? styles.dateBox
+                                    : styles.errorDateBox
+                            }
+                            buttonColor="#cfdfe8"
+                            onPress={() => setShowPicker2(true)}>
+                            {endDate !== '' ? (
+                                <Text style={styles.dateText}>
+                                    {endDate.toLocaleDateString('en-GB')}
+                                </Text>
+                            ) : (
+                                <Text style={styles.datePlaceholder}>
+                                    Select Date
+                                </Text>
+                            )}
+                        </Button>
 
-                    {showPicker2 && (
-                        <DateTimePicker
-                            value={endMinDate}
-                            mode="date"
-                            display="compact"
-                            minimumDate={minDate.setDate(minDate.getDate() + 3)}
-                            maximumDate={maxDate}
-                            onChange={handleEndDate}
-                        />
-                    )}
+                        {showPicker2 && (
+                            <DateTimePicker
+                                value={
+                                    new Date(
+                                        startDate.getTime() +
+                                            3 * 24 * 60 * 60 * 1000,
+                                    )
+                                }
+                                mode="date"
+                                display="compact"
+                                minimumDate={
+                                    new Date(
+                                        startDate.getTime() +
+                                            3 * 24 * 60 * 60 * 1000,
+                                    )
+                                }
+                                maximumDate={maxDate}
+                                onChange={handleEndDate}
+                            />
+                        )}
+                    </View>
+                )}
+
+                <View style={styles.inputView2}>
+                    <Text style={styles.labelText}>Tournament title:</Text>
+
+                    <TextInput
+                        style={styles.textInput2}
+                        outlineStyle={styles.inputOutline}
+                        contentStyle={styles.inputText2}
+                        mode="outlined"
+                        label="Title"
+                        value={tourName}
+                        onChangeText={text => setTourName(text)}
+                        outlineColor="black"
+                    />
+                </View>
+
+                <View style={styles.pickerView}>
+                    <Text style={styles.labelText}>No. of teams:</Text>
+
+                    <View style={styles.pickerStyle}>
+                        <Picker
+                            style={{width: '100%', color: '#11867F'}}
+                            selectedValue={tourSize}
+                            onValueChange={setTourSize}
+                            mode="dropdown"
+                            dropdownIconColor={'#143B63'}
+                            dropdownIconRippleColor={'#11867F'}>
+                            {numbers.map(number => (
+                                <Picker.Item
+                                    style={styles.pickerBox}
+                                    key={number}
+                                    label={`${number}`}
+                                    value={number}
+                                    color="black"
+                                />
+                            ))}
+                        </Picker>
+                    </View>
+                </View>
+
+                <View style={styles.dropView}>
+                    <Text style={styles.dropLabel}>Your city:</Text>
+                    <Dropdown
+                        style={styles.dropdown}
+                        selectedTextStyle={styles.selectedTextStyle}
+                        containerStyle={styles.dropContainer}
+                        itemTextStyle={styles.dropItemText}
+                        itemContainerStyle={styles.dropItem}
+                        iconStyle={styles.iconStyle}
+                        inputSearchStyle={styles.dropSearch}
+                        data={cityList}
+                        maxHeight={250}
+                        labelField="label"
+                        search={true}
+                        valueField="value"
+                        placeholder={!isFocus ? 'Select city' : '...'}
+                        searchPlaceholder={'Search here...'}
+                        placeholderStyle={{color: 'grey'}}
+                        searchField=""
+                        value={selectedCity}
+                        onFocus={() => setIsFocus(true)}
+                        onBlur={() => setIsFocus(false)}
+                        onChange={item => {
+                            setSelectedCity(item.value);
+                            setIsFocus(false);
+                        }}
+                    />
                 </View>
 
                 <View style={styles.inputView2}>
@@ -353,7 +387,7 @@ const OrganizeTournament = ({navigation, route}) => {
                     />
                 </View>
 
-                <View style={{marginTop: 20}}>
+                <View style={{marginTop: 20, width: '80%'}}>
                     <Text style={styles.labelText}>Tournament details:</Text>
 
                     <TextInput
@@ -405,25 +439,27 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     titleScreen: {
-        fontSize: 26,
-        fontWeight: '700',
+        fontSize: 22,
+        fontWeight: '600',
         color: '#4a5a96',
-        marginVertical: 30,
-        marginBottom: 50,
+        marginTop: 30,
+        marginBottom: 5,
     },
     inputView1: {
-        width: 300,
+        width: '80%',
+        marginTop: 30,
     },
     textInput1: {
-        width: 300,
-        height: 60,
+        width: '100%',
+        height: 50,
         borderRadius: 10,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
+        borderTopStartRadius: 10,
+        borderTopEndRadius: 10,
+        overflow: 'hidden',
         backgroundColor: '#4377AA',
     },
     textInput2: {
-        width: 300,
+        width: '100%',
         height: 50,
         backgroundColor: 'white',
     },
@@ -442,11 +478,13 @@ const styles = StyleSheet.create({
     },
     pickerView: {
         marginTop: 20,
-        alignSelf: 'flex-start',
-        marginLeft: 55,
+        alignSelf: 'center',
+        width: '80%',
     },
     pickerBox: {
         fontSize: 17,
+        width: '100%',
+        backgroundColor: 'white',
     },
     pickerStyle: {
         borderRadius: 10,
@@ -464,19 +502,57 @@ const styles = StyleSheet.create({
         color: 'black',
     },
     dropView: {
-        alignSelf: 'flex-start',
-        marginLeft: 55,
+        alignSelf: 'center',
         marginTop: 20,
+        width: '80%',
     },
-    dropDown: {
-        width: 250,
-        borderColor: 'darkgrey',
-        borderWidth: 2,
+    dropdown: {
         height: 50,
-        borderRadius: 10,
+        width: '100%',
+        borderColor: 'grey',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: 'white',
+    },
+    dropLabel: {
+        fontSize: 17,
+        marginBottom: 10,
+        fontWeight: '500',
+        color: 'black',
+    },
+    dropContainer: {
+        borderBottomWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'darkgrey',
+    },
+    selectedTextStyle: {
+        fontSize: 17,
+        fontWeight: '400',
+        color: '#11867F',
+    },
+    iconStyle: {
+        width: 25,
+        height: 25,
+        tintColor: 'black',
+    },
+    dropItemText: {
+        height: 22,
+        color: 'black',
+    },
+    dropItem: {
+        height: 45,
+        justifyContent: 'center',
+    },
+    dropSearch: {
+        height: 40,
+        fontSize: 16,
+        borderColor: 'black',
+        color: 'grey',
     },
     detailInput: {
-        width: 300,
+        width: '100%',
         backgroundColor: 'white',
         borderRadius: 10,
         top: -5,
@@ -485,7 +561,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
         flexDirection: 'row',
         alignItems: 'center',
-        width: 290,
+        width: '80%',
         marginBottom: 10,
         justifyContent: 'space-between',
     },
@@ -503,6 +579,15 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    errorDateBox: {
+        width: 160,
+        marginLeft: 10,
+        height: 45,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderBottomWidth: 3,
+        borderColor: 'red',
+    },
     dateText: {
         fontSize: 17,
         fontWeight: '500',
@@ -512,8 +597,8 @@ const styles = StyleSheet.create({
     datePlaceholder: {
         paddingHorizontal: 0,
         fontSize: 16,
-        fontWeight: '500',
-        color: '#4a5a96',
+        color: 'gray',
+        fontWeight: '400',
     },
     venueView: {
         marginTop: 20,
@@ -542,7 +627,7 @@ const styles = StyleSheet.create({
     },
     inputView2: {
         marginTop: 20,
-        width: 300,
+        width: '80%',
     },
     outline: {
         borderRadius: 8,

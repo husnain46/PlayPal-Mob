@@ -8,14 +8,14 @@ const styles = StyleSheet.create({
     bgImageView: {
         width: '91%',
         height: '95%',
-        borderRadius: 10,
-        overflow: 'hidden',
         justifyContent: 'center',
         marginTop: 20,
         alignSelf: 'center',
     },
     bgImage: {
         flex: 1,
+        borderRadius: 15,
+        overflow: 'hidden',
         alignItems: 'center',
     },
     logoView: {
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
         height: 90,
     },
     inner: {
-        marginTop: 30,
+        marginTop: 10,
         justifyContent: 'center',
         alignContent: 'center',
     },

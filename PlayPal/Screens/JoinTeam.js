@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Picker} from '@react-native-picker/picker';
-import {ButtonGroup, SearchBar} from '@rneui/themed';
+import {ButtonGroup, SearchBar, Divider, Card} from '@rneui/themed';
 import styles from '../Styles/joinTeamStyles';
 import {
     Image,
@@ -12,7 +12,7 @@ import {
     FlatList,
     ActivityIndicator,
 } from 'react-native';
-import {Button, Card, Title, Divider} from 'react-native-paper';
+import {Button, Title} from 'react-native-paper';
 import getSportsByIds from '../Functions/getSportsByIds';
 import sportsList from '../Assets/sportsList.json';
 import firestore from '@react-native-firebase/firestore';
@@ -123,15 +123,15 @@ const JoinTeam = ({navigation}) => {
 
         return (
             <TouchableOpacity onPress={() => gotoViewTeam(item, sportName)}>
-                <Card style={styles.card}>
-                    <Card.Cover
+                <Card containerStyle={styles.card}>
+                    <Card.Image
                         style={styles.cardImage}
                         source={{uri: item.teamPic}}
                         resizeMode="stretch"
                     />
-                    <Card.Content style={styles.content}>
+                    <View style={styles.content}>
                         <Title style={styles.cardTitle}>{item.name}</Title>
-                        <Divider style={{height: 3}} />
+                        <Divider width={1} />
                         <View style={styles.cardSubView}>
                             <View style={styles.cardDetailView}>
                                 <Text style={styles.cardLabel}>Sport:</Text>
@@ -144,17 +144,11 @@ const JoinTeam = ({navigation}) => {
                                 </Text>
                             </View>
                         </View>
-                        <View style={styles.cardSubView}>
-                            <View style={styles.cardDetailView}>
-                                <Text style={styles.cardText}>{item.rank}</Text>
-                            </View>
-                            <View style={styles.cardDetailView}>
-                                <Text style={styles.cardText}>
-                                    {item.ageCategory}
-                                </Text>
-                            </View>
+
+                        <View style={styles.cardDetailView}>
+                            <Text style={styles.rankText}>({item.rank})</Text>
                         </View>
-                    </Card.Content>
+                    </View>
                 </Card>
             </TouchableOpacity>
         );
@@ -163,6 +157,7 @@ const JoinTeam = ({navigation}) => {
     return (
         <SafeAreaView style={styles.container}>
             <Title style={styles.topTitle}>Explore Teams</Title>
+            <Divider width={1} style={styles.divider} color="grey" />
 
             <View style={styles.searchView}>
                 <SearchBar
@@ -199,7 +194,7 @@ const JoinTeam = ({navigation}) => {
                             </Text>
                             <View style={styles.pickerStyle}>
                                 <Picker
-                                    style={{width: 200}}
+                                    style={{width: '100%', color: '#11867F'}}
                                     selectedValue={sportsFilter}
                                     onValueChange={itemValue =>
                                         setSportsFilter(itemValue)
@@ -212,7 +207,7 @@ const JoinTeam = ({navigation}) => {
                                         label="Select sports"
                                         value=""
                                         enabled={false}
-                                        color="#11867F"
+                                        color="grey"
                                     />
                                     {Object.keys(sportsList).map(
                                         (sportId, index) => (
@@ -255,17 +250,20 @@ const JoinTeam = ({navigation}) => {
                                 onPress={() => resetFilters()}>
                                 Reset
                             </Button>
-
-                            <TouchableOpacity
-                                style={[styles.button, styles.buttonClose]}
-                                onPress={() => setModalVisible(!modalVisible)}>
-                                <Text style={styles.textStyle}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.button, styles.buttonOpen]}
-                                onPress={() => applyFilters()}>
-                                <Text style={styles.textStyle}>Apply</Text>
-                            </TouchableOpacity>
+                            <View style={{flexDirection: 'row'}}>
+                                <TouchableOpacity
+                                    style={[styles.button, styles.buttonClose]}
+                                    onPress={() =>
+                                        setModalVisible(!modalVisible)
+                                    }>
+                                    <Text style={styles.textStyle}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.button, styles.buttonOpen]}
+                                    onPress={() => applyFilters()}>
+                                    <Text style={styles.textStyle}>Apply</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -286,17 +284,9 @@ const JoinTeam = ({navigation}) => {
                         data={filteredTeams}
                         renderItem={renderItem}
                         keyExtractor={item => item.teamId}
-                        contentContainerStyle={{paddingBottom: 180}}
+                        contentContainerStyle={{paddingBottom: 150}}
                         ListEmptyComponent={() => (
-                            <Text
-                                style={{
-                                    marginTop: 20,
-                                    fontSize: 18,
-                                    color: '#c22710',
-                                    fontWeight: '500',
-                                }}>
-                                No team found!
-                            </Text>
+                            <Text style={styles.emptyText}>No team found!</Text>
                         )}
                     />
                 </View>

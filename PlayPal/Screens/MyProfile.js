@@ -302,7 +302,7 @@ const MyProfile = ({navigation, route}) => {
             <Card style={styles.card} mode="elevated">
                 <Card.Content>
                     <Avatar.Image
-                        size={150}
+                        size={170}
                         source={{uri: user.profilePic}}
                         style={styles.avatar}
                     />
@@ -577,7 +577,6 @@ const styles = StyleSheet.create({
     avatar: {
         alignSelf: 'center',
         marginBottom: 20,
-        marginTop: -10,
     },
     fullName: {
         fontSize: 24,

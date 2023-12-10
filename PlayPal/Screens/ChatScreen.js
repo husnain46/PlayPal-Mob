@@ -183,6 +183,7 @@ const ChatScreen = ({navigation, route}) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Type a message..."
+                    placeholderTextColor={'darkgrey'}
                     value={inputMessage}
                     onChangeText={text => setInputMessage(text)}
                     numberOfLines={4}
@@ -208,8 +209,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 10,
         paddingHorizontal: 15,
-        borderBottomWidth: 3,
-        borderColor: '#EDEDED',
+        borderBottomWidth: 2,
+        borderColor: 'lightgrey',
     },
     profilePicture: {
         width: 45,
@@ -219,9 +220,10 @@ const styles = StyleSheet.create({
     },
     username: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: '600',
         textAlign: 'left',
         textAlignVertical: 'center',
+        color: 'black',
     },
     flex1: {
         flex: 1,
@@ -261,34 +263,31 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         flexDirection: 'row',
+        width: '100%',
         height: 65,
         alignItems: 'center',
         borderTopWidth: 1,
         borderColor: '#EDEDED',
-        paddingHorizontal: 10,
-        paddingBottom: 10,
+        paddingHorizontal: 7,
+        justifyContent: 'space-between',
     },
     input: {
-        width: '85%',
+        width: '84%',
         height: 50,
         fontSize: 16,
         borderWidth: 2,
         borderColor: 'grey',
         borderRadius: 10,
         paddingLeft: 10,
+        color: 'black',
     },
     sendButton: {
         width: 50,
         height: 50,
         backgroundColor: '#0084ff',
         borderRadius: 40,
-        paddingHorizontal: 15,
-        marginLeft: 10,
-        paddingVertical: 14,
-    },
-    sendButtonText: {
-        color: 'white',
-        fontSize: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });
 

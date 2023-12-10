@@ -14,9 +14,9 @@ import {
 import {Button, Chip} from 'react-native-paper';
 import {Divider, Icon} from '@rneui/themed';
 import Carousel, {Pagination} from 'react-native-snap-carousel';
-import getPlayerData from '../Functions/getPlayerData';
 import getTimeAgo from '../Functions/getTimeAgo';
 import getSportsByIds from '../Functions/getSportsByIds';
+import {Rating} from 'react-native-ratings';
 
 const ViewArena = ({navigation, route}) => {
     const {arena, arenaRating, ratingCount, arenaId} = route.params;
@@ -78,8 +78,6 @@ const ViewArena = ({navigation, route}) => {
     );
 
     const renderReviewList = ({item}) => {
-        let user = getPlayerData(item.userId);
-        let userName = `${user.firstName} ${user.lastName}`;
         let reviewTime = getTimeAgo(item.timestamp);
         return (
             <View style={styles.ratingItem}>
@@ -88,13 +86,25 @@ const ViewArena = ({navigation, route}) => {
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                     }}>
-                    <View style={{flexDirection: 'row'}}>
-                        <Text style={styles.reviewUserText}>{userName}</Text>
-                        <Text style={styles.timeElapsed}>{reviewTime}</Text>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <Rating
+                            readonly={true}
+                            startingValue={item.ratingValue}
+                            imageSize={13}
+                        />
+
+                        <Text style={styles.ratingValue}>
+                            {item.ratingValue}
+                        </Text>
+                        <Text
+                            style={styles.reviewUserText}
+                            numberOfLines={1}
+                            ellipsizeMode="tail">
+                            {item.reviewerName}
+                        </Text>
                     </View>
-                    <Text style={styles.ratingValue}>
-                        ⭐ {item.ratingValue}
-                    </Text>
+
+                    <Text style={styles.timeElapsed}>({reviewTime})</Text>
                 </View>
                 <Text style={styles.reviewText}>{item.review}</Text>
             </View>
@@ -227,15 +237,13 @@ const ViewArena = ({navigation, route}) => {
                     </View>
                 </View>
 
-                <Button
-                    mode="contained"
-                    buttonColor="#4a5a96"
-                    style={{marginTop: 30, marginBottom: 5}}
-                    labelStyle={{fontSize: 16}}
-                    onPress={() => gotoSlots()}>
-                    Book slots
-                </Button>
-
+                <View style={styles.bookView}>
+                    <TouchableOpacity
+                        style={styles.bookBtn}
+                        onPress={() => gotoSlots()}>
+                        <Text style={styles.bookText}>Book slots</Text>
+                    </TouchableOpacity>
+                </View>
                 <Text style={styles.ratingTitle}>Rating & Reviews</Text>
                 <View style={styles.ratingView}>
                     <View style={styles.ratingSubView}>

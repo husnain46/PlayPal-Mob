@@ -74,6 +74,19 @@ const Notifications = ({navigation, route}) => {
                                     newMessage,
                                     type: notification.type,
                                 };
+                            } else if (
+                                notification.type === 'friend_accepted'
+                            ) {
+                                const newMessage =
+                                    senderName + notification.message;
+
+                                return {
+                                    id: doc.id,
+                                    senderId: notification.senderId,
+                                    receiverId: notification.receiverId,
+                                    newMessage,
+                                    type: notification.type,
+                                };
                             } else if (notification.type === 'team_request') {
                                 const newMessage =
                                     senderName +
@@ -137,9 +150,12 @@ const Notifications = ({navigation, route}) => {
                 <IconButton
                     icon={'arrow-right-circle-outline'}
                     size={32}
-                    style={{height: 40}}
+                    style={{height: 40, width: 50}}
                     onPress={() => {
-                        if (item.type === 'friend_request') {
+                        if (
+                            item.type === 'friend_request' ||
+                            item.type === 'friend_accepted'
+                        ) {
                             checkNotification(senderUserData);
                         } else if (item.type === 'team_request') {
                             gotoTeams();
@@ -189,7 +205,7 @@ const styles = StyleSheet.create({
         color: '#4a5a96',
     },
     notificationItem: {
-        padding: 10,
+        padding: 5,
         borderBottomWidth: 1,
         borderBottomColor: 'gray',
         flexDirection: 'row',
@@ -198,7 +214,9 @@ const styles = StyleSheet.create({
     },
     notificationText: {
         flex: 1,
+        width: '100%',
         fontSize: 17,
+        color: 'grey',
     },
     arrowIcon: {
         width: 20,

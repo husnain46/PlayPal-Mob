@@ -2,7 +2,7 @@ import styles from '../Styles/findplayersStyles';
 import React, {useState, useEffect, useCallback} from 'react';
 import {FlatList} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {ButtonGroup, Divider, SearchBar} from '@rneui/themed';
+import {ButtonGroup, Divider, SearchBar, Card} from '@rneui/themed';
 import firestore from '@react-native-firebase/firestore';
 
 import {
@@ -14,7 +14,7 @@ import {
     Text,
     ActivityIndicator,
 } from 'react-native';
-import {Button, Card, Title} from 'react-native-paper';
+import {Button} from 'react-native-paper';
 import locationIcon from '../Assets/Icons/location.png';
 import levelIcon from '../Assets/Icons/level.png';
 import sportsIcon from '../Assets/Icons/sports.png';
@@ -170,23 +170,20 @@ const FindPlayers = ({navigation}) => {
         const sportName = getSportsByIds(item.preferredSports);
 
         return (
-            <Card style={styles.card} mode="elevated">
-                <Card.Title
-                    title={`${item.firstName} ${item.lastName}`}
-                    titleStyle={styles.cardName}
-                    subtitleStyle={styles.cardUsername}
-                    subtitle={`@${item.username}`}
-                    style={styles.cardHeader}
-                    left={() => (
-                        <View>
-                            <Image
-                                style={styles.dpImage}
-                                source={{uri: item.profilePic}}
-                                resizeMode="contain"
-                            />
-                        </View>
-                    )}
-                    right={() => (
+            <Card containerStyle={styles.card}>
+                <View style={styles.cardHeader}>
+                    <Image
+                        style={styles.dpImage}
+                        source={{uri: item.profilePic}}
+                        resizeMode="contain"
+                    />
+                    <View style={{flex: 1}}>
+                        <Text style={styles.cardName}>
+                            {`${item.firstName} ${item.lastName}`}
+                        </Text>
+                        <Text style={styles.cardUsername}>
+                            {`@${item.username}`}
+                        </Text>
                         <View style={styles.cardAgeView}>
                             <Text
                                 style={{
@@ -203,50 +200,37 @@ const FindPlayers = ({navigation}) => {
                                 item.DOB,
                             )} years)`}</Text>
                         </View>
-                    )}
-                />
-                <Card.Content>
-                    <Divider style={styles.divider} width={1.2} color="grey" />
-                    <View style={styles.infoContainer}>
-                        <View style={styles.cardInfoView}>
-                            <Image
-                                source={sportsIcon}
-                                style={styles.infoIcons}
-                            />
-                            <Title style={styles.cardSportsText}>
-                                {`${sportName.join(', ')}`}
-                            </Title>
-                        </View>
-                        <View style={styles.cardInfoView}>
-                            <Image
-                                source={levelIcon}
-                                style={styles.infoIcons}
-                            />
-                            <Text style={styles.userInfo}>
-                                {`${item.skillLevel}`}
-                            </Text>
-                        </View>
-                        <View style={styles.cardInfoView}>
-                            <Image
-                                source={locationIcon}
-                                style={styles.infoIcons}
-                            />
-                            <Text style={styles.userInfo}>
-                                {`${item.area}, ${item.city}`}
-                            </Text>
-                        </View>
-                        <Button
-                            style={{
-                                top: 10,
-                                width: 130,
-                                alignSelf: 'center',
-                            }}
-                            mode="outlined"
-                            onPress={() => gotoViewProfile(item)}>
-                            View Profile
-                        </Button>
                     </View>
-                </Card.Content>
+                </View>
+
+                <Card.Divider style={styles.divider} width={1.2} color="grey" />
+
+                <View style={styles.cardInfoView}>
+                    <Image source={sportsIcon} style={styles.infoIcons} />
+                    <Text style={styles.cardSportsText}>
+                        {`${sportName.join(', ')}`}
+                    </Text>
+                </View>
+                <View style={styles.cardInfoView}>
+                    <Image source={levelIcon} style={styles.infoIcons} />
+                    <Text style={styles.userInfo}>{`${item.skillLevel}`}</Text>
+                </View>
+                <View style={styles.cardInfoView}>
+                    <Image source={locationIcon} style={styles.infoIcons} />
+                    <Text style={styles.userInfo}>
+                        {`${item.area}, ${item.city}`}
+                    </Text>
+                </View>
+                <Button
+                    style={{
+                        marginTop: 5,
+                        width: 130,
+                        alignSelf: 'center',
+                    }}
+                    mode="outlined"
+                    onPress={() => gotoViewProfile(item)}>
+                    View Profile
+                </Button>
             </Card>
         );
     };
@@ -256,7 +240,7 @@ const FindPlayers = ({navigation}) => {
             <View style={styles.searchView}>
                 <SearchBar
                     placeholder="Search name/username"
-                    style={{fontSize: 16}}
+                    style={{fontSize: 16, marginLeft: 5}}
                     onChangeText={handleSearch}
                     value={searchQuery}
                     containerStyle={styles.searchBar}
@@ -289,9 +273,9 @@ const FindPlayers = ({navigation}) => {
                             </Text>
                             <View style={styles.pickerStyle}>
                                 <Picker
-                                    style={{width: 180}}
                                     selectedValue={sportsFilter}
                                     onValueChange={setSportsFilter}
+                                    selectionColor={'#11867F'}
                                     mode="dropdown"
                                     dropdownIconColor={'#143B63'}
                                     dropdownIconRippleColor={'#11867F'}>
@@ -361,17 +345,20 @@ const FindPlayers = ({navigation}) => {
                                 onPress={() => resetFilters()}>
                                 Reset
                             </Button>
-
-                            <TouchableOpacity
-                                style={[styles.button, styles.buttonClose]}
-                                onPress={() => setModalVisible(!modalVisible)}>
-                                <Text style={styles.textStyle}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.button, styles.buttonOpen]}
-                                onPress={() => applyFilters()}>
-                                <Text style={styles.textStyle}>Apply</Text>
-                            </TouchableOpacity>
+                            <View style={{flexDirection: 'row'}}>
+                                <TouchableOpacity
+                                    style={[styles.button, styles.buttonClose]}
+                                    onPress={() =>
+                                        setModalVisible(!modalVisible)
+                                    }>
+                                    <Text style={styles.textStyle}>Cancel</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.button, styles.buttonOpen]}
+                                    onPress={() => applyFilters()}>
+                                    <Text style={styles.textStyle}>Apply</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -392,7 +379,12 @@ const FindPlayers = ({navigation}) => {
                         data={filteredUsers}
                         renderItem={renderItem}
                         keyExtractor={item => item.username}
-                        contentContainerStyle={{paddingBottom: 180}}
+                        contentContainerStyle={{paddingBottom: 170}}
+                        ListEmptyComponent={() => (
+                            <Text style={styles.emptyListText}>
+                                No player found!
+                            </Text>
+                        )}
                     />
                 </View>
             )}

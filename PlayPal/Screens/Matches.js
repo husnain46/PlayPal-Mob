@@ -17,6 +17,7 @@ import Toast from 'react-native-toast-message';
 const Matches = ({navigation, route}) => {
     const {data, teamsData, isOrganizer, isCricket} = route.params;
     const [matches, setMatches] = useState(data.matches);
+
     const alertRefs = useRef([]);
 
     useFocusEffect(
@@ -51,7 +52,11 @@ const Matches = ({navigation, route}) => {
     );
 
     const gotoAddMatch = () => {
-        navigation.navigate('AddMatch', {data, teamsData, isCricket});
+        navigation.navigate('AddMatch', {
+            data,
+            teamsData,
+            isCricket,
+        });
     };
 
     const gotoEditMatch = match => {
@@ -135,13 +140,18 @@ const Matches = ({navigation, route}) => {
 
         let matchNum = index + 1;
         return (
-            <View style={{marginBottom: 30}}>
+            <View
+                style={{
+                    marginBottom: 10,
+                    width: '90%',
+                    alignSelf: 'center',
+                }}>
                 <View style={styles.headerView}>
                     <Text
                         style={{
-                            fontSize: 24,
+                            fontSize: 20,
                             color: 'black',
-                            fontWeight: '600',
+                            fontWeight: '500',
                         }}>
                         {`Match ${matchNum}:`}
                     </Text>
@@ -151,6 +161,7 @@ const Matches = ({navigation, route}) => {
                             icon={'square-edit-outline'}
                             size={35}
                             onPress={() => gotoEditMatch(item)}
+                            style={{left: 10}}
                         />
                     ) : (
                         <></>
@@ -158,7 +169,7 @@ const Matches = ({navigation, route}) => {
                 </View>
 
                 <Card style={styles.card}>
-                    <Card.Content style={styles.cardContent}>
+                    <Card.Content>
                         <View style={styles.teamView}>
                             <View style={styles.teamContainer}>
                                 <Image
@@ -282,9 +293,11 @@ const Matches = ({navigation, route}) => {
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Matches</Text>
-            <Divider style={styles.divider} width={2} color="grey" />
+            <Divider style={styles.divider} width={1} color="grey" />
 
-            {isOrganizer ? (
+            {data.winner !== '' ? (
+                <></>
+            ) : isOrganizer ? (
                 <Button
                     onPress={() => gotoAddMatch()}
                     containerStyle={styles.matchBtn}
@@ -295,20 +308,21 @@ const Matches = ({navigation, route}) => {
             ) : (
                 <></>
             )}
-
-            <FlatList
-                contentContainerStyle={{paddingBottom: 30}}
-                data={matches}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={renderItem}
-                ListEmptyComponent={() => (
-                    <View style={{marginTop: 40}}>
-                        <Text style={{fontSize: 20, color: 'black'}}>
-                            No match scheduled yet!
-                        </Text>
-                    </View>
-                )}
-            />
+            <View style={{width: '100%', marginTop: 10}}>
+                <FlatList
+                    contentContainerStyle={{paddingBottom: 100}}
+                    data={matches}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={renderItem}
+                    ListEmptyComponent={() => (
+                        <View style={{marginTop: 40}}>
+                            <Text style={{fontSize: 18, color: 'grey'}}>
+                                No match scheduled yet!
+                            </Text>
+                        </View>
+                    )}
+                />
+            </View>
         </SafeAreaView>
     );
 };
@@ -319,22 +333,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleText: {
-        fontSize: 26,
+        fontSize: 24,
         color: '#4a5a96',
-        fontWeight: '700',
+        fontWeight: '600',
         marginTop: 20,
     },
     divider: {
         alignSelf: 'center',
         width: '90%',
-        marginVertical: 10,
+        marginTop: 5,
+        marginBottom: 10,
     },
     matchBtn: {
-        marginTop: 15,
+        marginVertical: 5,
         borderRadius: 10,
         width: 120,
         marginHorizontal: 10,
-        marginBottom: 30,
     },
     btnText: {
         fontSize: 16,
@@ -342,22 +356,19 @@ const styles = StyleSheet.create({
     },
     headerView: {
         flexDirection: 'row',
-        width: 380,
-        height: 60,
+        width: '100%',
+        height: 50,
         justifyContent: 'space-between',
         alignItems: 'center',
-        alignSelf: 'center',
-        marginHorizontal: 20,
     },
     card: {
-        width: 380,
-        marginHorizontal: 16,
+        width: '100%',
+        alignSelf: 'center',
+        marginHorizontal: 15,
         borderWidth: 1,
         borderColor: 'lightgrey',
         borderRadius: 12,
-    },
-    cardContent: {
-        padding: 16,
+        backgroundColor: 'white',
     },
     teamView: {
         flexDirection: 'row',
@@ -368,6 +379,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         marginBottom: 10,
+        width: '28%',
     },
     teamImage: {
         width: 70,
@@ -383,7 +395,7 @@ const styles = StyleSheet.create({
     },
     scoreContainer: {
         flexDirection: 'row',
-        width: 160,
+        width: '48%',
         alignItems: 'center',
         justifyContent: 'space-evenly',
         marginBottom: 16,
@@ -396,6 +408,7 @@ const styles = StyleSheet.create({
     },
     vsText: {
         fontSize: 14,
+        color: 'grey',
     },
     cardDivider: {
         alignSelf: 'center',
@@ -420,6 +433,7 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         color: '#068f6f',
         letterSpacing: 0.2,
+        textAlign: 'center',
     },
     startButton: {
         width: 80,

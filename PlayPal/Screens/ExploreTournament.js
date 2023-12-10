@@ -46,8 +46,11 @@ const ExploreTournament = ({navigation}) => {
     useEffect(() => {
         const fetchTournaments = async () => {
             try {
+                const currentDate = new Date();
+
                 const tournamentRef = await firestore()
                     .collection('tournaments')
+                    .where('end_date', '>=', currentDate)
                     .get();
 
                 if (!tournamentRef.empty) {
@@ -209,6 +212,8 @@ const ExploreTournament = ({navigation}) => {
     return (
         <SafeAreaView style={styles.container}>
             <Title style={styles.topTitle}>Explore Tournaments</Title>
+            <Divider style={styles.divider2} />
+
             <View style={styles.searchView}>
                 <SearchBar
                     placeholder="Search name"
@@ -250,19 +255,27 @@ const ExploreTournament = ({navigation}) => {
                                     label: item.city,
                                     value: item.city,
                                 }))}
-                                textStyle={{fontSize: 15, fontWeight: '500'}}
+                                textStyle={{
+                                    fontSize: 15,
+                                    fontWeight: '400',
+                                    color: 'black',
+                                }}
                                 setOpen={setOpen}
                                 setValue={setSelectedCity}
                                 searchable={true}
                                 searchPlaceholder="Type city name"
                                 placeholder="Select city"
-                                placeholderStyle={{color: '#11867F'}}
+                                placeholderStyle={{color: 'grey'}}
                                 searchablePlaceholderTextColor="gray"
+                                selectedItemLabelStyle={{color: '#11867F'}}
                                 searchableError={() => (
                                     <Text>City not found</Text>
                                 )}
                                 searchContainerStyle={{paddingVertical: 10}}
-                                dropDownContainerStyle={{width: 200}}
+                                dropDownContainerStyle={{
+                                    width: '100%',
+                                    maxHeight: 220,
+                                }}
                                 onChangeSearch={query => searchCity(query)}
                                 onClose={() => setOpen(false)}
                             />
@@ -274,7 +287,7 @@ const ExploreTournament = ({navigation}) => {
                             </Text>
                             <View style={styles.pickerStyle}>
                                 <Picker
-                                    style={{width: 200}}
+                                    style={{width: '100%'}}
                                     selectedValue={sportsFilter}
                                     onValueChange={setSportsFilter}
                                     mode="dropdown"
@@ -285,7 +298,7 @@ const ExploreTournament = ({navigation}) => {
                                         label="Select sports"
                                         value=""
                                         enabled={false}
-                                        color="#11867F"
+                                        color="grey"
                                     />
                                     {Object.keys(sportsList).map(
                                         (sportId, index) => (
@@ -323,6 +336,7 @@ const ExploreTournament = ({navigation}) => {
                     </View>
                 </View>
             </Modal>
+
             {isLoading ? (
                 <View style={{alignSelf: 'center'}}>
                     <ActivityIndicator
@@ -334,7 +348,6 @@ const ExploreTournament = ({navigation}) => {
             ) : (
                 <View style={styles.listView}>
                     <FlatList
-                        showsVerticalScrollIndicator={false}
                         data={filteredData}
                         renderItem={renderItem}
                         keyExtractor={filteredData.id}
@@ -362,34 +375,33 @@ const styles = StyleSheet.create({
         backgroundColor: '#EDEDED',
     },
     topTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 22,
+        fontWeight: '600',
         color: '#4A5B96',
         textAlign: 'center',
-        marginVertical: 20,
+        marginTop: 20,
     },
     searchView: {
+        width: '85%',
         flexDirection: 'row',
         alignSelf: 'center',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignContent: 'center',
         marginTop: 10,
     },
     searchBar: {
-        width: 290,
+        width: '85%',
         height: 50,
-        marginEnd: 30,
         justifyContent: 'center',
         backgroundColor: 'white',
         borderRadius: 10,
-        borderWidth: 2,
-        borderColor: 'darkgrey',
+        borderWidth: 1.2,
+        borderColor: 'grey',
     },
     filter: {
         width: 25,
         height: 25,
-        top: 2,
     },
     ageFilterView: {
         alignSelf: 'center',
@@ -443,26 +455,30 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginTop: 15,
         marginBottom: 10,
+        width: '95%',
     },
     pickerView2: {
         zIndex: 2,
         alignSelf: 'center',
         marginBottom: 10,
+        width: '95%',
     },
     dropDown: {
-        width: 200,
-        height: 57,
-        borderColor: 'lightgrey',
-        borderWidth: 2,
+        width: '100%',
+        height: 50,
+        borderColor: 'darkgrey',
+        borderWidth: 1,
     },
     pickerBox: {
         fontSize: 16,
+        width: '100%',
+        backgroundColor: 'white',
     },
     pickerStyle: {
         borderRadius: 10,
         overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: 'lightgrey',
+        borderWidth: 1,
+        borderColor: 'darkgrey',
     },
     filterLabel: {
         fontSize: 17,
@@ -487,18 +503,17 @@ const styles = StyleSheet.create({
     },
     listView: {
         marginTop: 30,
-    },
-    cardView: {
-        width: '85%',
-        alignSelf: 'center',
+        width: '100%',
     },
     card: {
+        width: '90%',
+        alignSelf: 'center',
         marginVertical: 10,
         borderRadius: 15,
-        elevation: 10,
+        elevation: 20,
         backgroundColor: 'white',
-        borderWidth: 2,
-        borderColor: 'lightgrey',
+        borderWidth: 1,
+        borderColor: 'darkgrey',
     },
     title: {
         fontSize: 20,
@@ -513,6 +528,14 @@ const styles = StyleSheet.create({
         width: '101%',
         height: 1.5,
         marginBottom: 10,
+        backgroundColor: 'grey',
+    },
+    divider2: {
+        width: '90%',
+        height: 1,
+        marginTop: 5,
+        marginBottom: 10,
+        alignSelf: 'center',
         backgroundColor: 'grey',
     },
     dateText: {

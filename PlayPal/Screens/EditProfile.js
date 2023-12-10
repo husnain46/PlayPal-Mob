@@ -71,7 +71,10 @@ const EditProfile = ({navigation, route}) => {
             !bioAndInterest ||
             selectedSports.length === 0
         ) {
-            Alert.alert('Error', 'Please fill/select all the fields!');
+            Toast.show({
+                type: 'error',
+                text2: 'Please fill/select all fields',
+            });
             return;
         }
 
@@ -81,8 +84,9 @@ const EditProfile = ({navigation, route}) => {
             let imageUri = imageSelected;
 
             // Upload the image to Firebase Storage
-            if (imageUri !== route.params.userData.profilePic) {
+            if (imageUri !== route.params.user.profilePic) {
                 // Image has changed, so upload it
+
                 imageUri = await uploadImage(uid, imageUri);
             }
             // Add the image URL to the user data
@@ -146,12 +150,12 @@ const EditProfile = ({navigation, route}) => {
             } else if (error.message.includes('file size')) {
                 errorMessage = 'The selected file size is too large.';
             }
-
-            Toast.show({
-                type: 'error',
-                text1: 'Error',
-                text2: errorMessage,
-            });
+            if (!imageSelected) {
+                Toast.show({
+                    type: 'error',
+                    text2: errorMessage,
+                });
+            }
         }
     };
 
@@ -473,6 +477,7 @@ const styles = StyleSheet.create({
         height: 40,
         fontSize: 16,
         borderColor: 'black',
+        color: 'grey',
     },
     btnView: {
         width: 140,

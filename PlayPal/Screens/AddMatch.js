@@ -24,6 +24,13 @@ const AddMatch = ({navigation, route}) => {
     const [selectedTeam2, setSelectedTeam2] = useState('');
     const [loading, setLoading] = useState(false);
     const [minDate, setMinDate] = useState(data.start_date.toDate());
+    const finalExists = data.matches.some(match => match.title === 'Final');
+    const semi1Exists = data.matches.some(
+        match => match.title === 'Semi-Final 1',
+    );
+    const semi2Exists = data.matches.some(
+        match => match.title === 'Semi-Final 2',
+    );
 
     const maxDate = data.end_date.toDate();
 
@@ -34,6 +41,18 @@ const AddMatch = ({navigation, route}) => {
         team1: '',
         team2: '',
     });
+
+    const matchTypes = [
+        {label: 'Group Stage', value: 'Group Stage'},
+        {label: 'Knockout', value: 'Knockout'},
+        {label: 'Semi-Final 1', value: 'Semi-Final 1'},
+        {label: 'Semi-Final 2', value: 'Semi-Final 2'},
+        {label: 'Final', value: 'Final'},
+    ];
+
+    const newMatchTypes = matchTypes.filter(
+        matchType => matchType.label !== 'Final',
+    );
 
     useEffect(() => {
         const currentDate = new Date();
@@ -73,7 +92,7 @@ const AddMatch = ({navigation, route}) => {
         if (!matchTitle.trim()) {
             setErrors(prevState => ({
                 ...prevState,
-                matchTitle: 'Please enter match title.',
+                matchTitle: 'Please select a match title.',
             }));
             hasError = true;
         } else {
@@ -207,22 +226,6 @@ const AddMatch = ({navigation, route}) => {
 
             <Divider style={styles.divider} width={2} color="lightgrey" />
 
-            <View style={styles.inputView1}>
-                <Text style={styles.labelText}>Match title:</Text>
-                <TextInput
-                    mode="outlined"
-                    placeholder="Group Stage/Qualifier/Semi-Final..."
-                    placeholderTextColor={'grey'}
-                    value={matchTitle}
-                    onChangeText={text => setMatchTitle(text)}
-                    style={styles.input1}
-                    outlineStyle={styles.outline}
-                />
-                {errors.matchTitle ? (
-                    <Text style={styles.errorText}>{errors.matchTitle}</Text>
-                ) : null}
-            </View>
-
             <View style={styles.dateView}>
                 <Text style={styles.dateLabel}>Match date:</Text>
                 <Button
@@ -291,6 +294,26 @@ const AddMatch = ({navigation, route}) => {
             {selectedDate !== null && errors.time ? (
                 <Text style={styles.dateError}>{errors.time}</Text>
             ) : null}
+
+            <View style={styles.dropView}>
+                <Text style={styles.dropLabel}>Match title:</Text>
+                <Dropdown
+                    style={styles.dropdown}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    containerStyle={styles.dropContainer}
+                    iconStyle={styles.iconStyle}
+                    data={finalExists ? newMatchTypes : matchTypes}
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={'Select Match Title'}
+                    value={matchTitle}
+                    onChange={item => setMatchTitle(item.value)}
+                />
+                {errors.matchTitle ? (
+                    <Text style={styles.errorText}>{errors.matchTitle}</Text>
+                ) : null}
+            </View>
 
             <View style={styles.dropView}>
                 <Text style={styles.dropLabel}>Team 1:</Text>

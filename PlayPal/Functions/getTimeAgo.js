@@ -1,6 +1,6 @@
 const getTimeAgo = date => {
     const currentDate = new Date();
-    const reviewDate = new Date(date);
+    const reviewDate = new Date(date.toDate());
     const timeDifference = currentDate.getTime() - reviewDate.getTime();
 
     const seconds = Math.floor(timeDifference / 1000);

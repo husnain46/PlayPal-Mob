@@ -1,5 +1,5 @@
+import styles from '../Styles/viewTournamentStyles';
 import {
-    StyleSheet,
     SafeAreaView,
     Text,
     View,
@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Modal,
+    Dimensions,
 } from 'react-native';
 import React, {useState, useEffect, useCallback} from 'react';
 import {Badge, Divider} from '@rneui/themed';
@@ -18,9 +19,11 @@ import {useFocusEffect} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import {useRef} from 'react';
 import AlertPro from 'react-native-alert-pro';
+import LottieView from 'lottie-react-native';
+import getSportsByIds from '../Functions/getSportsByIds';
 
 const ViewTournament = ({navigation, route}) => {
-    const {tournamentId, sportName} = route.params;
+    const {tournamentId} = route.params;
     const [data, setData] = useState([]);
     const [teamsData, setTeamsData] = useState([]);
     const [organizer, setOrganizer] = useState('');
@@ -39,9 +42,13 @@ const ViewTournament = ({navigation, route}) => {
     const [badgeCount, setBadgeCount] = useState(0);
     const [myPlayers, setMyPlayers] = useState([]);
     const [isClash, setIsClash] = useState(false);
+    const [clashTourName, setClashTourName] = useState(false);
+    const sportName = getSportsByIds([data.sport]);
 
+    const [isVisible, setIsVisible] = useState(false);
     const alertRefs = useRef([]);
     const noTeamAlertRef = useRef([]);
+    const clashAlertRef = useRef([]);
 
     const gotoEditTournament = () => {
         navigation.navigate('EditTournament', {data, teamsData});
@@ -57,136 +64,173 @@ const ViewTournament = ({navigation, route}) => {
     };
 
     const gotoViewTeam = () => {
-        navigation.navigate('ViewTeam', {team: organizer, sportName});
+        navigation.navigate('ViewTeam', {team: organizer});
     };
 
-    useEffect(() => {
-        const tournamentRef = firestore()
-            .collection('tournaments')
-            .doc(tournamentId);
+    useFocusEffect(
+        useCallback(() => {
+            const tournamentRef = firestore()
+                .collection('tournaments')
+                .doc(tournamentId);
 
-        const unsubscribe = tournamentRef.onSnapshot(
-            snapshot => {
-                if (snapshot.exists) {
-                    const tData = snapshot.data();
-                    tData.id = snapshot.id;
-                    const sport = tData.sport === 'sport2';
+            const unsubscribe = tournamentRef.onSnapshot(
+                snapshot => {
+                    if (snapshot.exists) {
+                        const tData = snapshot.data();
+                        tData.id = snapshot.id;
+                        const sport = tData.sport === 'sport2';
 
-                    setIsCricket(sport);
-                    setData(tData);
-                    setTeamsCount(tData.teamIds.length);
+                        setIsCricket(sport);
+                        setData(tData);
+                        setTeamsCount(tData.teamIds.length);
 
-                    const fetchTeamsData = async () => {
-                        try {
-                            const teamRef = firestore().collection('teams');
-
-                            const teamDoc = await teamRef
-                                .doc(tData.organizer)
-                                .get();
-
-                            const orgTeam = teamDoc.data();
-                            const isCaptain = myId === teamDoc.data().captainId;
-                            setIsOrganizer(isCaptain);
-                            setOrganizer(orgTeam);
-
-                            // requests fetching
-                            setBadgeCount(tData.requests.length);
-
-                            setRequests(tData.requests);
-
-                            if (!isCaptain) {
-                                const myTeamDoc = await teamRef
-                                    .where('captainId', '==', myId)
-                                    .get();
-
-                                if (!myTeamDoc.empty) {
-                                    const myTeam = myTeamDoc.docs[0].id;
-                                    const myTeamPlayers =
-                                        myTeamDoc.docs[0].data().playersId;
-
-                                    setMyPlayers(myTeamPlayers);
-                                    setMyTeamId(myTeam);
-
-                                    // if requested already by my team
-                                    const isRequest =
-                                        tData.requests.includes(myTeam);
-
-                                    setIsRequested(isRequest);
-                                } else {
-                                    setMyTeamId(null);
-                                }
-                            }
-
-                            let joined = false;
-
-                            const promises = tData.teamIds.map(async tId => {
-                                const docSnapshot = await firestore()
-                                    .collection('teams')
-                                    .doc(tId)
-                                    .get();
-
-                                if (docSnapshot.exists) {
-                                    const newTeamData = docSnapshot.data();
-                                    newTeamData.id = tId;
-
-                                    // getting my team players clashes
-                                    const hasCommonId =
-                                        newTeamData.playersId.some(id =>
-                                            myPlayers.includes(id),
-                                        );
-                                    setIsClash(hasCommonId);
-
-                                    if (!joined) {
-                                        joined =
-                                            newTeamData.playersId.includes(
-                                                myId,
-                                            );
-                                        setHasJoined(joined);
-                                    }
-
-                                    return newTeamData;
-                                } else {
-                                    return null;
-                                }
-                            });
-
-                            const teamDataArray = await Promise.all(promises);
-                            const teamInfo = teamDataArray.filter(
-                                tData => tData !== null,
-                            );
-                            setTeamsData(teamInfo);
-                            setIsLoading(false); // Move it here
-                        } catch (error) {
-                            setIsLoading(false);
-                            navigation.goBack();
-                            Toast.show({
-                                type: 'error',
-                                text1: 'Error',
-                                text2: error.message,
-                            });
+                        if (
+                            tData.winner !== '' &&
+                            tData.matches.some(match => match.title === 'Final')
+                        ) {
+                            setIsVisible(true);
                         }
-                    };
 
-                    fetchTeamsData();
-                } else {
-                    setData([]);
-                }
-            },
-            error => {
-                setIsLoading(false);
+                        const fetchTeamsData = async () => {
+                            try {
+                                const teamRef = firestore().collection('teams');
 
-                Toast.show({
-                    type: 'error',
-                    text1: 'Error fetching data!',
-                    text2: error.message,
-                });
-            },
-        );
+                                const teamDoc = await teamRef
+                                    .doc(tData.organizer)
+                                    .get();
 
-        return () => {
-            unsubscribe();
-        };
-    }, [tournamentId, navigation]);
+                                const orgTeam = teamDoc.data();
+                                const isCaptain =
+                                    myId === teamDoc.data().captainId;
+                                setIsOrganizer(isCaptain);
+                                setOrganizer(orgTeam);
+
+                                // requests fetching
+                                setBadgeCount(tData.requests.length);
+
+                                setRequests(tData.requests);
+
+                                if (!isCaptain) {
+                                    const myTeamDoc = await teamRef
+                                        .where('captainId', '==', myId)
+                                        .get();
+
+                                    if (!myTeamDoc.empty) {
+                                        const myTeam = myTeamDoc.docs[0].id;
+                                        const myTeamPlayers =
+                                            myTeamDoc.docs[0].data().playersId;
+
+                                        setMyPlayers(myTeamPlayers);
+                                        setMyTeamId(myTeam);
+
+                                        // if requested already by my team
+                                        const isRequest =
+                                            tData.requests.includes(myTeam);
+
+                                        setIsRequested(isRequest);
+                                    } else {
+                                        setMyTeamId(null);
+                                    }
+                                }
+
+                                let joined = false;
+
+                                const promises = tData.teamIds.map(
+                                    async tId => {
+                                        const docSnapshot = await firestore()
+                                            .collection('teams')
+                                            .doc(tId)
+                                            .get();
+
+                                        if (docSnapshot.exists) {
+                                            const newTeamData =
+                                                docSnapshot.data();
+                                            newTeamData.id = tId;
+
+                                            // getting my team players clashes
+                                            const hasCommonId =
+                                                newTeamData.playersId.some(id =>
+                                                    myPlayers.includes(id),
+                                                );
+                                            setIsClash(hasCommonId);
+
+                                            if (!joined) {
+                                                joined =
+                                                    newTeamData.playersId.includes(
+                                                        myId,
+                                                    );
+                                                setHasJoined(joined);
+                                            }
+
+                                            return newTeamData;
+                                        } else {
+                                            return null;
+                                        }
+                                    },
+                                );
+
+                                const teamDataArray = await Promise.all(
+                                    promises,
+                                );
+                                const teamInfo = teamDataArray.filter(
+                                    tData => tData !== null,
+                                );
+
+                                // Sort teams by points in descending order
+                                const teamsWithPoints = teamInfo.map(team => {
+                                    const {wins, losses, draws} =
+                                        countMatchesOutcome(
+                                            tData.matches,
+                                            team.id,
+                                        );
+                                    const points =
+                                        wins * 2 + draws - losses * 2;
+                                    return {...team, points};
+                                });
+
+                                teamsWithPoints.sort(
+                                    (a, b) => b.points - a.points,
+                                );
+
+                                // Extract only the sorted teams' data
+                                const sortedTeamsData = teamsWithPoints.map(
+                                    ({points, ...rest}) => rest,
+                                );
+
+                                setTeamsData(sortedTeamsData);
+                                setIsLoading(false);
+                            } catch (error) {
+                                setIsLoading(false);
+                                navigation.goBack();
+                                Toast.show({
+                                    type: 'error',
+                                    text1: 'Error',
+                                    text2: error.message,
+                                });
+                            }
+                        };
+
+                        fetchTeamsData();
+                    } else {
+                        setData([]);
+                    }
+                },
+                error => {
+                    setIsLoading(false);
+
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Error fetching data!',
+                        text2: error.message,
+                    });
+                },
+            );
+
+            return () => {
+                unsubscribe();
+            };
+        }, [tournamentId]),
+    );
 
     useEffect(() => {
         const fetchReqTeamsData = async () => {
@@ -295,20 +339,50 @@ const ViewTournament = ({navigation, route}) => {
                 noTeamAlertRef.current.open();
             } else {
                 try {
-                    const teamReq = {
-                        requests: firestore.FieldValue.arrayUnion(myTeamId),
-                    };
-                    await firestore()
+                    const tournament_ref = await firestore()
                         .collection('tournaments')
-                        .doc(tournamentId)
-                        .update(teamReq);
+                        .where('teamIds', 'array-contains', myTeamId)
+                        .get();
 
-                    setIsRequested(true);
+                    let hasClash;
 
-                    Toast.show({
-                        type: 'info',
-                        text1: 'Request sent!',
+                    tournament_ref.docs.forEach(doc => {
+                        const startDate = doc.data().start_date.toDate();
+                        const endDate = doc.data().end_date.toDate();
+
+                        if (
+                            (startDate <= data.start_date.toDate() &&
+                                endDate >= data.start_date.toDate()) ||
+                            (startDate <= data.end_date.toDate() &&
+                                endDate >= data.end_date.toDate()) ||
+                            (startDate >= data.start_date.toDate() &&
+                                endDate <= data.end_date.toDate())
+                        ) {
+                            // Clash detected
+                            hasClash = true;
+                            setClashTourName(doc.data().name);
+                            return;
+                        }
                     });
+
+                    if (hasClash) {
+                        clashAlertRef.current.open();
+                    } else {
+                        const teamReq = {
+                            requests: firestore.FieldValue.arrayUnion(myTeamId),
+                        };
+                        await firestore()
+                            .collection('tournaments')
+                            .doc(tournamentId)
+                            .update(teamReq);
+
+                        setIsRequested(true);
+
+                        Toast.show({
+                            type: 'info',
+                            text1: 'Request sent!',
+                        });
+                    }
                 } catch (error) {
                     Toast.show({
                         type: 'error',
@@ -340,6 +414,44 @@ const ViewTournament = ({navigation, route}) => {
                 });
             }
         }
+    };
+
+    const countMatchesOutcome = (matches, teamId) => {
+        let wins = 0;
+        let losses = 0;
+        let draws = 0;
+
+        matches.forEach(match => {
+            if (match.status !== 'Upcoming' && match.status !== 'Started') {
+                const team1 = match.teams.team1;
+                const team2 = match.teams.team2;
+
+                if (
+                    (team1 === teamId &&
+                        match.result.scoreTeam1 > match.result.scoreTeam2) ||
+                    (team2 === teamId &&
+                        match.result.scoreTeam2 > match.result.scoreTeam1)
+                ) {
+                    wins++;
+                } else if (
+                    (team1 === teamId &&
+                        match.result.scoreTeam1 < match.result.scoreTeam2) ||
+                    (team2 === teamId &&
+                        match.result.scoreTeam2 < match.result.scoreTeam1)
+                ) {
+                    losses++;
+                } else if (
+                    (team1 === teamId &&
+                        match.result.scoreTeam1 === match.result.scoreTeam2) ||
+                    (team2 === teamId &&
+                        match.result.scoreTeam1 === match.result.scoreTeam2)
+                ) {
+                    draws++;
+                }
+            }
+        });
+
+        return {wins, losses, draws};
     };
 
     const renderRequests = ({item, index}) => {
@@ -388,6 +500,14 @@ const ViewTournament = ({navigation, route}) => {
 
     const renderItem = ({item, index}) => {
         const num = index + 1;
+
+        const {wins, losses, draws} = countMatchesOutcome(
+            data.matches,
+            item.id,
+        );
+
+        const points = wins * 2 + draws;
+
         return (
             <View style={styles.teamCard}>
                 <View style={styles.cardSubView}>
@@ -395,19 +515,19 @@ const ViewTournament = ({navigation, route}) => {
                     <Text style={styles.teamName}>{item.name}</Text>
                 </View>
                 <View style={styles.cardSubView2}>
-                    <Text style={styles.pointsText}>4</Text>
+                    <Text style={styles.pointsText}>{wins}</Text>
                 </View>
 
                 <View style={styles.cardSubView2}>
-                    <Text style={styles.pointsText}>0</Text>
+                    <Text style={styles.pointsText}>{losses}</Text>
                 </View>
 
                 <View style={styles.cardSubView2}>
-                    <Text style={styles.pointsText}>1</Text>
+                    <Text style={styles.pointsText}>{draws}</Text>
                 </View>
 
                 <View style={styles.cardSubView3}>
-                    <Text style={styles.pointsText2}>4</Text>
+                    <Text style={styles.pointsText2}>{points}</Text>
                 </View>
             </View>
         );
@@ -444,14 +564,12 @@ const ViewTournament = ({navigation, route}) => {
 
                 <Divider style={styles.divider} width={2} color="grey" />
 
-                {isOrganizer ? (
+                {data.winner !== '' ? (
+                    <></>
+                ) : isOrganizer ? (
                     <Button
                         mode="elevated"
-                        style={{
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: '#374c62',
-                        }}
+                        style={styles.editBtn}
                         onPress={() => gotoEditTournament()}>
                         <Text style={{fontSize: 16, color: '#374c62'}}>
                             Edit Tournament
@@ -475,6 +593,34 @@ const ViewTournament = ({navigation, route}) => {
                         </Text>
                     </Button>
                 )}
+
+                <View style={styles.dateView}>
+                    <View style={styles.subView2}>
+                        <Text style={styles.dateLabel}>Start:</Text>
+                        <Text style={styles.sDateText}>
+                            {data.start_date
+                                .toDate()
+                                .toLocaleDateString('en-GB', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
+                        </Text>
+                    </View>
+                    <View style={styles.subView2}>
+                        <Text style={styles.dateLabel}>End:</Text>
+                        <Text style={styles.eDateText}>
+                            {data.end_date
+                                .toDate()
+                                .toLocaleDateString('en-GB', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                })}
+                        </Text>
+                    </View>
+                </View>
+
                 <View style={styles.detailView}>
                     <View style={styles.subView}>
                         <Text style={styles.detailLabel}>Sport:</Text>
@@ -494,32 +640,77 @@ const ViewTournament = ({navigation, route}) => {
                     </View>
                 </View>
 
-                <View style={styles.detailView}>
-                    <View style={styles.subView}>
-                        <Text style={styles.detailLabel}>Start:</Text>
-                        <Text style={styles.detailText}>
-                            {data.start_date
-                                .toDate()
-                                .toLocaleDateString('en-GB', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                })}
-                        </Text>
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={isVisible}
+                    onRequestClose={() => setIsVisible(false)}>
+                    <View
+                        style={{
+                            flex: 1,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}>
+                        <LottieView
+                            source={require('../Assets/Animations/confetti4.json')}
+                            autoPlay
+                            loop={false}
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                            }}
+                        />
+                        <View
+                            style={{
+                                backgroundColor: 'white',
+                                padding: 10,
+                                borderRadius: 10,
+                                alignItems: 'center',
+                                borderWidth: 1,
+                                elevation: 100,
+                                width: '65%',
+                            }}>
+                            <Text
+                                style={{
+                                    fontSize: 20,
+                                    fontWeight: '600',
+                                    color: 'darkblue',
+                                }}>
+                                Winner
+                            </Text>
+
+                            <Divider
+                                style={{
+                                    alignSelf: 'center',
+                                    width: '95%',
+                                    marginBottom: 20,
+                                }}
+                                width={1}
+                                color="grey"
+                            />
+
+                            <Text
+                                style={{
+                                    fontSize: 18,
+                                    fontWeight: 'bold',
+                                    marginBottom: 10,
+                                    color: '#088d9c',
+                                }}>
+                                {data.winner}
+                            </Text>
+
+                            <Button
+                                style={{marginTop: 10}}
+                                labelStyle={{textDecorationLine: 'underline'}}
+                                onPress={() => setIsVisible(false)}>
+                                close
+                            </Button>
+                        </View>
                     </View>
-                    <View style={styles.subView}>
-                        <Text style={styles.detailLabel}>End:</Text>
-                        <Text style={styles.detailText}>
-                            {data.end_date
-                                .toDate()
-                                .toLocaleDateString('en-GB', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric',
-                                })}
-                        </Text>
-                    </View>
-                </View>
+                </Modal>
 
                 <AlertPro
                     ref={ref => (alertRefs.current = ref)}
@@ -555,14 +746,27 @@ const ViewTournament = ({navigation, route}) => {
                     }}
                 />
 
+                <AlertPro
+                    ref={ref => (clashAlertRef.current = ref)}
+                    title={'Tournament clash!'}
+                    message={`There is a clash with ${clashTourName}. You cannot join this tournament right now.`}
+                    onConfirm={() => clashAlertRef.current.close()}
+                    showCancel={false}
+                    textConfirm="Ok"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#4a5a96'},
+                        container: {borderWidth: 2, borderColor: 'lightgrey'},
+                    }}
+                />
+
                 <View style={styles.cardView}>
-                    <Card style={styles.card}>
+                    <Card style={styles.card} mode="contained">
                         <Card.Content style={{marginTop: -5}}>
                             <Text style={styles.organizerLabel}>Organizer</Text>
                             <Divider
                                 style={styles.divider2}
-                                width={2}
-                                color="darkgrey"
+                                width={1}
+                                color="lightgrey"
                             />
 
                             <TouchableOpacity onPress={() => gotoViewTeam()}>
@@ -572,15 +776,15 @@ const ViewTournament = ({navigation, route}) => {
                             </TouchableOpacity>
                         </Card.Content>
                     </Card>
-                    <Card style={styles.card}>
+                    <Card style={styles.card} mode="contained">
                         <Card.Content style={{marginTop: -5}}>
                             <Text style={styles.organizerLabel}>
                                 Total Matches
                             </Text>
                             <Divider
                                 style={styles.divider2}
-                                width={2}
-                                color="darkgrey"
+                                width={1}
+                                color="lightgrey"
                             />
                             <Text style={styles.totalMatch}>
                                 {data.matches.length}
@@ -604,12 +808,12 @@ const ViewTournament = ({navigation, route}) => {
                                 }}>
                                 <Text
                                     style={{
-                                        fontSize: 24,
+                                        fontSize: 22,
                                         flex: 1,
                                         left: 25,
                                         textAlign: 'center',
                                         color: '#4a5a96',
-                                        fontWeight: '700',
+                                        fontWeight: '500',
                                     }}>
                                     Requests
                                 </Text>
@@ -621,9 +825,9 @@ const ViewTournament = ({navigation, route}) => {
                                 />
                             </View>
                             <Divider
-                                style={styles.divider2}
-                                width={1.5}
-                                color="grey"
+                                style={styles.divider3}
+                                width={1}
+                                color="lightgrey"
                             />
 
                             {reqLoading ? (
@@ -640,12 +844,7 @@ const ViewTournament = ({navigation, route}) => {
                                     keyExtractor={item => item.id}
                                     renderItem={renderRequests}
                                     ListEmptyComponent={() => (
-                                        <Text
-                                            style={{
-                                                fontSize: 20,
-                                                textAlign: 'center',
-                                                marginTop: 40,
-                                            }}>
+                                        <Text style={styles.emptyText}>
                                             No requests yet!
                                         </Text>
                                     )}
@@ -655,25 +854,15 @@ const ViewTournament = ({navigation, route}) => {
                     </View>
                 </Modal>
 
-                <View
-                    style={{
-                        width: '100%',
-                        marginVertical: 25,
-                        flexDirection: 'row',
-                        justifyContent: 'space-evenly',
-                    }}>
+                <View style={styles.middleBtnView}>
                     {isOrganizer ? (
                         <>
                             <Button
                                 mode="contained"
-                                style={{
-                                    borderRadius: 12,
-                                    width: 150,
-                                    marginRight: 30,
-                                }}
+                                style={styles.reqBtn}
                                 icon={'android-messages'}
                                 textColor="#374c62"
-                                buttonColor="#bdd0d9"
+                                buttonColor="#d3e8f2"
                                 onPress={() => setReqModal(true)}>
                                 <Text style={{fontSize: 16, color: '#374c62'}}>
                                     Requests
@@ -696,8 +885,8 @@ const ViewTournament = ({navigation, route}) => {
                     )}
                     <Button
                         mode="contained"
-                        style={{borderRadius: 12}}
-                        buttonColor="#247091"
+                        style={{borderRadius: 12, justifyContent: 'center'}}
+                        buttonColor="#f2a72e"
                         onPress={() => gotoMatches()}>
                         <Text style={{fontSize: 16, color: 'white'}}>
                             View matches
@@ -739,228 +928,5 @@ const ViewTournament = ({navigation, route}) => {
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    modalBackground: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    activityIndicatorWrapper: {
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 10,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-    },
-    titleView: {
-        marginTop: 15,
-    },
-    teamTitle: {
-        fontSize: 24,
-        color: '#4a5a96',
-        fontWeight: '900',
-        textAlign: 'center',
-        marginTop: 10,
-        paddingHorizontal: 25,
-    },
-    bio: {
-        fontSize: 17,
-        textAlign: 'center',
-        marginTop: 25,
-        paddingHorizontal: 20,
-    },
-    divider: {
-        alignSelf: 'center',
-        width: '90%',
-        marginTop: 10,
-        marginBottom: 10,
-    },
-    detailView: {
-        width: '90%',
-        justifyContent: 'space-between',
-        alignSelf: 'center',
-        flexDirection: 'row',
-        marginTop: 15,
-        borderRadius: 10,
-        backgroundColor: 'white',
-        elevation: 5,
-        borderWidth: 1.5,
-        borderColor: 'darkgrey',
-        flexWrap: 'wrap',
-    },
-    subView: {
-        flexDirection: 'row',
-        margin: 10,
-        marginHorizontal: 15,
-        flexWrap: 'wrap',
-    },
-    detailLabel: {
-        fontSize: 17,
-        color: 'black',
-        fontWeight: '700',
-        marginRight: 10,
-    },
-    detailText: {
-        fontSize: 16.5,
-        color: 'black',
-    },
-    organizerLabel: {
-        fontSize: 18,
-        color: 'black',
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    divider2: {
-        alignSelf: 'center',
-        width: '100%',
-        marginTop: 5,
-    },
-    organizer: {
-        fontSize: 18,
-        paddingVertical: 15,
-        color: '#4a5a96',
-        textDecorationLine: 'underline',
-        fontWeight: '500',
-        textAlign: 'center',
-    },
-    totalMatch: {
-        fontSize: 24,
-        paddingVertical: 15,
-        color: '#4a5a96',
-        fontWeight: '500',
-        textAlign: 'center',
-    },
-    cardView: {
-        marginTop: 20,
-        width: '90%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    card: {
-        backgroundColor: 'white',
-        width: 180,
-        height: 110,
-        borderWidth: 1.5,
-        borderColor: 'darkgrey',
-    },
-    reqModalView: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    reqModalInnerView: {
-        width: '90%',
-        height: 600,
-        borderRadius: 15,
-        borderWidth: 1,
-        backgroundColor: 'white',
-        alignSelf: 'center',
-        elevation: 20,
-    },
-    playerLabel: {
-        marginLeft: 5,
-        fontSize: 17,
-        fontWeight: '700',
-        color: 'black',
-    },
-    teamReqView: {
-        width: '80%',
-        alignSelf: 'center',
-        height: 50,
-        marginTop: 20,
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: 'grey',
-        borderRadius: 10,
-        padding: 5,
-    },
-    tableTitle: {
-        marginTop: 10,
-        fontSize: 20,
-        fontWeight: '700',
-        color: 'black',
-        textDecorationLine: 'underline',
-        letterSpacing: 0.5,
-    },
-    tableHeader: {
-        width: '90%',
-        height: 50,
-        justifyContent: 'space-between',
-        height: 50,
-        alignItems: 'center',
-        flexDirection: 'row',
-        marginTop: 20,
-        marginBottom: 15,
-        borderRadius: 10,
-        backgroundColor: '#567595',
-        elevation: 5,
-    },
-    headerView1: {
-        width: '40%',
-        left: 30,
-    },
-    headerView2: {
-        right: -4,
-    },
-    headerText: {
-        fontSize: 17,
-        color: 'white',
-        fontWeight: '700',
-        marginRight: 10,
-    },
-    teamCard: {
-        flexDirection: 'row',
-        borderWidth: 1,
-        borderColor: 'lightgrey',
-        marginBottom: 10,
-        height: 55,
-        alignSelf: 'center',
-        alignItems: 'center',
-        width: '94%',
-        justifyContent: 'space-around',
-        borderRadius: 10,
-        backgroundColor: 'white',
-        elevation: 5,
-    },
-    cardSubView: {
-        flexDirection: 'row',
-        width: 155,
-        marginRight: 10,
-    },
-    cardSubView2: {
-        width: '7%',
-        marginRight: 20,
-        alignItems: 'center',
-    },
-    cardSubView3: {
-        width: 25,
-        marginLeft: 15,
-        marginRight: 17,
-    },
-    numText: {
-        fontSize: 17,
-        color: 'black',
-        left: 5,
-    },
-    teamName: {
-        fontSize: 17,
-        color: 'black',
-        paddingHorizontal: 15,
-    },
-    pointsText: {
-        fontSize: 17,
-        color: 'green',
-    },
-    pointsText2: {
-        fontSize: 17,
-        color: 'blue',
-    },
-});
 
 export default ViewTournament;

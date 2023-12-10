@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
         elevation: 5,
         width: '90%',
-        marginTop: 20,
+        marginVertical: 20,
     },
     sportsTitle: {
         marginTop: 10,
@@ -170,6 +170,24 @@ const styles = StyleSheet.create({
         marginLeft: 7,
         marginRight: 20,
     },
+    bookView: {
+        width: '100%',
+        alignItems: 'center',
+    },
+    bookBtn: {
+        width: 150,
+        height: 38,
+        justifyContent: 'center',
+        backgroundColor: '#4a5a96',
+        elevation: 5,
+        borderRadius: 10,
+    },
+    bookText: {
+        fontSize: 16,
+        color: 'white',
+        fontWeight: '500',
+        textAlign: 'center',
+    },
     ratingTitle: {
         marginTop: 20,
         fontSize: 18,
@@ -210,34 +228,37 @@ const styles = StyleSheet.create({
     numRating: {
         marginLeft: 10,
         fontSize: 14,
+        color: 'grey',
     },
     ratingItem: {
         marginTop: 10,
         width: '95%',
-        borderWidth: 1.5,
+        borderWidth: 1,
         borderColor: 'grey',
         borderRadius: 10,
-        padding: 10,
+        padding: 8,
         alignSelf: 'center',
     },
     reviewUserText: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: 'black',
+        fontSize: 14,
+        width: 80,
+        color: 'grey',
     },
     timeElapsed: {
         fontSize: 14,
-        marginLeft: 15,
         textAlignVertical: 'center',
+        color: 'grey',
     },
     ratingValue: {
-        fontSize: 16,
+        fontSize: 15,
         color: 'black',
         marginRight: 10,
+        left: 2,
     },
     reviewText: {
-        fontSize: 16,
+        fontSize: 15,
         marginTop: 8,
+        color: 'black',
     },
 });
 

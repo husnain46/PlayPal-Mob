@@ -1,15 +1,18 @@
 import {
     ActivityIndicator,
+    Modal,
     SafeAreaView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
 import {Button, Surface, TextInput} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
+import {Dropdown} from 'react-native-element-dropdown';
+import AlertPro from 'react-native-alert-pro';
 
 const CricketMatch = ({navigation, route}) => {
     const {match, team1, team2, matchNum, tournamentId} = route.params;
@@ -21,6 +24,23 @@ const CricketMatch = ({navigation, route}) => {
     const [error2, setError2] = useState('');
     const [t1Wickets, setT1Wickets] = useState(0);
     const [t2Wickets, setT2Wickets] = useState(0);
+    const [selectedWinner, setSelectedWinner] = useState('');
+    const [tieModal, setTieModal] = useState(false);
+    const [winnerError, setWinnerError] = useState('');
+    const [finishLoading, setFinishLoading] = useState(false);
+
+    const alertRefs = useRef([]);
+
+    const teamsList = [
+        {
+            label: team1.name,
+            value: team1.name,
+        },
+        {
+            label: team2.name,
+            value: team2.name,
+        },
+    ];
 
     const addWicket = (outs, setWickets) => {
         setWickets(outs + 1);
@@ -104,41 +124,58 @@ const CricketMatch = ({navigation, route}) => {
                 .collection('tournaments')
                 .doc(tournamentId);
 
-            const tournamentDoc = await tournamentRef.get();
-            const matchesArray = tournamentDoc.data().matches;
-
-            const updatedStatus = matchesArray.map(item => {
-                if (
-                    item.title === match.title &&
-                    item.date.isEqual(match.date) &&
-                    item.time.isEqual(match.time)
-                ) {
-                    let matchStatus;
-
-                    if (scoreT1 > scoreT2) {
-                        matchStatus = `${team1.name} won!`;
-                    } else if (scoreT2 > scoreT1) {
-                        matchStatus = `${team2.name} won!`;
-                    } else if (scoreT1 === scoreT2) {
-                        matchStatus = `Match drawn!`;
-                    }
-                    return {
-                        title: item.title,
-                        date: item.date,
-                        time: item.time,
-                        teams: {
-                            team1: item.teams.team1,
-                            team2: item.teams.team2,
-                        },
-                        result: item.result,
-                        status: matchStatus,
-                    };
+            if (match.title === 'Final') {
+                let newWinner;
+                if (scoreT1 > scoreT2) {
+                    newWinner = team1.name;
+                } else if (scoreT2 > scoreT1) {
+                    newWinner = team2.name;
                 } else {
-                    return item;
-                }
-            });
+                    setTieModal(true);
 
-            await tournamentRef.update({matches: updatedStatus});
+                    setEndLoading(false);
+
+                    return;
+                }
+
+                await tournamentRef.update({winner: newWinner});
+            } else {
+                const tournamentDoc = await tournamentRef.get();
+                const matchesArray = tournamentDoc.data().matches;
+
+                const updatedStatus = matchesArray.map(item => {
+                    if (
+                        item.title === match.title &&
+                        item.date.isEqual(match.date) &&
+                        item.time.isEqual(match.time)
+                    ) {
+                        let matchStatus;
+
+                        if (scoreT1 > scoreT2) {
+                            matchStatus = `${team1.name} won!`;
+                        } else if (scoreT2 > scoreT1) {
+                            matchStatus = `${team2.name} won!`;
+                        } else if (scoreT1 === scoreT2) {
+                            matchStatus = `Match drawn!`;
+                        }
+                        return {
+                            title: item.title,
+                            date: item.date,
+                            time: item.time,
+                            teams: {
+                                team1: item.teams.team1,
+                                team2: item.teams.team2,
+                            },
+                            result: item.result,
+                            status: matchStatus,
+                        };
+                    } else {
+                        return item;
+                    }
+                });
+
+                await tournamentRef.update({matches: updatedStatus});
+            }
 
             setEndLoading(false);
             navigation.goBack();
@@ -152,6 +189,62 @@ const CricketMatch = ({navigation, route}) => {
                 type: 'error',
                 text1: 'Error',
                 text2: error.message,
+            });
+        }
+    };
+
+    const handleFinalWinner = async () => {
+        try {
+            if (selectedWinner === '') {
+                setWinnerError('Please select a winner.');
+            } else {
+                setFinishLoading(true);
+
+                const tournamentRef = firestore()
+                    .collection('tournaments')
+                    .doc(tournamentId);
+
+                const tournamentDoc = await tournamentRef.get();
+                const matchesArray = tournamentDoc.data().matches;
+
+                const updatedStatus = matchesArray.map(item => {
+                    if (
+                        item.title === match.title &&
+                        item.date.isEqual(match.date) &&
+                        item.time.isEqual(match.time)
+                    ) {
+                        let matchStatus = `Scores are level but ${selectedWinner} won on decided rules.`;
+
+                        return {
+                            title: item.title,
+                            date: item.date,
+                            time: item.time,
+                            teams: {
+                                team1: item.teams.team1,
+                                team2: item.teams.team2,
+                            },
+                            result: item.result,
+                            status: matchStatus,
+                        };
+                    } else {
+                        return item;
+                    }
+                });
+
+                await tournamentRef.update({matches: updatedStatus});
+                setFinishLoading(false);
+
+                await tournamentRef.update({winner: selectedWinner});
+                setTieModal(false);
+
+                navigation.goBack();
+            }
+        } catch (error) {
+            setTieModal(false);
+
+            Toast.show({
+                type: 'error',
+                text2: 'An error occurred!',
             });
         }
     };
@@ -238,6 +331,87 @@ const CricketMatch = ({navigation, route}) => {
                     Update
                 </Button>
             </View>
+
+            <Modal
+                transparent={true}
+                animationType={'slide'}
+                visible={tieModal}>
+                <View style={styles.reqModalView}>
+                    <View style={styles.reqModalInnerView}>
+                        <Text style={styles.modelTitle}>Choose a winner</Text>
+
+                        <Divider
+                            style={styles.divider}
+                            width={1.5}
+                            color="grey"
+                        />
+
+                        <View style={styles.dropView}>
+                            <Text style={styles.dropLabel}>
+                                Select winner team:
+                            </Text>
+                            <Dropdown
+                                style={styles.dropdown}
+                                selectedTextStyle={styles.selectedTextStyle}
+                                containerStyle={styles.dropContainer}
+                                iconStyle={styles.iconStyle}
+                                data={teamsList}
+                                maxHeight={300}
+                                labelField="label"
+                                valueField="value"
+                                placeholder={'Select team 1'}
+                                value={selectedWinner}
+                                onChange={item => setSelectedWinner(item.value)}
+                            />
+                            {winnerError !== '' ? (
+                                <Text style={{color: 'red', top: 5}}>
+                                    {winnerError}
+                                </Text>
+                            ) : (
+                                <></>
+                            )}
+                        </View>
+
+                        <Button
+                            style={styles.finishBtn}
+                            mode="contained"
+                            buttonColor="red"
+                            onPress={() => handleFinalWinner()}>
+                            {finishLoading ? (
+                                <ActivityIndicator
+                                    color={'white'}
+                                    size={'small'}
+                                    style={{alignSelf: 'center'}}
+                                />
+                            ) : (
+                                <Text
+                                    style={{
+                                        fontSize: 18,
+                                        color: 'white',
+                                        fontWeight: '600',
+                                    }}>
+                                    Finish
+                                </Text>
+                            )}
+                        </Button>
+                    </View>
+                </View>
+            </Modal>
+
+            <AlertPro
+                ref={ref => (alertRefs.current = ref)}
+                title={'End match?'}
+                message={'Are you sure you want to end the match now?'}
+                onCancel={() => alertRefs.current.close()}
+                textCancel={'No'}
+                onConfirm={() => handleEndMatch()}
+                textConfirm={'Yes'}
+                customStyles={{
+                    buttonCancel: {backgroundColor: '#00acef'},
+                    buttonConfirm: {backgroundColor: '#f53d3d'},
+                    container: {borderWidth: 2, borderColor: 'lightgrey'},
+                }}
+            />
 
             <View style={styles.teamView}>
                 <Text style={styles.teamLabel}>{team2.name}:</Text>
@@ -330,7 +504,7 @@ const CricketMatch = ({navigation, route}) => {
                         mode="contained"
                         buttonColor="red"
                         style={{borderRadius: 12}}
-                        onPress={() => handleEndMatch()}>
+                        onPress={() => alertRefs.current.open()}>
                         <Text
                             style={{
                                 fontSize: 18,
@@ -361,6 +535,15 @@ const styles = StyleSheet.create({
     divider: {
         width: '90%',
         marginTop: 10,
+    },
+    finishBtn: {
+        borderRadius: 12,
+        marginTop: 100,
+        width: '75%',
+        backgroundColor: 'red',
+        height: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     teamLabel: {
         fontSize: 20,

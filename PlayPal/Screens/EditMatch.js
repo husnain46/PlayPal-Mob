@@ -30,6 +30,13 @@ const EditMatch = ({navigation, route}) => {
         value: team.id,
     }));
 
+    const matchTypes = [
+        {label: 'Group Stage', value: 'Group Stage'},
+        {label: 'Knockout', value: 'Knockout'},
+        {label: 'Semi-Final', value: 'Semi-Final'},
+        {label: 'Final', value: 'Final'},
+    ];
+
     const currentDate = new Date();
     const nextDay = new Date(currentDate);
     nextDay.setDate(currentDate.getDate() + 1);
@@ -168,19 +175,6 @@ const EditMatch = ({navigation, route}) => {
 
             <Divider style={styles.divider} width={2} color="lightgrey" />
 
-            <View style={styles.inputView1}>
-                <Text style={styles.labelText}>Match title:</Text>
-                <TextInput
-                    mode="outlined"
-                    placeholder="Group Stage/Qualifier/Semi-Final..."
-                    placeholderTextColor={'grey'}
-                    value={matchTitle}
-                    onChangeText={text => setMatchTitle(text)}
-                    style={styles.input1}
-                    outlineStyle={styles.outline}
-                />
-            </View>
-
             <View style={styles.dateView}>
                 <Text style={styles.dateLabel}>Match date:</Text>
                 <Button
@@ -234,6 +228,23 @@ const EditMatch = ({navigation, route}) => {
                         onChange={handleTimeChange}
                     />
                 )}
+            </View>
+
+            <View style={styles.dropView}>
+                <Text style={styles.dropLabel}>Match title:</Text>
+                <Dropdown
+                    style={styles.dropdown}
+                    selectedTextStyle={styles.selectedTextStyle}
+                    containerStyle={styles.dropContainer}
+                    iconStyle={styles.iconStyle}
+                    data={matchTypes}
+                    maxHeight={300}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={'Select Match Title'}
+                    value={matchTitle}
+                    onChange={item => setMatchTitle(item.value)}
+                />
             </View>
 
             <Modal

@@ -70,7 +70,7 @@ const toastConfig = {
             style={{borderLeftColor: 'blue'}}
             contentContainerStyle={{paddingHorizontal: 15}}
             text1Style={{
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: '400',
             }}
         />
@@ -94,7 +94,10 @@ export default function App() {
 
     if (routeName === null) {
         return (
-            <ActivityIndicator size={'large'} style={{alignSelf: 'center'}} />
+            <ActivityIndicator
+                size={'large'}
+                style={{flex: 1, alignSelf: 'center'}}
+            />
         );
     }
 

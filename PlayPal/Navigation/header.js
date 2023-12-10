@@ -95,7 +95,7 @@ export default function Header({navigation}) {
 
     return (
         <SafeAreaView style={styles.header}>
-            <View>
+            <View style={styles.logoView}>
                 <Image
                     source={require('../Assets/Icons/Logo.png')}
                     style={styles.logo}
@@ -108,7 +108,7 @@ export default function Header({navigation}) {
                     onPress={() =>
                         navigation.navigate('Notifications', {user: userData})
                     }
-                    style={{flexDirection: 'row'}}>
+                    style={{flexDirection: 'row-reverse'}}>
                     <Image
                         source={require('../Assets/Icons/bell.png')}
                         style={styles.bell}
@@ -118,7 +118,12 @@ export default function Header({navigation}) {
                         <Badge
                             status="error"
                             value={badgeCount}
-                            containerStyle={{marginLeft: -10}}
+                            containerStyle={{
+                                position: 'absolute',
+                                width: 8,
+                                height: 8,
+                                top: -2,
+                            }}
                         />
                     )}
                 </TouchableOpacity>
@@ -146,17 +151,22 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
     },
+    logoView: {
+        width: '70%',
+        justifyContent: 'center',
+    },
     logo: {
         width: 150,
-        height: 90,
     },
     rightView: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-evenly',
+        width: '30%',
     },
     bell: {
-        width: 26,
-        height: 29,
+        width: 24,
+        height: 27,
     },
     divider: {
         width: 2,
@@ -165,7 +175,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
     },
     account: {
-        width: 35,
-        height: 35,
+        width: 33,
+        height: 33,
     },
 });

@@ -1,18 +1,42 @@
-import {SafeAreaView, StyleSheet, Text, View} from 'react-native';
+import {
+    Modal,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import React, {useRef, useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
-import {Button, Surface} from 'react-native-paper';
+import {Button, IconButton, Surface} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
 import AlertPro from 'react-native-alert-pro';
 import {ActivityIndicator} from 'react-native';
+import {Dropdown} from 'react-native-element-dropdown';
 
 const StartMatch = ({navigation, route}) => {
     const {match, team1, team2, matchNum, tournamentId} = route.params;
     const [loading, setLoading] = useState(false);
     const [scoreT1, setScoreT1] = useState(match.result.scoreTeam1);
     const [scoreT2, setScoreT2] = useState(match.result.scoreTeam2);
+    const [selectedWinner, setSelectedWinner] = useState('');
+    const [tieModal, setTieModal] = useState(false);
+    const [winnerError, setWinnerError] = useState('');
+    const [finishLoading, setFinishLoading] = useState(false);
+
     const alertRefs = useRef([]);
+
+    const teamsList = [
+        {
+            label: team1.name,
+            value: team1.name,
+        },
+        {
+            label: team2.name,
+            value: team2.name,
+        },
+    ];
 
     const increaseScore = (team, score, setScore) => {
         setScore(score + 1);
@@ -88,40 +112,58 @@ const StartMatch = ({navigation, route}) => {
                 .collection('tournaments')
                 .doc(tournamentId);
 
-            const tournamentDoc = await tournamentRef.get();
-            const matchesArray = tournamentDoc.data().matches;
-
-            const updatedStatus = matchesArray.map(item => {
-                if (
-                    item.title === match.title &&
-                    item.date.isEqual(match.date) &&
-                    item.time.isEqual(match.time)
-                ) {
-                    let matchStatus;
-                    if (scoreT1 > scoreT2) {
-                        matchStatus = `${team1.name} won!`;
-                    } else if (scoreT2 > scoreT1) {
-                        matchStatus = `${team2.name} won!`;
-                    } else if (scoreT1 === scoreT2) {
-                        matchStatus = `Match drawn!`;
-                    }
-                    return {
-                        title: item.title,
-                        date: item.date,
-                        time: item.time,
-                        teams: {
-                            team1: item.teams.team1,
-                            team2: item.teams.team2,
-                        },
-                        result: item.result,
-                        status: matchStatus,
-                    };
+            if (match.title === 'Final') {
+                let newWinner;
+                if (scoreT1 > scoreT2) {
+                    newWinner = team1.name;
+                } else if (scoreT2 > scoreT1) {
+                    newWinner = team2.name;
                 } else {
-                    return item;
-                }
-            });
+                    setTieModal(true);
 
-            await tournamentRef.update({matches: updatedStatus});
+                    setLoading(false);
+
+                    return;
+                }
+
+                await tournamentRef.update({winner: newWinner});
+            } else {
+                const tournamentDoc = await tournamentRef.get();
+                const matchesArray = tournamentDoc.data().matches;
+
+                const updatedStatus = matchesArray.map(item => {
+                    if (
+                        item.title === match.title &&
+                        item.date.isEqual(match.date) &&
+                        item.time.isEqual(match.time)
+                    ) {
+                        let matchStatus;
+                        if (scoreT1 > scoreT2) {
+                            matchStatus = `${team1.name} won!`;
+                        } else if (scoreT2 > scoreT1) {
+                            matchStatus = `${team2.name} won!`;
+                        } else if (scoreT1 === scoreT2) {
+                            matchStatus = `Match drawn!`;
+                        }
+                        return {
+                            title: item.title,
+                            date: item.date,
+                            time: item.time,
+                            teams: {
+                                team1: item.teams.team1,
+                                team2: item.teams.team2,
+                            },
+                            result: item.result,
+                            status: matchStatus,
+                        };
+                    } else {
+                        return item;
+                    }
+                });
+
+                await tournamentRef.update({matches: updatedStatus});
+            }
+
             setLoading(false);
             navigation.goBack();
             Toast.show({
@@ -135,6 +177,62 @@ const StartMatch = ({navigation, route}) => {
                 type: 'error',
                 text1: 'Error',
                 text2: error.message,
+            });
+        }
+    };
+
+    const handleFinalWinner = async () => {
+        try {
+            if (selectedWinner === '') {
+                setWinnerError('Please select a winner.');
+            } else {
+                setFinishLoading(true);
+
+                const tournamentRef = firestore()
+                    .collection('tournaments')
+                    .doc(tournamentId);
+
+                const tournamentDoc = await tournamentRef.get();
+                const matchesArray = tournamentDoc.data().matches;
+
+                const updatedStatus = matchesArray.map(item => {
+                    if (
+                        item.title === match.title &&
+                        item.date.isEqual(match.date) &&
+                        item.time.isEqual(match.time)
+                    ) {
+                        let matchStatus = `Scores are level but ${selectedWinner} won on decided rules.`;
+
+                        return {
+                            title: item.title,
+                            date: item.date,
+                            time: item.time,
+                            teams: {
+                                team1: item.teams.team1,
+                                team2: item.teams.team2,
+                            },
+                            result: item.result,
+                            status: matchStatus,
+                        };
+                    } else {
+                        return item;
+                    }
+                });
+
+                await tournamentRef.update({matches: updatedStatus});
+                setFinishLoading(false);
+
+                await tournamentRef.update({winner: selectedWinner});
+                setTieModal(false);
+
+                navigation.goBack();
+            }
+        } catch (error) {
+            setTieModal(false);
+
+            Toast.show({
+                type: 'error',
+                text2: 'An error occurred!',
             });
         }
     };
@@ -173,6 +271,78 @@ const StartMatch = ({navigation, route}) => {
                     </View>
                 </View>
             </View>
+
+            <Modal
+                transparent={true}
+                animationType={'slide'}
+                visible={tieModal}>
+                <View style={styles.reqModalView}>
+                    <View style={styles.reqModalInnerView}>
+                        <Text style={styles.modelTitle}>Choose a winner</Text>
+
+                        <Divider
+                            style={styles.divider}
+                            width={1.5}
+                            color="grey"
+                        />
+
+                        <View style={styles.dropView}>
+                            <Text style={styles.dropLabel}>
+                                Select winner team:
+                            </Text>
+                            <Dropdown
+                                style={styles.dropdown}
+                                selectedTextStyle={styles.selectedTextStyle}
+                                containerStyle={styles.dropContainer}
+                                iconStyle={styles.iconStyle}
+                                data={teamsList}
+                                maxHeight={300}
+                                labelField="label"
+                                valueField="value"
+                                placeholder={'Select team 1'}
+                                value={selectedWinner}
+                                onChange={item => setSelectedWinner(item.value)}
+                            />
+                            {winnerError !== '' ? (
+                                <Text style={{color: 'red', top: 5}}>
+                                    {winnerError}
+                                </Text>
+                            ) : (
+                                <></>
+                            )}
+                        </View>
+
+                        <TouchableOpacity
+                            style={{
+                                borderRadius: 12,
+                                marginTop: 100,
+                                width: '75%',
+                                backgroundColor: 'red',
+                                height: 40,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                            }}
+                            onPress={() => handleFinalWinner()}>
+                            {finishLoading ? (
+                                <ActivityIndicator
+                                    color={'white'}
+                                    size={'small'}
+                                    style={{alignSelf: 'center'}}
+                                />
+                            ) : (
+                                <Text
+                                    style={{
+                                        fontSize: 18,
+                                        color: 'white',
+                                        fontWeight: '600',
+                                    }}>
+                                    Finish
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
 
             <AlertPro
                 ref={ref => (alertRefs.current = ref)}
@@ -311,5 +481,62 @@ const styles = StyleSheet.create({
     updateLabel: {
         fontWeight: '600',
         fontSize: 18,
+    },
+    reqModalView: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    reqModalInnerView: {
+        width: '80%',
+        height: 350,
+        borderRadius: 15,
+        borderWidth: 1,
+        backgroundColor: 'white',
+        alignSelf: 'center',
+        alignItems: 'center',
+        elevation: 20,
+    },
+    modelTitle: {
+        fontSize: 24,
+        marginTop: 20,
+        textAlign: 'center',
+        color: '#4a5a96',
+        fontWeight: '700',
+    },
+    dropView: {
+        width: '75%',
+        marginTop: 20,
+    },
+    dropdown: {
+        height: 50,
+        width: 250,
+        borderColor: 'grey',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: 'white',
+        alignSelf: 'center',
+    },
+    dropLabel: {
+        fontSize: 17,
+        fontWeight: '500',
+        color: 'black',
+        marginBottom: 10,
+        textAlign: 'left',
+    },
+    dropContainer: {
+        borderBottomWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'grey',
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        color: '#11867F',
+    },
+    iconStyle: {
+        width: 25,
+        height: 25,
+        tintColor: 'black',
     },
 });

@@ -48,11 +48,28 @@ const Tournament = ({navigation}) => {
                         const tournamentSnapshot = await tournamentRef.get();
                         const tournaments = [];
 
-                        tournamentSnapshot.forEach(doc => {
-                            tournaments.push({
-                                id: doc.id,
-                                ...doc.data(),
-                            });
+                        tournamentSnapshot.forEach(async doc => {
+                            const tournamentData = doc.data();
+                            const endDate = tournamentData.end_date.toDate();
+                            const currentDate = new Date();
+
+                            if (endDate >= currentDate) {
+                                tournaments.push({
+                                    id: doc.id,
+                                    ...tournamentData,
+                                });
+                            }
+
+                            if (
+                                endDate < currentDate &&
+                                tournamentData.status !== 'Ended'
+                            ) {
+                                // Update the status to 'Ended' if end_date has passed
+                                await firestore()
+                                    .collection('tournaments')
+                                    .doc(doc.id)
+                                    .update({status: 'Ended'});
+                            }
                         });
 
                         if (tournaments.length > 0) {
@@ -93,8 +110,8 @@ const Tournament = ({navigation}) => {
                 const teamDoc = myTeamDoc.docs[0].data();
                 const name = teamDoc.name;
                 const id = myTeamDoc.docs[0].id;
-
-                setMyTeam({id, name});
+                const mySportId = teamDoc.sportId;
+                setMyTeam({id, name, mySportId});
             } else {
                 setMyTeam(null);
             }
@@ -150,7 +167,7 @@ const Tournament = ({navigation}) => {
                     <Card.Content style={styles.cardContent}>
                         <View style={{flexWrap: 'wrap'}}>
                             <Title style={styles.title}>{item.name}</Title>
-                            <Text style={styles.subtitle}> {sportName} </Text>
+                            <Text style={styles.subtitle}>({sportName}) </Text>
                             <Divider style={styles.divider} />
 
                             <View style={{flexDirection: 'row'}}>
@@ -171,7 +188,7 @@ const Tournament = ({navigation}) => {
                                 </Text>
                             </View>
                             <View style={{flexDirection: 'row'}}>
-                                <Text>End date:</Text>
+                                <Text style={styles.dateText}>End date:</Text>
                                 <Text
                                     style={styles.info2}>{` ${endDate}`}</Text>
                             </View>
@@ -224,8 +241,8 @@ const Tournament = ({navigation}) => {
                                 ListEmptyComponent={() => (
                                     <Text
                                         style={{
-                                            fontSize: 18,
-                                            color: 'black',
+                                            fontSize: 16,
+                                            color: 'grey',
                                             textAlign: 'center',
                                         }}>
                                         No tournament is joined yet!
@@ -236,6 +253,7 @@ const Tournament = ({navigation}) => {
                     </View>
                     <Divider style={styles.divider2} />
                 </View>
+
                 <View style={styles.cardView2}>
                     <Card style={styles.card2}>
                         <Card.Content>
@@ -246,8 +264,7 @@ const Tournament = ({navigation}) => {
                                 />
                             </View>
                             <Text style={styles.detailText}>
-                                Organize a tournament if you are captain of a
-                                team!
+                                Organize a tournament as captain of a team!
                             </Text>
                             <Button
                                 title="Organize Tournament"
@@ -292,8 +309,8 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     text1: {
-        fontSize: 22,
-        fontWeight: '700',
+        fontSize: 20,
+        fontWeight: '500',
         color: '#4A5B96',
     },
     text2: {
@@ -308,7 +325,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'grey',
     },
     listView: {
-        width: '90%',
+        width: '100%',
         marginTop: 20,
         marginBottom: 10,
     },
@@ -326,12 +343,14 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     card1: {
+        width: '95%',
+        alignSelf: 'center',
         marginVertical: 10,
         borderRadius: 15,
         elevation: 25,
         backgroundColor: 'white',
-        borderWidth: 2,
-        borderColor: 'lightgrey',
+        borderWidth: 1,
+        borderColor: 'darkgrey',
     },
     cardContent: {
         flexDirection: 'row',
@@ -344,16 +363,18 @@ const styles = StyleSheet.create({
     },
     subtitle: {
         fontSize: 17,
+        color: 'grey',
     },
     divider: {
         marginTop: 10,
-        width: '101%',
+        width: '100%',
         height: 1.5,
         backgroundColor: 'grey',
         marginBottom: 10,
     },
     dateText: {
         fontSize: 14,
+        color: 'black',
     },
     info1: {
         fontSize: 14,
@@ -383,15 +404,17 @@ const styles = StyleSheet.create({
     cardView2: {
         flexDirection: 'row',
         marginTop: 30,
+        width: '100%',
+        justifyContent: 'center',
     },
     card2: {
         borderRadius: 10,
         elevation: 5,
-        width: '44%',
-        marginHorizontal: 8,
+        width: '45%',
+        marginHorizontal: 5,
         backgroundColor: 'white',
-        borderWidth: 2,
-        borderColor: 'lightgrey',
+        borderWidth: 1,
+        borderColor: 'darkgrey',
     },
     header: {
         alignItems: 'center',
@@ -400,8 +423,9 @@ const styles = StyleSheet.create({
         fontSize: 15,
         marginTop: 20,
         marginBottom: 20,
-        width: 150,
+        width: '100%',
         textAlign: 'center',
+        color: 'grey',
     },
     icon: {
         marginTop: 10,

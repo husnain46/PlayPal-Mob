@@ -225,6 +225,7 @@ const styles = StyleSheet.create({
     textInput: {
         height: 40,
         width: 280,
+        color: 'black',
         borderColor: '#000000',
         marginBottom: 20,
         borderBottomWidth: 1,
