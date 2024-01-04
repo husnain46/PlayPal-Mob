@@ -25,13 +25,11 @@ const EditTournament = ({navigation, route}) => {
     const [open, setOpen] = useState(false);
     const [tourDetail, setTourDetail] = useState(data.detail);
     const [loading, setLoading] = useState(false);
+    const currentDate = new Date();
+    const isStarted = data.start_date <= currentDate;
 
-    const isTeamInMatches = (matches, teamId) => {
-        return matches.some(
-            match =>
-                match.teams.team1 === teamId || match.teams.team2 === teamId,
-        );
-    };
+    const deleteAlertRef = useRef([]);
+    const clashAlertRef = useRef([]);
 
     const searchCity = query => {
         const filteredItems = cityData.filter(item =>
@@ -54,19 +52,19 @@ const EditTournament = ({navigation, route}) => {
         }
     };
 
-    const renderAlert = (tId, tName, index, isTeamInMatch) => {
+    const renderAlert = (tId, tName, index) => {
         return (
             <AlertPro
                 ref={ref => (alertRefs.current[index] = ref)}
                 title=""
                 message={
-                    isTeamInMatch
-                        ? `${tName} is already in a match. You cannot remove this team directly`
+                    isStarted
+                        ? `Tournament is started, you cannot remove any team right now.`
                         : `Are you sure you want to remove ${tName} from the tournament?`
                 }
                 onCancel={() => handleClose(index)}
-                showConfirm={isTeamInMatch ? false : true}
-                textCancel={isTeamInMatch ? 'Ok' : 'No'}
+                showConfirm={isStarted ? false : true}
+                textCancel={isStarted ? 'Ok' : 'No'}
                 textConfirm="Yes"
                 onConfirm={() => confirmDelete(tId, index)}
                 customStyles={{
@@ -76,7 +74,7 @@ const EditTournament = ({navigation, route}) => {
                     },
                     buttonConfirm: {backgroundColor: 'red'},
                     buttonCancel: {
-                        backgroundColor: isTeamInMatch ? '#1d4d80' : '#00acef',
+                        backgroundColor: isStarted ? '#1d4d80' : '#00acef',
                     },
                 }}
             />
@@ -130,8 +128,17 @@ const EditTournament = ({navigation, route}) => {
         }
     };
 
+    const canDelete = () => {
+        if (isStarted) {
+            clashAlertRef.current.open();
+        } else {
+            deleteAlertRef.current.open();
+        }
+    };
+
     const handleDeleteTournament = async () => {
         try {
+            deleteAlertRef.current.close();
             setLoading(true);
 
             const tournamentRef = firestore()
@@ -160,10 +167,10 @@ const EditTournament = ({navigation, route}) => {
 
     const renderItem = ({item, index}) => {
         const num = index + 1;
-        const isTeamInMatch = isTeamInMatches(data.matches, item.id);
+
         return (
             <View style={styles.teamCard}>
-                <Text style={styles.teamName}>{`${num})  ${item.name}`}</Text>
+                <Text style={styles.teamName}>{`${num}) ${item.name}`}</Text>
                 {item.id === data.organizer ? (
                     <></>
                 ) : (
@@ -176,7 +183,7 @@ const EditTournament = ({navigation, route}) => {
                         onPress={() => showAlert(index)}
                     />
                 )}
-                {renderAlert(item.id, item.name, index, isTeamInMatch)}
+                {renderAlert(item.id, item.name, index)}
             </View>
         );
     };
@@ -203,12 +210,43 @@ const EditTournament = ({navigation, route}) => {
                     <Text style={styles.labelText}>Tournament title:</Text>
                     <TextInput
                         mode="outlined"
+                        disabled={isStarted}
                         value={tourName}
                         onChangeText={text => setTourName(text)}
                         style={styles.input1}
                         outlineStyle={styles.outline}
                     />
                 </View>
+
+                <AlertPro
+                    ref={ref => (clashAlertRef.current = ref)}
+                    title={''}
+                    message={
+                        'The tournament is started, you cannot delete now!'
+                    }
+                    showCancel={false}
+                    textConfirm="Ok"
+                    onConfirm={() => clashAlertRef.current.close()}
+                    customStyles={{
+                        message: {marginTop: -20, marginBottom: 10},
+                    }}
+                />
+
+                <AlertPro
+                    ref={ref => (deleteAlertRef.current = ref)}
+                    title={'Delete tournament?'}
+                    message={'Are you sure you want to delete this tournament?'}
+                    onCancel={() => deleteAlertRef.current.close()}
+                    textCancel={'No'}
+                    onConfirm={() => handleDeleteTournament()}
+                    textConfirm="Yes"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: 'red'},
+                        buttonCancel: {backgroundColor: '#64bbde'},
+                        container: {borderWidth: 2, borderColor: 'grey'},
+                        message: {fontSize: 16},
+                    }}
+                />
 
                 <Modal
                     transparent={true}
@@ -230,6 +268,7 @@ const EditTournament = ({navigation, route}) => {
                     <DropDownPicker
                         style={styles.dropDown}
                         labelStyle={{fontSize: 17}}
+                        disabled={isStarted}
                         open={open}
                         value={selectedCity}
                         items={cityData.map(item => ({
@@ -281,7 +320,7 @@ const EditTournament = ({navigation, route}) => {
                         style={{borderRadius: 10}}
                         mode="contained"
                         buttonColor="red"
-                        onPress={() => handleDeleteTournament()}>
+                        onPress={() => canDelete()}>
                         <Text style={styles.updateTxt}>Delete tournament</Text>
                     </Button>
                 </View>

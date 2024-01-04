@@ -108,79 +108,67 @@ const Login = ({navigation}) => {
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.bgImageView}>
-                <ImageBackground
-                    source={require('../Assets/BGs/blurPic.jpg')}
-                    style={styles.bgImage}
-                    resizeMode="cover">
-                    <View>
-                        <View>
-                            <Image
-                                source={require('../Assets/Icons/Logo.png')}
-                                style={styles.logoImg}
-                                resizeMode="contain"
-                            />
+                <View>
+                    <Image
+                        source={require('../Assets/Icons/mainLogo.png')}
+                        style={styles.logoImg}
+                        resizeMode="contain"
+                    />
+                </View>
+
+                <ScrollView>
+                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                        <View style={styles.inner}>
+                            <View style={styles.inputView}>
+                                <TextInput
+                                    placeholder="Email"
+                                    cursorColor={'#3f70c4'}
+                                    style={styles.textInput}
+                                    onChangeText={text => setEmail(text)}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                                <TextInput
+                                    placeholder="Password"
+                                    cursorColor={'#3f70c4'}
+                                    style={styles.textInput}
+                                    secureTextEntry={true}
+                                    onChangeText={text => setPassword(text)}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                            </View>
+                            <View style={styles.btnContainer}>
+                                {isLoading ? (
+                                    <ActivityIndicator
+                                        size="large"
+                                        color="#0000ff"
+                                    />
+                                ) : (
+                                    <Button
+                                        containerStyle={{
+                                            borderRadius: 8,
+                                            elevation: 5,
+                                            width: 130,
+                                        }}
+                                        title="Login"
+                                        titleStyle={{fontSize: 17}}
+                                        onPress={() => handleSignIn()}
+                                    />
+                                )}
+                            </View>
+
+                            <View style={styles.footerView}>
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        navigation.navigate('ForgotPassword')
+                                    }>
+                                    <Text style={styles.loginText}>
+                                        Forgot password
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-
-                        <ScrollView>
-                            <TouchableWithoutFeedback
-                                onPress={Keyboard.dismiss}>
-                                <View style={styles.inner}>
-                                    <View style={styles.inputView}>
-                                        <TextInput
-                                            placeholder="Email"
-                                            style={styles.textInput}
-                                            onChangeText={text =>
-                                                setEmail(text)
-                                            }
-                                            placeholderTextColor={'darkgrey'}
-                                        />
-                                        <TextInput
-                                            placeholder="Password"
-                                            style={styles.textInput}
-                                            secureTextEntry={true}
-                                            onChangeText={text =>
-                                                setPassword(text)
-                                            }
-                                            placeholderTextColor={'darkgrey'}
-                                        />
-                                    </View>
-                                    <View style={styles.btnContainer}>
-                                        {isLoading ? (
-                                            <ActivityIndicator
-                                                size="large"
-                                                color="#0000ff"
-                                            />
-                                        ) : (
-                                            <Button
-                                                containerStyle={{
-                                                    borderRadius: 8,
-                                                    elevation: 5,
-                                                    width: 130,
-                                                }}
-                                                title="Login"
-                                                titleStyle={{fontSize: 17}}
-                                                onPress={() => handleSignIn()}
-                                            />
-                                        )}
-                                    </View>
-
-                                    <View style={styles.footerView}>
-                                        <TouchableOpacity
-                                            onPress={() =>
-                                                navigation.navigate(
-                                                    'ForgotPassword',
-                                                )
-                                            }>
-                                            <Text style={styles.loginText}>
-                                                Forgot password
-                                            </Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
-                            </TouchableWithoutFeedback>
-                        </ScrollView>
-                    </View>
-                </ImageBackground>
+                    </TouchableWithoutFeedback>
+                </ScrollView>
             </View>
         </SafeAreaView>
     );
@@ -194,25 +182,21 @@ const styles = StyleSheet.create({
     bgImageView: {
         width: '91%',
         height: '95%',
-        borderRadius: 10,
-        overflow: 'hidden',
-        justifyContent: 'center',
+        borderRadius: 15,
         marginTop: 20,
         alignSelf: 'center',
-    },
-    bgImage: {
-        flex: 1,
+        backgroundColor: 'white',
         alignItems: 'center',
     },
     logoImg: {
         marginTop: 50,
         alignSelf: 'center',
-        width: 230,
+        width: 200,
         height: 60,
     },
     inner: {
         flex: 1,
-        marginTop: 100,
+        marginTop: 70,
         justifyContent: 'center',
         alignContent: 'center',
     },
@@ -224,7 +208,7 @@ const styles = StyleSheet.create({
     },
     textInput: {
         height: 40,
-        width: 280,
+        width: '85%',
         color: 'black',
         borderColor: '#000000',
         marginBottom: 20,
@@ -234,9 +218,10 @@ const styles = StyleSheet.create({
     },
     btnContainer: {
         width: 150,
+        height: 60,
         alignSelf: 'center',
         alignItems: 'center',
-        marginTop: 50,
+        marginTop: 80,
     },
     footerView: {
         flex: 1,

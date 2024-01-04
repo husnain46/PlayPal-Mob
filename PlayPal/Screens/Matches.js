@@ -19,6 +19,7 @@ const Matches = ({navigation, route}) => {
     const [matches, setMatches] = useState(data.matches);
 
     const alertRefs = useRef([]);
+    const noTeamAlertRef = useRef([]);
 
     useFocusEffect(
         useCallback(() => {
@@ -52,11 +53,15 @@ const Matches = ({navigation, route}) => {
     );
 
     const gotoAddMatch = () => {
-        navigation.navigate('AddMatch', {
-            data,
-            teamsData,
-            isCricket,
-        });
+        if (data.teamIds.length < 2) {
+            noTeamAlertRef.current.open();
+        } else {
+            navigation.navigate('AddMatch', {
+                data,
+                teamsData,
+                isCricket,
+            });
+        }
     };
 
     const gotoEditMatch = match => {
@@ -308,6 +313,21 @@ const Matches = ({navigation, route}) => {
             ) : (
                 <></>
             )}
+
+            <AlertPro
+                ref={ref => (noTeamAlertRef.current = ref)}
+                title={'Not enough teams!'}
+                message={'Invite teams to add a new match.'}
+                showCancel={false}
+                textConfirm="Ok"
+                onConfirm={() => noTeamAlertRef.current.close()}
+                customStyles={{
+                    buttonConfirm: {backgroundColor: '#4a5a96'},
+                    container: {borderWidth: 2, borderColor: 'grey'},
+                    message: {fontSize: 16},
+                }}
+            />
+
             <View style={{width: '100%', marginTop: 10}}>
                 <FlatList
                     contentContainerStyle={{paddingBottom: 100}}
@@ -316,7 +336,7 @@ const Matches = ({navigation, route}) => {
                     renderItem={renderItem}
                     ListEmptyComponent={() => (
                         <View style={{marginTop: 40}}>
-                            <Text style={{fontSize: 18, color: 'grey'}}>
+                            <Text style={styles.emptyText}>
                                 No match scheduled yet!
                             </Text>
                         </View>
@@ -387,7 +407,7 @@ const styles = StyleSheet.create({
         borderRadius: 40,
     },
     teamName: {
-        fontSize: 16,
+        fontSize: 15,
         width: 100,
         textAlign: 'center',
         marginTop: 10,
@@ -401,13 +421,13 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     scoreText: {
-        fontSize: 19,
-        fontWeight: 'bold',
+        fontSize: 17,
+        fontWeight: '500',
         marginHorizontal: 25,
         color: '#31b571',
     },
     vsText: {
-        fontSize: 14,
+        fontSize: 12,
         color: 'grey',
     },
     cardDivider: {
@@ -416,7 +436,7 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     matchTitle: {
-        fontSize: 18,
+        fontSize: 16,
         color: '#154075',
     },
     detailsContainer1: {
@@ -425,14 +445,13 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     detailText: {
-        fontSize: 16,
+        fontSize: 15,
         color: 'black',
     },
     resultText: {
-        fontSize: 17,
-        fontWeight: '600',
-        color: '#068f6f',
-        letterSpacing: 0.2,
+        fontSize: 16,
+        fontWeight: '500',
+        color: 'royalblue',
         textAlign: 'center',
     },
     startButton: {
@@ -450,6 +469,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    emptyText: {
+        fontSize: 16,
+        color: 'grey',
+        textAlign: 'center',
     },
 });
 

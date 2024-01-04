@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, SearchBar, Divider, Card} from '@rneui/themed';
-import styles from '../Styles/joinTeamStyles';
+import styles from '../Styles/inviteTeamsStyles';
 import {
     Image,
     Modal,
@@ -20,15 +20,18 @@ import Toast from 'react-native-toast-message';
 import {Dropdown} from 'react-native-element-dropdown';
 import cityData from '../Assets/cityData.json';
 
-const JoinTeam = ({navigation}) => {
+const InviteTeams = ({navigation, route}) => {
+    const {tourData, organizer} = route.params;
     const [modalVisible, setModalVisible] = useState(false);
     const [sportsFilter, setSportsFilter] = useState('');
     const [rankFilter, setRankFilter] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [teamsData, setTeamsData] = useState();
     const [isLoading, setIsLoading] = useState(true);
+    const [inviteStatus, setInviteStatus] = useState({});
     const [cityFilter, setCityFilter] = useState('');
     const [isFocus, setIsFocus] = useState(false);
+    const currentDate = new Date();
 
     const cityList = cityData.map(item => ({
         label: item.city,
@@ -39,27 +42,109 @@ const JoinTeam = ({navigation}) => {
         navigation.navigate('ViewTeam', {team, sportName});
     };
 
+    const handleTeamInvite = async (teamId, captainId) => {
+        try {
+            const isInvited = inviteStatus[teamId];
+            if (isInvited) {
+                await firestore()
+                    .collection('teams')
+                    .doc(teamId)
+                    .update({
+                        invites: firestore.FieldValue.arrayRemove(tourData.id),
+                    });
+
+                const notifyRef = await firestore()
+                    .collection('notifications')
+                    .where('senderId', '==', organizer.teamId)
+                    .where('receiverId', '==', captainId)
+                    .where('type', '==', 'tour_invite')
+                    .get();
+
+                await notifyRef.docs[0].ref.delete();
+
+                Toast.show({
+                    type: 'info',
+                    text1: 'Invitation cancelled!',
+                });
+
+                setInviteStatus({
+                    ...inviteStatus,
+                    [teamId]: false,
+                });
+            } else {
+                await firestore()
+                    .collection('teams')
+                    .doc(teamId)
+                    .update({
+                        invites: firestore.FieldValue.arrayUnion(tourData.id),
+                    });
+
+                const notification = {
+                    senderId: organizer.teamId,
+                    receiverId: captainId,
+                    message: `${organizer.name} has invited your team to play ${tourData.name}`,
+                    type: 'tour_invite',
+                    tourId: tourData.id,
+                    read: false,
+                    timestamp: currentDate,
+                };
+                await firestore().collection('notifications').add(notification);
+                Toast.show({
+                    type: 'success',
+                    text1: `Invitation sent!`,
+                });
+
+                setInviteStatus({
+                    ...inviteStatus,
+                    [teamId]: true,
+                });
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text2: 'An error occurred!',
+            });
+        }
+    };
+
     useEffect(() => {
         const fetchTeams = async () => {
-            const teamsCollection = firestore().collection('teams');
+            const teamsCollection = firestore()
+                .collection('teams')
+                .where('sportId', '==', tourData.sport);
 
             try {
                 const querySnapshot = await teamsCollection.get();
 
                 const teams = [];
-                querySnapshot.forEach(doc => {
-                    const tData = {
-                        teamId: doc.id,
-                        ...doc.data(),
-                    };
+                const updatedInviteStatus = {};
 
-                    teams.push(tData);
+                querySnapshot.forEach(doc => {
+                    if (!tourData.teamIds.includes(doc.id)) {
+                        const tData = {
+                            teamId: doc.id,
+                            ...doc.data(),
+                        };
+                        const invited = tData.invites.includes(tourData.id);
+
+                        teams.push(tData);
+
+                        updatedInviteStatus[tData.teamId] = invited;
+                    }
                 });
+
                 setTeamsData(teams);
+
+                setInviteStatus(prevStatus => ({
+                    ...prevStatus,
+                    ...updatedInviteStatus,
+                }));
+
                 setFilteredTeams(teams);
                 setIsLoading(false);
             } catch (error) {
                 setIsLoading(false);
+
                 Toast.show({
                     type: 'error',
                     text1: 'Error loading teams!',
@@ -83,7 +168,6 @@ const JoinTeam = ({navigation}) => {
 
     const resetFilters = () => {
         setCityFilter(null);
-        setSportsFilter(null);
         setRankFilter(null);
     };
 
@@ -99,17 +183,9 @@ const JoinTeam = ({navigation}) => {
 
             const isCityMatched = !cityFilter || team.city === cityFilter;
 
-            const isSportsMatched =
-                !sportsFilter || team.sportId.includes(sportsFilter);
-
             const isRankMatched = !rankFilter || team.rank === rankFilter;
 
-            return (
-                isNameMatched &&
-                isCityMatched &&
-                isSportsMatched &&
-                isRankMatched
-            );
+            return isNameMatched && isCityMatched && isRankMatched;
         });
 
         setFilteredTeams(filtered);
@@ -125,16 +201,8 @@ const JoinTeam = ({navigation}) => {
 
             const isCityMatched = !cityFilter || team.city === cityFilter;
 
-            const isSportsMatched =
-                !sportsFilter || team.sportId.includes(sportsFilter);
-
             const isRankMatched = !rankFilter || team.rank === rankFilter;
-            return (
-                isNameMatched &&
-                isCityMatched &&
-                isSportsMatched &&
-                isRankMatched
-            );
+            return isNameMatched && isCityMatched && isRankMatched;
         });
 
         setFilteredTeams(filtered);
@@ -144,10 +212,11 @@ const JoinTeam = ({navigation}) => {
     const renderItem = ({item}) => {
         const sportName = getSportsByIds([item.sportId], sportsList);
         const playerCount = item.playersId.length;
+        const isInvited = inviteStatus[item.teamId];
 
         return (
-            <TouchableOpacity onPress={() => gotoViewTeam(item, sportName)}>
-                <Card containerStyle={styles.card}>
+            <Card containerStyle={styles.card}>
+                <TouchableOpacity onPress={() => gotoViewTeam(item, sportName)}>
                     <Card.Image
                         style={styles.cardImage}
                         source={{uri: item.teamPic}}
@@ -182,17 +251,48 @@ const JoinTeam = ({navigation}) => {
                             </View>
                         </View>
                     </View>
-                    <View style={styles.cardDetailView}>
-                        <Text style={styles.rankText}>({item.rank})</Text>
-                    </View>
-                </Card>
-            </TouchableOpacity>
+                </TouchableOpacity>
+                <View style={styles.cardDetailView2}>
+                    <Text style={styles.rankText}>({item.rank})</Text>
+
+                    <TouchableOpacity
+                        style={[
+                            !isInvited ? styles.inviteBtn : styles.invitedBtn,
+                        ]}
+                        onPress={() =>
+                            handleTeamInvite(item.teamId, item.captainId)
+                        }>
+                        <Text
+                            style={[
+                                !isInvited
+                                    ? styles.inviteText
+                                    : styles.invitedText,
+                            ]}>
+                            {!isInvited ? 'Invite' : 'Invited'}
+                        </Text>
+
+                        {!isInvited ? (
+                            <Image
+                                source={require('../Assets/Icons/send.png')}
+                                resizeMode="contain"
+                                style={styles.inviteIcon}
+                            />
+                        ) : (
+                            <Image
+                                source={require('../Assets/Icons/tick.png')}
+                                resizeMode="contain"
+                                style={styles.invitedIcon}
+                            />
+                        )}
+                    </TouchableOpacity>
+                </View>
+            </Card>
         );
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Title style={styles.topTitle}>Explore Teams</Title>
+            <Title style={styles.topTitle}>Invite Teams</Title>
             <Divider width={1} style={styles.divider} color="grey" />
 
             <View style={styles.searchView}>
@@ -260,48 +360,6 @@ const JoinTeam = ({navigation}) => {
                                     setIsFocus(false);
                                 }}
                             />
-                        </View>
-
-                        <View style={styles.pickerView}>
-                            <Text style={styles.filterLabel}>
-                                Sports preference:
-                            </Text>
-                            <View style={styles.pickerStyle}>
-                                <Picker
-                                    style={{
-                                        width: '100%',
-                                        height: 50,
-                                        color: '#11867F',
-                                        justifyContent: 'center',
-                                        bottom: 3,
-                                    }}
-                                    selectedValue={sportsFilter}
-                                    onValueChange={itemValue =>
-                                        setSportsFilter(itemValue)
-                                    }
-                                    mode="dropdown"
-                                    dropdownIconColor={'#143B63'}
-                                    dropdownIconRippleColor={'#11867F'}>
-                                    <Picker.Item
-                                        style={styles.pickerBox}
-                                        label="Select sports"
-                                        value=""
-                                        enabled={false}
-                                        color="grey"
-                                    />
-                                    {Object.keys(sportsList).map(
-                                        (sportId, index) => (
-                                            <Picker.Item
-                                                key={index}
-                                                style={styles.pickerBox}
-                                                label={sportsList[sportId].name}
-                                                value={sportId}
-                                                color="black"
-                                            />
-                                        ),
-                                    )}
-                                </Picker>
-                            </View>
                         </View>
 
                         <View style={styles.ageFilterView}>
@@ -375,4 +433,4 @@ const JoinTeam = ({navigation}) => {
     );
 };
 
-export default JoinTeam;
+export default InviteTeams;

@@ -1,11 +1,10 @@
+import styles from '../Styles/viewTeamStyles';
 import {
-    StyleSheet,
     SafeAreaView,
     Text,
     View,
     Image,
     FlatList,
-    Dimensions,
     ScrollView,
     TouchableOpacity,
     Modal,
@@ -43,6 +42,14 @@ const ViewTeam = ({navigation, route}) => {
     const [playedTournaments, setPlayedTournaments] = useState([]);
     const joinAlertRef = useRef([]);
     const sportName = getSportsByIds([team.sportId]);
+    const [isInvited, setIsInvited] = useState(false);
+    const [acceptLoading, setAcceptLoading] = useState(false);
+    const [inviteCount, setInviteCount] = useState(0);
+    const [invitesData, setInvitesData] = useState([]);
+    const [inviteModal, setInviteModal] = useState(false);
+    const [inviteLoading, setInviteLoading] = useState(false);
+    const [inviteTournaments, setInviteTournaments] = useState([]);
+    const totalMatch = team.wins + team.draws + team.loses;
 
     const currentDate = new Date();
 
@@ -55,11 +62,11 @@ const ViewTeam = ({navigation, route}) => {
             : navigation.navigate('ViewProfile', {user});
     };
 
-    const gotoViewTournament = (tournamentId, sportName) => {
+    const gotoViewTournament = tournamentId => {
         setTourModal(false);
+        setInviteModal(false);
         navigation.navigate('ViewTournament', {
             tournamentId,
-            sportName,
         });
     };
 
@@ -71,6 +78,228 @@ const ViewTeam = ({navigation, route}) => {
     };
 
     const leaveAlertRef = useRef([]);
+    const inviteAlertRef = useRef([]);
+    const tourInviteAlert = useRef(null);
+
+    const renderTourInviteAlert = isFull => {
+        return (
+            <AlertPro
+                ref={ref => (tourInviteAlert.current = ref)}
+                title={
+                    isFull
+                        ? 'Tournament is full!'
+                        : 'Tournament is already started!'
+                }
+                message={
+                    'You cannot accept the invite for this tournament now.'
+                }
+                onConfirm={() => tourInviteAlert.current.close()}
+                showCancel={false}
+                textConfirm="Ok"
+                customStyles={{
+                    buttonConfirm: {backgroundColor: '#4a5a96'},
+                    container: {
+                        borderWidth: 2,
+                        borderColor: 'darkgrey',
+                        borderRadius: 10,
+                    },
+                }}
+            />
+        );
+    };
+
+    const handleTournamentInvite = async (tour, isFull, isStarted) => {
+        if (isFull) {
+            tourInviteAlert.current.open();
+        } else if (isStarted) {
+            tourInviteAlert.current.open();
+        } else {
+            try {
+                setInviteLoading(true);
+
+                const tournament_ref = await firestore()
+                    .collection('tournaments')
+                    .where('teamIds', 'array-contains', team.teamId)
+                    .get();
+
+                let hasClash = false;
+
+                tournament_ref.docs.forEach(doc => {
+                    const startDate = doc.data().start_date.toDate();
+                    const endDate = doc.data().end_date.toDate();
+
+                    if (
+                        (startDate <= tour.start_date.toDate() &&
+                            endDate >= tour.start_date.toDate()) ||
+                        (startDate <= tour.end_date.toDate() &&
+                            endDate >= tour.end_date.toDate()) ||
+                        (startDate >= tour.start_date.toDate() &&
+                            endDate <= tour.end_date.toDate())
+                    ) {
+                        // Clash detected
+                        hasClash = true;
+                        return;
+                    }
+                });
+
+                if (hasClash) {
+                    setInviteLoading(false);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Clash with another tournament!',
+                        text2: 'Cannot accept invite, your team has a clash with this tournament.',
+                    });
+                } else {
+                    await firestore()
+                        .collection('tournaments')
+                        .doc(tour.id)
+                        .update({
+                            teamIds: firestore.FieldValue.arrayUnion(
+                                team.teamId,
+                            ),
+                        });
+
+                    await firestore()
+                        .collection('teams')
+                        .doc(team.teamId)
+                        .update({
+                            invites: firestore.FieldValue.arrayRemove(tour.id),
+                        });
+
+                    const notifyRef = await firestore()
+                        .collection('notifications')
+                        .where('tourId', '==', tour.id)
+                        .where('senderId', '==', tour.organizer)
+                        .where('receiverId', '==', myId)
+                        .where('type', '==', 'tour_invite')
+                        .get();
+
+                    await notifyRef.docs[0].ref.delete();
+
+                    const orgRef = await firestore()
+                        .collection('teams')
+                        .doc(tour.organizer)
+                        .get();
+
+                    if (orgRef.exists) {
+                        const notification = {
+                            senderId: myId,
+                            receiverId: orgRef.data().captainId,
+                            message: `${team.name} has accepted your invite to play ${tour.name}`,
+                            type: 'tour_accepted',
+                            tourId: tour.id,
+                            read: false,
+                            timestamp: currentDate,
+                        };
+
+                        await firestore()
+                            .collection('notifications')
+                            .add(notification);
+                    }
+                    setInviteTournaments(prevData =>
+                        prevData.filter(data => data.id !== tour.id),
+                    );
+
+                    setInviteLoading(false);
+
+                    Toast.show({
+                        type: 'success',
+                        text2: `Your team is added to ${tour.name}!`,
+                    });
+                }
+            } catch (error) {
+                setInviteLoading(false);
+
+                Toast.show({
+                    type: 'error',
+                    text2: 'An error occurred!',
+                });
+            }
+        }
+    };
+
+    const handleRemoveInvite = async tour => {
+        try {
+            setInviteLoading(true);
+
+            await firestore()
+                .collection('teams')
+                .doc(team.teamId)
+                .update({invites: firestore.FieldValue.arrayRemove(tour.id)});
+
+            // add notification removal here
+            const notifyRef = await firestore()
+                .collection('notifications')
+                .where('tourId', '==', tour.id)
+                .where('senderId', '==', tour.organizer)
+                .where('receiverId', '==', myId)
+                .where('type', '==', 'tour_invite')
+                .get();
+
+            await notifyRef.docs[0].ref.delete();
+
+            setInviteTournaments(prevData =>
+                prevData.filter(data => data.id !== tour.id),
+            );
+
+            setInviteLoading(false);
+        } catch (error) {
+            setInviteLoading(false);
+            Toast.show({
+                type: 'error',
+                text2: 'An error occurred!',
+            });
+        }
+    };
+
+    const handleTeamInvite = async () => {
+        try {
+            if (playerCount === team.size) {
+                inviteAlertRef.current.open();
+            } else {
+                setAcceptLoading(true);
+
+                const teamRef = firestore()
+                    .collection('teams')
+                    .doc(team.teamId);
+
+                const userRef = firestore().collection('users').doc(myId);
+
+                await teamRef.update({
+                    playersId: firestore.FieldValue.arrayUnion(myId),
+                });
+
+                await userRef.update({
+                    teamReq: firestore.FieldValue.arrayRemove(team.teamId),
+                });
+
+                const notifyRef = await firestore()
+                    .collection('notifications')
+                    .where('receiverId', '==', myId)
+                    .where('teamId', '==', team.teamId)
+                    .where('type', '==', 'team_invite')
+                    .get();
+
+                await notifyRef.docs[0].ref.delete();
+
+                navigation.navigate('BottomTab', {screen: 'Team'});
+
+                Toast.show({
+                    type: 'success',
+                    text1: 'Team invite accepted!',
+                    text2: `You have joined ${team.name}.`,
+                });
+
+                setAcceptLoading(false);
+            }
+        } catch (error) {
+            setAcceptLoading(false);
+            Toast.show({
+                type: 'error',
+                text2: 'An error occurred!',
+            });
+        }
+    };
 
     const handleLeaveTeam = async () => {
         try {
@@ -135,8 +364,8 @@ const ViewTeam = ({navigation, route}) => {
 
                     setReqLoading(false);
                     Toast.show({
-                        type: 'info',
-                        text1: 'Cannot add players during ongoing tournament',
+                        type: 'error',
+                        text2: 'Cannot add players during ongoing tournament',
                     });
                 } else {
                     const teamRef = firestore()
@@ -166,6 +395,7 @@ const ViewTeam = ({navigation, route}) => {
                         message: `Your request to join ${team.name} has been accepted!`,
                         type: 'team_accept_request',
                         read: false,
+                        timestamp: currentDate,
                     };
 
                     await firestore()
@@ -196,6 +426,8 @@ const ViewTeam = ({navigation, route}) => {
     const handleRemoveRequest = async uid => {
         try {
             setReqLoading(true);
+
+            setReqUsers(prevUsers => prevUsers.filter(user => user.id !== uid));
 
             await firestore()
                 .collection('teams')
@@ -253,6 +485,7 @@ const ViewTeam = ({navigation, route}) => {
                             type: 'team_request',
                             teamName: team.name,
                             read: false,
+                            timestamp: currentDate,
                         };
                         await firestore()
                             .collection('notifications')
@@ -307,6 +540,43 @@ const ViewTeam = ({navigation, route}) => {
         }
     };
 
+    const fetchInvitedTournaments = async () => {
+        try {
+            setInviteLoading(true);
+            setInviteModal(true);
+            const currentDate = new Date();
+
+            const fetchedDocs = [];
+            if (invitesData.length > 0) {
+                for (const tId of invitesData) {
+                    const docRef = firestore()
+                        .collection('tournaments')
+                        .doc(tId);
+                    const docSnapshot = await docRef.get();
+
+                    if (docSnapshot.exists) {
+                        fetchedDocs.push({
+                            id: docSnapshot.id,
+                            ...docSnapshot.data(),
+                        });
+                    }
+                }
+                setInviteTournaments(fetchedDocs);
+                setInviteLoading(false);
+            } else {
+                setInviteTournaments([]);
+
+                setInviteLoading(false);
+            }
+        } catch (error) {
+            setInviteLoading(false);
+            Toast.show({
+                type: 'error',
+                text2: 'Error loading tournaments!',
+            });
+        }
+    };
+
     const fetchTournaments = async () => {
         try {
             setTourLoading(true);
@@ -328,12 +598,16 @@ const ViewTeam = ({navigation, route}) => {
                 setPlayedTournaments(tournaments);
 
                 setTourLoading(false);
+            } else {
+                setPlayedTournaments([]);
+
+                setTourLoading(false);
             }
         } catch (error) {
             setTourLoading(false);
             Toast.show({
                 type: 'error',
-                text1: 'Error loading tournaments!',
+                text2: 'Error loading tournaments!',
             });
         }
     };
@@ -352,8 +626,6 @@ const ViewTeam = ({navigation, route}) => {
                         const userData = userDoc.data();
                         userData.id = userId;
                         return userData;
-                    } else {
-                        return null;
                     }
                 });
                 const usersData = await Promise.all(userPromises);
@@ -380,6 +652,20 @@ const ViewTeam = ({navigation, route}) => {
                     .collection('users')
                     .doc(team.captainId)
                     .get();
+
+                if (!team.playersId.includes(myId)) {
+                    const myDataRef = await firestore()
+                        .collection('users')
+                        .doc(myId)
+                        .get();
+
+                    if (myDataRef.exists) {
+                        const invite = myDataRef
+                            .data()
+                            .teamReq.includes(team.teamId);
+                        setIsInvited(invite);
+                    }
+                }
 
                 if (!querySnapshot.empty) {
                     const capData = querySnapshot.data();
@@ -430,13 +716,16 @@ const ViewTeam = ({navigation, route}) => {
             .onSnapshot(
                 snapshot => {
                     if (snapshot.exists) {
-                        const req = snapshot.data();
-                        setTeamRequests(req.requests);
-                        setBadgeCount(req.requests.length);
-                        const isRequest = req.requests.includes(myId);
+                        const data = snapshot.data();
+                        setTeamRequests(data.requests);
+                        setBadgeCount(data.requests.length);
+                        const isRequest = data.requests.includes(myId);
 
                         setRequest(isRequest);
                         setReqLoading(false);
+
+                        setInviteCount(data.invites.length);
+                        setInvitesData(data.invites);
                     }
                 },
                 error => {
@@ -451,6 +740,48 @@ const ViewTeam = ({navigation, route}) => {
 
         return () => unsubscribe();
     }, []);
+
+    const renderInvites = ({item, index}) => {
+        let num = index + 1;
+        const isFull = item.teamIds.length === item.size;
+        const isStarted = item.start_date.toDate() <= currentDate;
+
+        return (
+            <View style={styles.tourInvitesView}>
+                <TouchableOpacity
+                    style={styles.tourNameBtn}
+                    onPress={() => gotoViewTournament(item.id)}>
+                    <Text style={styles.title}>{item.name}</Text>
+                </TouchableOpacity>
+                <View style={styles.tourInvitesBtnView}>
+                    <IconButton
+                        icon={'close-thick'}
+                        iconColor="red"
+                        size={25}
+                        onPress={() => handleRemoveInvite(item)}
+                    />
+                    <Text
+                        style={{
+                            fontSize: 28,
+                            fontWeight: '200',
+                            bottom: 3,
+                            color: 'grey',
+                        }}>
+                        |
+                    </Text>
+                    <IconButton
+                        icon={'check-bold'}
+                        iconColor="#26a65b"
+                        size={25}
+                        onPress={() =>
+                            handleTournamentInvite(item, isFull, isStarted)
+                        }
+                    />
+                    {renderTourInviteAlert(isFull)}
+                </View>
+            </View>
+        );
+    };
 
     const renderTournaments = ({item, index}) => {
         return (
@@ -627,6 +958,25 @@ const ViewTeam = ({navigation, route}) => {
                         />
                     </View>
                 </Modal>
+
+                <AlertPro
+                    ref={ref => (inviteAlertRef.current = ref)}
+                    title={'Team is full!'}
+                    message={'You cannot accept the invite right now!'}
+                    onConfirm={() => inviteAlertRef.current.close()}
+                    showCancel={false}
+                    textConfirm="Ok"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#4a5a96'},
+                        container: {
+                            borderWidth: 2,
+                            borderColor: 'grey',
+                            borderRadius: 10,
+                        },
+                        message: {fontSize: 16},
+                    }}
+                />
+
                 <Modal
                     transparent={true}
                     animationType={'none'}
@@ -693,6 +1043,7 @@ const ViewTeam = ({navigation, route}) => {
                         },
                     }}
                 />
+
                 <Text style={styles.teamTitle}>{team.name}</Text>
                 {isCaptain ? (
                     <IconButton
@@ -708,6 +1059,39 @@ const ViewTeam = ({navigation, route}) => {
 
                 <Divider style={styles.divider} width={1.5} color="grey" />
                 <Paragraph style={styles.bio}>{team.description}</Paragraph>
+
+                {isCaptain ? (
+                    <View
+                        style={{
+                            alignSelf: 'center',
+                            flexDirection: 'row-reverse',
+                            marginTop: 10,
+                        }}>
+                        <TouchableOpacity
+                            style={styles.invitesBtn}
+                            onPress={() => fetchInvitedTournaments()}>
+                            <Text
+                                style={{
+                                    fontSize: 17,
+                                    color: 'white',
+                                    fontWeight: '600',
+                                }}>
+                                Invites
+                            </Text>
+                        </TouchableOpacity>
+                        {inviteCount > 0 && (
+                            <Badge
+                                status="error"
+                                value={inviteCount}
+                                containerStyle={{
+                                    position: 'absolute',
+                                }}
+                            />
+                        )}
+                    </View>
+                ) : (
+                    <></>
+                )}
 
                 <View style={styles.detailView}>
                     <View
@@ -764,7 +1148,7 @@ const ViewTeam = ({navigation, route}) => {
                                     Total Matches:
                                 </Text>
                                 <Text style={styles.detailText}>
-                                    {team.totalMatch}
+                                    {totalMatch}
                                 </Text>
                             </View>
                             <View style={{flexDirection: 'row', marginTop: 5}}>
@@ -792,6 +1176,52 @@ const ViewTeam = ({navigation, route}) => {
                 <Modal
                     transparent={true}
                     animationType={'slide'}
+                    visible={inviteModal}
+                    onRequestClose={() => setInviteModal(false)}>
+                    <View style={styles.reqModalView}>
+                        <View style={styles.reqModalInnerView}>
+                            <View style={styles.modelHeaderView}>
+                                <Text style={styles.modelTitle}>Invites</Text>
+                                <IconButton
+                                    icon="close"
+                                    size={30}
+                                    style={{alignSelf: 'flex-end'}}
+                                    onPress={() => setInviteModal(false)}
+                                />
+                            </View>
+                            <Divider
+                                style={styles.divider2}
+                                width={1.5}
+                                color="grey"
+                            />
+
+                            {inviteLoading ? (
+                                <View
+                                    style={{
+                                        height: 450,
+                                        justifyContent: 'center',
+                                    }}>
+                                    <ActivityIndicator size={40} />
+                                </View>
+                            ) : (
+                                <FlatList
+                                    data={inviteTournaments}
+                                    keyExtractor={item => item.id}
+                                    renderItem={renderInvites}
+                                    ListEmptyComponent={() => (
+                                        <Text style={styles.emptyList}>
+                                            No invites yet!
+                                        </Text>
+                                    )}
+                                />
+                            )}
+                        </View>
+                    </View>
+                </Modal>
+
+                <Modal
+                    transparent={true}
+                    animationType={'slide'}
                     visible={tourModal}
                     onRequestClose={() => setTourModal(false)}>
                     <View style={styles.reqModalView}>
@@ -813,7 +1243,7 @@ const ViewTeam = ({navigation, route}) => {
                                 color="grey"
                             />
 
-                            {reqLoading ? (
+                            {tourLoading ? (
                                 <View
                                     style={{
                                         height: 450,
@@ -919,7 +1349,33 @@ const ViewTeam = ({navigation, route}) => {
                 <Divider style={styles.divider3} width={1.5} color="grey" />
                 <View style={styles.playersView}>
                     <Text style={styles.playerTitle}>Players:</Text>
-                    {isJoined ? (
+
+                    {isInvited ? (
+                        <Button
+                            title={'Accept invite'}
+                            icon={() =>
+                                acceptLoading ? (
+                                    <ActivityIndicator
+                                        size={'small'}
+                                        color={'white'}
+                                        style={{marginLeft: 5}}
+                                    />
+                                ) : (
+                                    <Icon
+                                        name="check"
+                                        color={'white'}
+                                        size={18}
+                                        style={{marginLeft: 5}}
+                                    />
+                                )
+                            }
+                            iconRight={true}
+                            titleStyle={{fontSize: 16}}
+                            color={'#52adeb'}
+                            containerStyle={styles.acceptBtn}
+                            onPress={() => handleTeamInvite()}
+                        />
+                    ) : isJoined ? (
                         <Button
                             title={'Leave'}
                             icon={() => (
@@ -931,7 +1387,7 @@ const ViewTeam = ({navigation, route}) => {
                                 />
                             )}
                             iconRight={true}
-                            titleStyle={{fontSize: 16, letterSpacing: 1}}
+                            titleStyle={{fontSize: 16, letterSpacing: 0.5}}
                             color={'red'}
                             containerStyle={styles.leaveButton}
                             onPress={() => leaveAlertRef.current.open()}
@@ -945,7 +1401,7 @@ const ViewTeam = ({navigation, route}) => {
                                         name="check-circle"
                                         type="Feather"
                                         color={'white'}
-                                        size={20}
+                                        size={18}
                                         style={{marginLeft: 5}}
                                     />
                                 ) : (
@@ -953,7 +1409,7 @@ const ViewTeam = ({navigation, route}) => {
                                 )
                             }
                             iconRight={true}
-                            titleStyle={{fontSize: 18, letterSpacing: 1}}
+                            titleStyle={{fontSize: 16}}
                             color={request ? 'warning' : '#28b57a'}
                             containerStyle={
                                 request
@@ -977,296 +1433,5 @@ const ViewTeam = ({navigation, route}) => {
         </SafeAreaView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    modalBackground: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    activityIndicatorWrapper: {
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 10,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-around',
-    },
-    mainImage: {
-        width: Dimensions.get('window').width,
-        height: 250,
-        top: -2,
-    },
-    modalView: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 1)',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    closeTouchable: {
-        position: 'absolute',
-        alignItems: 'center',
-        top: 30,
-        right: 10,
-        width: 40,
-        height: 30,
-    },
-    closeText: {
-        color: 'white',
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    teamTitle: {
-        fontSize: 24,
-        color: '#4a5a96',
-        fontWeight: '900',
-        textAlign: 'center',
-        marginTop: 10,
-        width: 250,
-    },
-    editIcon: {
-        width: 40,
-        alignSelf: 'flex-end',
-        marginTop: -40,
-        marginBottom: -10,
-        right: 10,
-    },
-    bio: {
-        fontSize: 16.5,
-        textAlign: 'center',
-        marginTop: 15,
-        width: '90%',
-    },
-    divider: {
-        alignSelf: 'center',
-        width: '90%',
-        marginTop: 10,
-    },
-    divider2: {
-        alignSelf: 'center',
-        width: '89%',
-        marginBottom: 20,
-    },
-    divider3: {
-        alignSelf: 'center',
-        width: '90%',
-        marginTop: 15,
-    },
-    detailView: {
-        width: '90%',
-        marginTop: 20,
-        borderRadius: 10,
-        backgroundColor: 'white',
-        elevation: 5,
-    },
-    subView1: {
-        flexDirection: 'row',
-        padding: 15,
-    },
-    subView2: {
-        flexDirection: 'row',
-        paddingHorizontal: 15,
-        paddingBottom: 15,
-    },
-    detailLabel: {
-        fontSize: 17,
-        color: 'black',
-        fontWeight: '700',
-        marginRight: 5,
-    },
-    detailText: {
-        fontSize: 17,
-        color: 'black',
-    },
-    cardView: {
-        marginTop: 20,
-        width: '90%',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    card: {
-        backgroundColor: 'white',
-        width: '49%',
-    },
-    reqModalView: {
-        flex: 1,
-        justifyContent: 'center',
-    },
-    reqModalInnerView: {
-        width: '90%',
-        height: 600,
-        borderRadius: 15,
-        borderWidth: 1,
-        backgroundColor: 'white',
-        alignSelf: 'center',
-        elevation: 20,
-    },
-    modelHeaderView: {
-        width: '100%',
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    modelTitle: {
-        fontSize: 22,
-        flex: 1,
-        left: 25,
-        textAlign: 'center',
-        color: '#4a5a96',
-        fontWeight: '700',
-    },
-    emptyList: {
-        fontSize: 16,
-        textAlign: 'center',
-        marginTop: 40,
-        paddingHorizontal: 40,
-        color: 'grey',
-    },
-    teamInfoBtnView: {
-        flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        marginTop: 20,
-        width: '100%',
-    },
-    tournamentBtn: {
-        backgroundColor: '#eba421',
-        borderRadius: 12,
-        height: 40,
-        justifyContent: 'center',
-    },
-    tournamentBtnText: {
-        fontSize: 15,
-        fontWeight: '500',
-        color: 'white',
-        paddingHorizontal: 10,
-    },
-    teamReqBtn: {
-        height: 40,
-        flexDirection: 'row',
-        backgroundColor: '#4a5a96',
-        alignItems: 'center',
-        justifyContent: 'space-evenly',
-        borderRadius: 12,
-    },
-    teamReqText: {
-        fontSize: 15,
-        color: 'white',
-        fontWeight: '600',
-        paddingHorizontal: 10,
-    },
-    badge: {
-        marginRight: -30,
-        right: 10,
-        marginBottom: 40,
-    },
-    playersView: {
-        flexDirection: 'row',
-        marginTop: 20,
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '90%',
-    },
-    playerTitle: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: 'black',
-        textDecorationLine: 'underline',
-        letterSpacing: 1,
-    },
-    leaveButton: {
-        borderRadius: 15,
-        width: 110,
-    },
-    joinButton: {
-        borderRadius: 15,
-        width: 90,
-    },
-    requestSentButton: {
-        borderRadius: 15,
-        width: 150,
-        backgroundColor: '#ccc',
-    },
-    listView: {
-        width: '100%',
-        paddingBottom: 30,
-    },
-    playerLabel: {
-        marginLeft: 5,
-        fontSize: 16,
-        fontWeight: '500',
-        color: 'black',
-    },
-    playerText: {
-        fontSize: 16,
-        color: 'grey',
-    },
-    icon: {
-        width: 20,
-        height: 20,
-        marginRight: 10,
-    },
-    playersContainer: {
-        width: '92%',
-        alignSelf: 'center',
-        height: 50,
-        marginTop: 20,
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: 'grey',
-        borderRadius: 10,
-        padding: 5,
-    },
-    userReqView: {
-        width: '80%',
-        alignSelf: 'center',
-        height: 50,
-        marginTop: 20,
-        justifyContent: 'center',
-        borderWidth: 2,
-        borderColor: 'grey',
-        borderRadius: 10,
-        padding: 5,
-    },
-    card1: {
-        marginVertical: 10,
-        borderRadius: 15,
-        elevation: 20,
-        backgroundColor: 'white',
-        borderWidth: 1,
-        borderColor: 'darkgrey',
-        width: '85%',
-        alignSelf: 'center',
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: '500',
-        marginLeft: 2,
-        color: 'black',
-    },
-    subtitle: {
-        fontSize: 17,
-    },
-    locIcon: {
-        width: 18,
-        height: 18,
-        marginRight: 10,
-    },
-    winIcon: {
-        width: 20,
-        height: 20,
-        marginRight: 5,
-    },
-    cityText: {
-        fontSize: 16,
-        color: 'darkblue',
-    },
-    winText: {
-        fontSize: 16,
-        color: '#098f60',
-    },
-});
 
 export default ViewTeam;

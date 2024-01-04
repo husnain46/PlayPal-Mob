@@ -36,7 +36,7 @@ const ViewTournament = ({navigation, route}) => {
     const [reqModal, setReqModal] = useState(false);
     const [reqTeams, setReqTeams] = useState([]);
     const [teamsCount, setTeamsCount] = useState();
-    const [myTeamId, setMyTeamId] = useState(null);
+    const [myTeam, setMyTeam] = useState(null);
     const [hasJoined, setHasJoined] = useState(false);
     const [isCricket, setIsCricket] = useState(false);
     const [badgeCount, setBadgeCount] = useState(0);
@@ -44,14 +44,39 @@ const ViewTournament = ({navigation, route}) => {
     const [isClash, setIsClash] = useState(false);
     const [clashTourName, setClashTourName] = useState(false);
     const sportName = getSportsByIds([data.sport]);
+    const [isTeamInvited, setIsTeamInvited] = useState(false);
+    const [inviteLoading, setInviteLoading] = useState(false);
 
     const [isVisible, setIsVisible] = useState(false);
     const alertRefs = useRef([]);
     const noTeamAlertRef = useRef([]);
     const clashAlertRef = useRef([]);
+    const sportAlertRef = useRef([]);
+    const inviteAlertRef = useRef([]);
 
     const gotoEditTournament = () => {
         navigation.navigate('EditTournament', {data, teamsData});
+    };
+
+    const gotoInviteTeams = () => {
+        const currentDate = new Date();
+
+        if (data.size === data.teamIds.length) {
+            Toast.show({
+                type: 'info',
+                text1: 'Tournament is full! You cannot invite more teams.',
+            });
+        } else if (data.start_date.toDate() <= currentDate) {
+            Toast.show({
+                type: 'info',
+                text1: 'Tournament is already started! You cannot invite teams now.',
+            });
+        } else {
+            navigation.navigate('InviteTeams', {
+                tourData: data,
+                organizer: organizer,
+            });
+        }
     };
 
     const gotoMatches = () => {
@@ -100,6 +125,7 @@ const ViewTournament = ({navigation, route}) => {
                                     .get();
 
                                 const orgTeam = teamDoc.data();
+                                orgTeam.teamId = teamDoc.id;
                                 const isCaptain =
                                     myId === teamDoc.data().captainId;
                                 setIsOrganizer(isCaptain);
@@ -116,12 +142,26 @@ const ViewTournament = ({navigation, route}) => {
                                         .get();
 
                                     if (!myTeamDoc.empty) {
-                                        const myTeam = myTeamDoc.docs[0].id;
+                                        const id = myTeamDoc.docs[0].id;
+                                        const name =
+                                            myTeamDoc.docs[0].data().name;
+
+                                        const sport =
+                                            myTeamDoc.docs[0].data().sportId;
                                         const myTeamPlayers =
                                             myTeamDoc.docs[0].data().playersId;
 
+                                        const myTeamInvited = myTeamDoc.docs[0]
+                                            .data()
+                                            .invites.includes(tournamentId);
+
+                                        setIsTeamInvited(myTeamInvited);
                                         setMyPlayers(myTeamPlayers);
-                                        setMyTeamId(myTeam);
+                                        setMyTeam({
+                                            id: id,
+                                            name: name,
+                                            sport: sport,
+                                        });
 
                                         // if requested already by my team
                                         const isRequest =
@@ -129,7 +169,7 @@ const ViewTournament = ({navigation, route}) => {
 
                                         setIsRequested(isRequest);
                                     } else {
-                                        setMyTeamId(null);
+                                        setMyTeam(null);
                                     }
                                 }
 
@@ -266,6 +306,151 @@ const ViewTournament = ({navigation, route}) => {
         fetchReqTeamsData();
     }, [requests]);
 
+    const renderAcceptInviteAlert = () => {
+        return (
+            <AlertPro
+                ref={ref => (inviteAlertRef.current = ref)}
+                title={''}
+                message={
+                    'Do you want to accept the invitation to play this tournament?'
+                }
+                textConfirm="Yes"
+                textCancel="No"
+                onConfirm={() => handleAcceptInvite()}
+                onCancel={() => inviteAlertRef.current.close()}
+                customStyles={{
+                    buttonConfirm: {backgroundColor: '#4a5a96'},
+                    container: {
+                        borderWidth: 1.5,
+                        borderColor: 'grey',
+                        borderRadius: 10,
+                        width: '70%',
+                    },
+                    message: {marginTop: -25},
+                }}
+            />
+        );
+    };
+
+    const handleAcceptInvite = async () => {
+        const currentDate = new Date();
+        inviteAlertRef.current.close();
+        if (data.size === data.teamIds.length) {
+            Toast.show({
+                type: 'error',
+                text1: 'Tournament is full!',
+                text2: 'You cannot accept the invite for this tournament now.',
+            });
+        } else if (data.start_date.toDate() <= currentDate) {
+            Toast.show({
+                type: 'error',
+                text1: 'Tournament is already started!',
+                text2: 'You cannot accept the invite for this tournament now.',
+            });
+        } else {
+            try {
+                setInviteLoading(true);
+
+                const tournament_ref = await firestore()
+                    .collection('tournaments')
+                    .where('status', '!=', 'Ended')
+                    .where('teamIds', 'array-contains', myTeam.id)
+                    .get();
+
+                let hasClash = false;
+
+                tournament_ref.docs.forEach(doc => {
+                    const startDate = doc.data().start_date.toDate();
+                    const endDate = doc.data().end_date.toDate();
+
+                    if (
+                        (startDate <= data.start_date.toDate() &&
+                            endDate >= data.start_date.toDate()) ||
+                        (startDate <= data.end_date.toDate() &&
+                            endDate >= data.end_date.toDate()) ||
+                        (startDate >= data.start_date.toDate() &&
+                            endDate <= data.end_date.toDate())
+                    ) {
+                        // Clash detected
+                        hasClash = true;
+                        return;
+                    }
+                });
+
+                if (hasClash) {
+                    setInviteLoading(false);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Clash with another tournament!',
+                        text2: 'Cannot accept invite, your team has a clash with this tournament.',
+                    });
+                } else {
+                    await firestore()
+                        .collection('tournaments')
+                        .doc(data.id)
+                        .update({
+                            teamIds: firestore.FieldValue.arrayUnion(myTeam.id),
+                        });
+
+                    await firestore()
+                        .collection('teams')
+                        .doc(myTeam.id)
+                        .update({
+                            invites: firestore.FieldValue.arrayRemove(data.id),
+                        });
+
+                    const notifyRef = await firestore()
+                        .collection('notifications')
+                        .where('tourId', '==', data.id)
+                        .where('senderId', '==', data.organizer)
+                        .where('receiverId', '==', myId)
+                        .where('type', '==', 'tour_invite')
+                        .get();
+
+                    await notifyRef.docs[0].ref.delete();
+
+                    const orgRef = await firestore()
+                        .collection('teams')
+                        .doc(data.organizer)
+                        .get();
+
+                    if (orgRef.exists) {
+                        const notification = {
+                            senderId: myId,
+                            receiverId: orgRef.data().captainId,
+                            message: `${myTeam.name} has accepted your invite to play ${data.name}`,
+                            type: 'tour_accepted',
+                            tourId: data.id,
+                            read: false,
+                            timestamp: currentDate,
+                        };
+
+                        await firestore()
+                            .collection('notifications')
+                            .add(notification);
+                    }
+                    setHasJoined(true);
+
+                    setIsTeamInvited(false);
+
+                    Toast.show({
+                        type: 'success',
+                        text2: `Your team is added to ${data.name}!`,
+                    });
+
+                    setInviteLoading(false);
+                }
+            } catch (error) {
+                setInviteLoading(false);
+                console.log(error);
+                Toast.show({
+                    type: 'error',
+                    text2: 'An error occurred!',
+                });
+            }
+        }
+    };
+
     const handleAcceptRequest = async tId => {
         if (teamsCount === data.size) {
             alertRefs.current.open();
@@ -330,10 +515,12 @@ const ViewTournament = ({navigation, route}) => {
 
     const handleJoinRequest = async () => {
         if (!isRequested) {
-            if (teamsCount === data.size) {
-                alertRefs.current.open();
-            } else if (myTeamId === null) {
+            if (myTeam === null) {
                 noTeamAlertRef.current.open();
+            } else if (myTeam.sport !== data.sport) {
+                sportAlertRef.current.open();
+            } else if (teamsCount === data.size) {
+                alertRefs.current.open();
             } else if (isClash) {
                 // alert for having clash of players in team to avoid joining
                 noTeamAlertRef.current.open();
@@ -341,10 +528,10 @@ const ViewTournament = ({navigation, route}) => {
                 try {
                     const tournament_ref = await firestore()
                         .collection('tournaments')
-                        .where('teamIds', 'array-contains', myTeamId)
+                        .where('teamIds', 'array-contains', myTeam.id)
                         .get();
 
-                    let hasClash;
+                    let hasClash = false;
 
                     tournament_ref.docs.forEach(doc => {
                         const startDate = doc.data().start_date.toDate();
@@ -369,7 +556,9 @@ const ViewTournament = ({navigation, route}) => {
                         clashAlertRef.current.open();
                     } else {
                         const teamReq = {
-                            requests: firestore.FieldValue.arrayUnion(myTeamId),
+                            requests: firestore.FieldValue.arrayUnion(
+                                myTeam.id,
+                            ),
                         };
                         await firestore()
                             .collection('tournaments')
@@ -397,7 +586,7 @@ const ViewTournament = ({navigation, route}) => {
                     .collection('tournaments')
                     .doc(tournamentId)
                     .update({
-                        requests: firestore.FieldValue.arrayRemove(myTeamId),
+                        requests: firestore.FieldValue.arrayRemove(myTeam.id),
                     });
 
                 setIsRequested(false);
@@ -559,7 +748,7 @@ const ViewTournament = ({navigation, route}) => {
                 style={{width: '100%'}}>
                 <View style={styles.titleView}>
                     <Text style={styles.teamTitle}>{data.name}</Text>
-                    <Paragraph style={styles.bio}>{data.detail}</Paragraph>
+                    <Text style={styles.bio}>{data.detail}</Text>
                 </View>
 
                 <Divider style={styles.divider} width={2} color="grey" />
@@ -567,14 +756,49 @@ const ViewTournament = ({navigation, route}) => {
                 {data.winner !== '' ? (
                     <></>
                 ) : isOrganizer ? (
-                    <Button
-                        mode="elevated"
-                        style={styles.editBtn}
-                        onPress={() => gotoEditTournament()}>
-                        <Text style={{fontSize: 16, color: '#374c62'}}>
-                            Edit Tournament
-                        </Text>
-                    </Button>
+                    <View
+                        style={{
+                            width: '90%',
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                        }}>
+                        <Button
+                            mode="elevated"
+                            style={styles.editBtn}
+                            onPress={() => gotoEditTournament()}>
+                            <Text style={{fontSize: 16, color: '#374c62'}}>
+                                Edit Tournament
+                            </Text>
+                        </Button>
+                        <Button
+                            mode="elevated"
+                            style={styles.inviteTeamBtn}
+                            onPress={() => gotoInviteTeams()}>
+                            <Text style={{fontSize: 16, color: 'white'}}>
+                                Invite Teams
+                            </Text>
+                        </Button>
+                    </View>
+                ) : isTeamInvited ? (
+                    <>
+                        {renderAcceptInviteAlert()}
+                        {inviteLoading ? (
+                            <ActivityIndicator size={'large'} color={'blue'} />
+                        ) : (
+                            <Button
+                                mode="contained"
+                                style={{
+                                    borderRadius: 12,
+                                    marginLeft: 15,
+                                }}
+                                buttonColor={'#28b57a'}
+                                onPress={() => inviteAlertRef.current.open()}>
+                                <Text style={{fontSize: 16, color: 'white'}}>
+                                    Accept invite?
+                                </Text>
+                            </Button>
+                        )}
+                    </>
                 ) : hasJoined ? (
                     <></>
                 ) : (
@@ -584,7 +808,6 @@ const ViewTournament = ({navigation, route}) => {
                         style={{
                             borderRadius: 12,
                             marginLeft: 15,
-                            marginTop: 5,
                         }}
                         buttonColor={isRequested ? '#faad15' : '#28b57a'}
                         onPress={() => handleJoinRequest()}>
@@ -742,7 +965,12 @@ const ViewTournament = ({navigation, route}) => {
                     textConfirm="Ok"
                     customStyles={{
                         buttonConfirm: {backgroundColor: '#4a5a96'},
-                        container: {borderWidth: 2, borderColor: 'lightgrey'},
+                        container: {
+                            borderWidth: 2,
+                            borderColor: 'grey',
+                            borderRadius: 10,
+                        },
+                        message: {fontSize: 16},
                     }}
                 />
 
@@ -756,6 +984,24 @@ const ViewTournament = ({navigation, route}) => {
                     customStyles={{
                         buttonConfirm: {backgroundColor: '#4a5a96'},
                         container: {borderWidth: 2, borderColor: 'lightgrey'},
+                    }}
+                />
+
+                <AlertPro
+                    ref={ref => (sportAlertRef.current = ref)}
+                    title={''}
+                    message={`Tournament sport does not match your team sport!`}
+                    onConfirm={() => sportAlertRef.current.close()}
+                    showCancel={false}
+                    textConfirm="Ok"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#4a5a96'},
+                        container: {borderWidth: 2, borderColor: 'lightgrey'},
+                        message: {
+                            color: 'black',
+                            marginTop: -30,
+                            marginBottom: 10,
+                        },
                     }}
                 />
 
@@ -885,7 +1131,7 @@ const ViewTournament = ({navigation, route}) => {
                     )}
                     <Button
                         mode="contained"
-                        style={{borderRadius: 12, justifyContent: 'center'}}
+                        style={styles.matchesBtn}
                         buttonColor="#f2a72e"
                         onPress={() => gotoMatches()}>
                         <Text style={{fontSize: 16, color: 'white'}}>

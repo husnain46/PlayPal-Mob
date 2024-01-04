@@ -1,4 +1,4 @@
-import React, {useState, useCallback, useEffect} from 'react';
+import React, {useState, useCallback, useEffect, useRef} from 'react';
 import {Button} from '@rneui/themed';
 import {
     SafeAreaView,
@@ -17,11 +17,13 @@ import {useFocusEffect} from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
+import AlertPro from 'react-native-alert-pro';
 
 const Tournament = ({navigation}) => {
     const myId = auth().currentUser.uid;
     const [loading, setLoading] = useState(true);
-    const [myTeam, setMyTeam] = useState();
+    const [myTeam, setMyTeam] = useState(null);
+    const alertRefs = useRef([]);
 
     const [myTournaments, setMyTournaments] = useState([]);
 
@@ -45,13 +47,20 @@ const Tournament = ({navigation}) => {
                         const tournamentRef = firestore()
                             .collection('tournaments')
                             .where('teamIds', 'array-contains', team.id);
+
                         const tournamentSnapshot = await tournamentRef.get();
                         const tournaments = [];
 
                         tournamentSnapshot.forEach(async doc => {
                             const tournamentData = doc.data();
+                            const startDate =
+                                tournamentData.start_date.toDate();
                             const endDate = tournamentData.end_date.toDate();
                             const currentDate = new Date();
+
+                            // Get the next day by adding 1 day to the currentDate
+                            const endDate_next = new Date(endDate);
+                            endDate_next.setDate(endDate_next.getDate() + 1);
 
                             if (endDate >= currentDate) {
                                 tournaments.push({
@@ -61,14 +70,34 @@ const Tournament = ({navigation}) => {
                             }
 
                             if (
+                                startDate <= currentDate &&
+                                endDate >= currentDate
+                            ) {
+                                // Update the status to 'Ongoing' if start_date is passed
+                                //  and end_date is ahead
+                                await firestore()
+                                    .collection('tournaments')
+                                    .doc(doc.id)
+                                    .update({status: 'Ongoing'});
+                            } else if (
                                 endDate < currentDate &&
-                                tournamentData.status !== 'Ended'
+                                tournamentData.status !== 'Ended' &&
+                                tournamentData.winner !== ''
                             ) {
                                 // Update the status to 'Ended' if end_date has passed
                                 await firestore()
                                     .collection('tournaments')
                                     .doc(doc.id)
                                     .update({status: 'Ended'});
+                            } else if (
+                                endDate_next < currentDate &&
+                                tournamentData.status !== 'Ended' &&
+                                tournamentData.winner === ''
+                            ) {
+                                await firestore()
+                                    .collection('tournaments')
+                                    .doc(doc.id)
+                                    .update({status: 'Abandoned'});
                             }
                         });
 
@@ -140,7 +169,11 @@ const Tournament = ({navigation}) => {
     };
 
     const gotoOrganizeTournament = () => {
-        navigation.navigate('OrganizeTournament', {myTeam});
+        if (myTeam === null) {
+            alertRefs.current.open();
+        } else {
+            navigation.navigate('OrganizeTournament', {myTeam});
+        }
     };
 
     const gotoExploreTournament = () => {
@@ -245,7 +278,7 @@ const Tournament = ({navigation}) => {
                                             color: 'grey',
                                             textAlign: 'center',
                                         }}>
-                                        No tournament is joined yet!
+                                        You are not in a tournament yet!
                                     </Text>
                                 )}
                             />
@@ -253,6 +286,26 @@ const Tournament = ({navigation}) => {
                     </View>
                     <Divider style={styles.divider2} />
                 </View>
+
+                <AlertPro
+                    ref={ref => (alertRefs.current = ref)}
+                    title={'Captain Restriction!'}
+                    message={
+                        'You are not captain of a team, so you cannot organize a tournament!'
+                    }
+                    onConfirm={() => alertRefs.current.close()}
+                    showCancel={false}
+                    textConfirm={'Ok'}
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: '#2bad8b'},
+                        container: {
+                            borderWidth: 2,
+                            borderColor: 'grey',
+                            borderRadius: 10,
+                        },
+                        message: {fontSize: 16},
+                    }}
+                />
 
                 <View style={styles.cardView2}>
                     <Card style={styles.card2}>
@@ -306,7 +359,7 @@ const styles = StyleSheet.create({
     yourTeamView: {
         alignItems: 'center',
         width: '90%',
-        marginTop: 20,
+        marginTop: 10,
     },
     text1: {
         fontSize: 20,
@@ -359,7 +412,6 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginLeft: 2,
     },
     subtitle: {
         fontSize: 17,

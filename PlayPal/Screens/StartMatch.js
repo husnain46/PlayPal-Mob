@@ -17,7 +17,7 @@ import {Dropdown} from 'react-native-element-dropdown';
 
 const StartMatch = ({navigation, route}) => {
     const {match, team1, team2, matchNum, tournamentId} = route.params;
-    const [loading, setLoading] = useState(false);
+    const [endLoading, setEndLoading] = useState(false);
     const [scoreT1, setScoreT1] = useState(match.result.scoreTeam1);
     const [scoreT2, setScoreT2] = useState(match.result.scoreTeam2);
     const [selectedWinner, setSelectedWinner] = useState('');
@@ -103,30 +103,98 @@ const StartMatch = ({navigation, route}) => {
         }
     };
 
+    const updateTeamData = async isFinal => {
+        try {
+            const team1Doc = await firestore()
+                .collection('teams')
+                .doc(team1.id)
+                .get();
+
+            const team2Doc = await firestore()
+                .collection('teams')
+                .doc(team2.id)
+                .get();
+
+            if (team1Doc.exists && team2Doc.exists) {
+                let winsT1 = team1Doc.data().wins || 0;
+                let drawsT1 = team1Doc.data().draws || 0;
+                let lostT1 = team1Doc.data().loses || 0;
+
+                let winsT2 = team2Doc.data().wins || 0;
+                let drawsT2 = team2Doc.data().draws || 0;
+                let lostT2 = team2Doc.data().loses || 0;
+
+                if (scoreT1 > scoreT2) {
+                    winsT1++;
+                    lostT2++;
+                } else if (scoreT2 > scoreT1) {
+                    winsT2++;
+                    lostT1++;
+                } else if (scoreT1 === scoreT2) {
+                    drawsT1++;
+                    drawsT2++;
+                }
+
+                const batch = firestore().batch();
+
+                batch.update(firestore().collection('teams').doc(team1.id), {
+                    wins: winsT1,
+                    draws: drawsT1,
+                    loses: lostT1,
+                });
+                batch.update(firestore().collection('teams').doc(team2.id), {
+                    wins: winsT2,
+                    draws: drawsT2,
+                    loses: lostT2,
+                });
+
+                let newPoint = 1;
+                isFinal ? (newPoint = 5) : (newPoint = 1);
+
+                const updateUsersPoints = async playerIds => {
+                    for (const playerId of playerIds) {
+                        const userRef = await firestore()
+                            .collection('users')
+                            .doc(playerId)
+                            .get();
+                        if (userRef.exists) {
+                            const userData = userRef.data();
+                            const updatedPoints = userData.points + newPoint;
+                            batch.update(userRef.ref, {points: updatedPoints});
+                        }
+                    }
+                };
+
+                const playersIdTeam1 = team1Doc.data().playersId || [];
+                const playersIdTeam2 = team2Doc.data().playersId || [];
+
+                await updateUsersPoints(playersIdTeam1);
+                await updateUsersPoints(playersIdTeam2);
+
+                await batch.commit();
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text1: 'An error occurred!',
+            });
+        }
+    };
+
     const handleEndMatch = async () => {
         try {
-            alertRefs.current.close();
-            setLoading(true);
+            setEndLoading(true);
 
             const tournamentRef = firestore()
                 .collection('tournaments')
                 .doc(tournamentId);
 
             if (match.title === 'Final') {
-                let newWinner;
-                if (scoreT1 > scoreT2) {
-                    newWinner = team1.name;
-                } else if (scoreT2 > scoreT1) {
-                    newWinner = team2.name;
-                } else {
-                    setTieModal(true);
+                setTieModal(true);
 
-                    setLoading(false);
+                setEndLoading(false);
 
-                    return;
-                }
-
-                await tournamentRef.update({winner: newWinner});
+                return;
             } else {
                 const tournamentDoc = await tournamentRef.get();
                 const matchesArray = tournamentDoc.data().matches;
@@ -138,6 +206,7 @@ const StartMatch = ({navigation, route}) => {
                         item.time.isEqual(match.time)
                     ) {
                         let matchStatus;
+
                         if (scoreT1 > scoreT2) {
                             matchStatus = `${team1.name} won!`;
                         } else if (scoreT2 > scoreT1) {
@@ -162,17 +231,18 @@ const StartMatch = ({navigation, route}) => {
                 });
 
                 await tournamentRef.update({matches: updatedStatus});
+                let isFinal = false;
+                await updateTeamData(isFinal);
             }
 
-            setLoading(false);
+            setEndLoading(false);
             navigation.goBack();
+
             Toast.show({
                 type: 'success',
                 text1: 'Match ended!',
             });
         } catch (error) {
-            setLoading(false);
-
             Toast.show({
                 type: 'error',
                 text1: 'Error',
@@ -201,7 +271,14 @@ const StartMatch = ({navigation, route}) => {
                         item.date.isEqual(match.date) &&
                         item.time.isEqual(match.time)
                     ) {
-                        let matchStatus = `Scores are level but ${selectedWinner} won on decided rules.`;
+                        let matchStatus;
+                        if (scoreT1 > scoreT2) {
+                            matchStatus = `${team1.name} won!`;
+                        } else if (scoreT2 > scoreT1) {
+                            matchStatus = `${team2.name} won!`;
+                        } else if (scoreT1 === scoreT2) {
+                            matchStatus = `Scores are level but ${selectedWinner} won on decided rules.`;
+                        }
 
                         return {
                             title: item.title,
@@ -218,11 +295,20 @@ const StartMatch = ({navigation, route}) => {
                         return item;
                     }
                 });
+                let isFinal = true;
+                await updateTeamData(isFinal);
 
                 await tournamentRef.update({matches: updatedStatus});
                 setFinishLoading(false);
 
-                await tournamentRef.update({winner: selectedWinner});
+                if (scoreT1 > scoreT2) {
+                    await tournamentRef.update({winner: team1.id});
+                } else if (scoreT2 > scoreT1) {
+                    await tournamentRef.update({winner: team2.id});
+                } else if (scoreT1 === scoreT2) {
+                    await tournamentRef.update({winner: selectedWinner});
+                }
+
                 setTieModal(false);
 
                 navigation.goBack();
@@ -393,7 +479,7 @@ const StartMatch = ({navigation, route}) => {
                 style={{
                     marginTop: 80,
                 }}>
-                {loading ? (
+                {endLoading ? (
                     <ActivityIndicator size={35} />
                 ) : (
                     <Button

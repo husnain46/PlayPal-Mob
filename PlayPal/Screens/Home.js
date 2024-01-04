@@ -79,6 +79,18 @@ const Home = ({navigation}) => {
                     const querySnapshot = await usersRef.get();
 
                     const userData = querySnapshot.data();
+
+                    if (userData.points > 15 && userData.points < 30) {
+                        await usersRef.update({skillLevel: 'Amateur'});
+                        userData.skillLevel = 'Amateur';
+                    } else if (userData.points > 30) {
+                        await usersRef.update({skillLevel: 'Pro'});
+                        userData.skillLevel = 'Pro';
+                    } else if (userData.points >= 0) {
+                        await usersRef.update({skillLevel: 'Beginner'});
+                        userData.skillLevel = 'Beginner';
+                    }
+
                     setMyData(userData);
 
                     const friendsId = userData.friends;
@@ -134,7 +146,7 @@ const Home = ({navigation}) => {
                 <View style={{height: 50, justifyContent: 'center'}}>
                     <IconButton
                         icon={'android-messages'}
-                        size={40}
+                        size={35}
                         onPress={() => gotoChat(item, item.id)}
                     />
                 </View>
@@ -146,28 +158,59 @@ const Home = ({navigation}) => {
         <SafeAreaView style={styles.container}>
             <View style={styles.cardsContainer}>
                 <Card containerStyle={styles.card}>
-                    <Card.Title style={{fontSize: 20}}>My Points</Card.Title>
-                    <Card.Divider width={1} />
+                    <Card.Title style={{fontSize: 18}}>My Points</Card.Title>
+
                     {loading ? (
                         <ActivityIndicator
                             size={'small'}
                             style={{alignSelf: 'center'}}
                         />
                     ) : (
-                        <Text style={styles.cardText}>{myData.points}</Text>
+                        <View
+                            style={{
+                                flexDirection: 'row',
+                                width: '30%',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                alignSelf: 'center',
+                                left: -2,
+                            }}>
+                            <Image
+                                source={require('../Assets/Icons/star.png')}
+                                style={{width: 16, height: 16}}
+                            />
+                            <Text style={styles.cardText}>{myData.points}</Text>
+                        </View>
                     )}
                 </Card>
 
                 <Card containerStyle={styles.card}>
-                    <Card.Title style={{fontSize: 20}}>Experience</Card.Title>
-                    <Card.Divider width={1} />
+                    <Card.Title style={{fontSize: 18}}>
+                        My Experience
+                    </Card.Title>
+
                     {loading ? (
                         <ActivityIndicator
                             size={'small'}
                             style={{alignSelf: 'center'}}
                         />
                     ) : (
-                        <Text style={styles.cardText}>{myData.skillLevel}</Text>
+                        <View
+                            style={{
+                                flexDirection: 'row',
+                                width: '75%',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                alignSelf: 'center',
+                            }}>
+                            <Image
+                                source={levelIcon}
+                                style={{width: 16, height: 16}}
+                            />
+                            <Text style={styles.cardText}>
+                                {myData.skillLevel}
+                            </Text>
+                        </View>
                     )}
                 </Card>
             </View>
@@ -198,22 +241,23 @@ const Home = ({navigation}) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 15,
+        padding: 10,
     },
     cardsContainer: {
         flexDirection: 'row',
-        width: '100%',
+        width: '90%',
         justifyContent: 'center',
         marginBottom: 60,
+        alignSelf: 'center',
     },
     card: {
-        width: '46%',
-        height: 120,
+        width: '50%',
+        height: 100,
         borderRadius: 12,
     },
     cardText: {
         textAlign: 'center',
-        fontSize: 18,
+        fontSize: 17,
         color: 'grey',
     },
     friendsTitle: {
@@ -238,7 +282,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     friendName: {
-        fontSize: 20,
+        fontSize: 19,
         fontWeight: '500',
         color: 'black',
     },
@@ -254,8 +298,8 @@ const styles = StyleSheet.create({
         left: 10,
     },
     infoIcons: {
-        width: 23,
-        height: 23,
+        width: 20,
+        height: 20,
     },
     emptyText: {
         fontSize: 17,

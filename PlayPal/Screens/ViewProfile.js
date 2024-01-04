@@ -35,6 +35,7 @@ const ViewProfile = ({navigation, route}) => {
     const [isCaptain, setIsCaptain] = useState(false);
     const [myTeam, setMyTeam] = useState({});
     const [isTeamMate, setIsTeamMate] = useState(false);
+    const currentDate = new Date();
 
     useFocusEffect(
         useCallback(() => {
@@ -212,14 +213,13 @@ const ViewProfile = ({navigation, route}) => {
                     .where('type', '==', 'friend_request')
                     .get();
 
-                // await notifyRef.docs[0].ref.delete();
-
                 const notification = {
                     senderId: myId,
                     receiverId: playerId,
                     message: ' accepted your friend request!',
                     type: 'friend_accepted',
                     read: false,
+                    timestamp: currentDate,
                 };
 
                 await notifyRef.docs[0].ref.update(notification);
@@ -372,6 +372,7 @@ const ViewProfile = ({navigation, route}) => {
                         message: 'You have received a friend request from ',
                         type: 'friend_request',
                         read: false,
+                        timestamp: currentDate,
                     };
                     await firestore()
                         .collection('notifications')
@@ -442,13 +443,15 @@ const ViewProfile = ({navigation, route}) => {
                         type: 'team_invite',
                         teamId: myTeam.id,
                         read: false,
+                        timestamp: currentDate,
                     };
                     await firestore()
                         .collection('notifications')
                         .add(notification);
+
                     Toast.show({
                         type: 'info',
-                        text1: 'Team invitation sent!',
+                        text1: `You invited this player to join ${myTeam.name}`,
                     });
 
                     setIsInvited(true);

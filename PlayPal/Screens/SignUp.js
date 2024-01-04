@@ -9,6 +9,8 @@ import {
     Image,
     Text,
     ImageBackground,
+    Platform,
+    Dimensions,
 } from 'react-native';
 import {RadioButton} from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -19,6 +21,7 @@ import firestore from '@react-native-firebase/firestore';
 import {ActivityIndicator} from 'react-native';
 import Toast from 'react-native-toast-message';
 import {KeyboardAvoidingView} from 'react-native';
+import {ScrollView} from 'react-native-gesture-handler';
 
 const SignUp = ({navigation}) => {
     const [backDate, setBackDate] = useState(new Date());
@@ -196,221 +199,204 @@ const SignUp = ({navigation}) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.bgImageView}>
-                <ImageBackground
-                    source={require('../Assets/BGs/blurPic.jpg')}
-                    style={styles.bgImage}
-                    resizeMode="cover">
+            <ScrollView
+                style={styles.bgContainer}
+                contentContainerStyle={{alignItems: 'center'}}>
+                <KeyboardAvoidingView
+                    behavior={'padding'}
+                    style={{flex: 1}}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 10}>
                     <View style={styles.logoView}>
                         <Image
-                            source={require('../Assets/Icons/Logo.png')}
+                            source={require('../Assets/Icons/mainLogo.png')}
                             style={styles.logoImg}
                             resizeMode="contain"
                         />
                     </View>
 
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-                        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                            <View style={styles.inner}>
-                                <View style={styles.nameView}>
-                                    <TextInput
-                                        placeholder="First Name"
-                                        style={styles.textInput1}
-                                        onChangeText={text =>
-                                            setFirstName(text)
-                                        }
-                                        maxLength={15}
-                                        placeholderTextColor={'darkgrey'}
-                                    />
-                                    <TextInput
-                                        placeholder="Last Name"
-                                        style={styles.textInput2}
-                                        onChangeText={text => setLastName(text)}
-                                        maxLength={15}
-                                        placeholderTextColor={'darkgrey'}
-                                    />
-                                </View>
-                                <View style={styles.radioView}>
-                                    <Text style={styles.radioText}>Male</Text>
-                                    <RadioButton
-                                        value="first"
-                                        status={
-                                            gender === 'Male'
-                                                ? 'checked'
-                                                : 'unchecked'
-                                        }
-                                        onPress={() => setGender('Male')}
-                                    />
+                    <TouchableWithoutFeedback
+                        onPress={Keyboard.dismiss}
+                        style={{flex: 1}}>
+                        <View style={{marginTop: 20}}>
+                            <View style={styles.nameView}>
+                                <TextInput
+                                    placeholder="First Name"
+                                    style={styles.textInput1}
+                                    cursorColor={'#3f70c4'}
+                                    onChangeText={text => setFirstName(text)}
+                                    maxLength={15}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                                <TextInput
+                                    placeholder="Last Name"
+                                    style={styles.textInput2}
+                                    onChangeText={text => setLastName(text)}
+                                    maxLength={15}
+                                    cursorColor={'#3f70c4'}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                            </View>
+                            <View style={styles.radioView}>
+                                <Text style={styles.radioText}>Male</Text>
+                                <RadioButton
+                                    value="first"
+                                    status={
+                                        gender === 'Male'
+                                            ? 'checked'
+                                            : 'unchecked'
+                                    }
+                                    onPress={() => setGender('Male')}
+                                />
 
-                                    <Text style={styles.radioText}>Female</Text>
-                                    <RadioButton
-                                        value="Female"
-                                        status={
-                                            gender === 'Female'
-                                                ? 'checked'
-                                                : 'unchecked'
-                                        }
-                                        onPress={() => setGender('Female')}
-                                    />
-                                </View>
-                                <View style={styles.dobView}>
-                                    <Text style={styles.dobText}>
-                                        Date of birth:
-                                    </Text>
-                                    <View style={styles.dateView}>
-                                        <TouchableOpacity
-                                            style={styles.dateBox}
-                                            onPress={() => setShowPicker(true)}>
-                                            {selectedDate ? (
-                                                <Text style={styles.dobText}>
-                                                    {selectedDate}
-                                                </Text>
-                                            ) : (
-                                                <Text
-                                                    style={{color: 'darkgrey'}}>
-                                                    Select date of birth
-                                                </Text>
-                                            )}
-                                        </TouchableOpacity>
-                                        {showPicker && (
-                                            <DateTimePicker
-                                                value={backDate}
-                                                mode="date"
-                                                display="spinner"
-                                                minimumDate={
-                                                    new Date(1970, 0, 1)
-                                                }
-                                                maximumDate={backDate}
-                                                onChange={handleDateChange}
-                                            />
+                                <Text style={styles.radioText}>Female</Text>
+                                <RadioButton
+                                    value="Female"
+                                    status={
+                                        gender === 'Female'
+                                            ? 'checked'
+                                            : 'unchecked'
+                                    }
+                                    onPress={() => setGender('Female')}
+                                />
+                            </View>
+
+                            <View style={styles.dobView}>
+                                <Text style={styles.dobText}>
+                                    Date of birth:
+                                </Text>
+                                <View style={styles.dateView}>
+                                    <TouchableOpacity
+                                        style={styles.dateBox}
+                                        onPress={() => setShowPicker(true)}>
+                                        {selectedDate ? (
+                                            <Text style={styles.dobText}>
+                                                {selectedDate}
+                                            </Text>
+                                        ) : (
+                                            <Text style={{color: 'darkgrey'}}>
+                                                Select date of birth
+                                            </Text>
                                         )}
-                                    </View>
-                                </View>
-
-                                <View style={styles.inputView}>
-                                    <TextInput
-                                        placeholder="Email"
-                                        style={styles.textInput3}
-                                        onChangeText={text => {
-                                            setEmail(text);
-                                            if (emailPattern.test(text)) {
-                                                setIsEmailValid(true);
-                                            } else {
-                                                setIsEmailValid(false);
-                                            }
-                                        }}
-                                        placeholderTextColor={'darkgrey'}
-                                    />
-                                    {email.length > 0 && !isEmailValid ? (
-                                        <Text
-                                            style={{
-                                                color: 'red',
-                                                bottom: 18,
-                                                right: 12,
-                                                textAlign: 'right',
-                                            }}>
-                                            Email address is not valid!
-                                        </Text>
-                                    ) : (
-                                        <></>
-                                    )}
-                                    <TextInput
-                                        placeholder="Mobile no. (e.g. 03xxxxxxxxx)"
-                                        style={styles.textInput3}
-                                        onChangeText={text => {
-                                            setPhone(text);
-                                            if (phonePattern.test(text)) {
-                                                setIsPhoneValid(true);
-                                            } else {
-                                                setIsPhoneValid(false);
-                                            }
-                                        }}
-                                        placeholderTextColor={'darkgrey'}
-                                    />
-                                    {phone.length > 0 && !isPhoneValid ? (
-                                        <Text
-                                            style={{
-                                                color: 'red',
-                                                bottom: 18,
-                                                right: 12,
-                                                textAlign: 'right',
-                                            }}>
-                                            Phone number is not valid!
-                                        </Text>
-                                    ) : (
-                                        <></>
-                                    )}
-                                    <TextInput
-                                        placeholder="Username"
-                                        style={styles.textInput3}
-                                        onChangeText={async text => {
-                                            setUsername(text);
-                                            await checkUsername(text);
-                                        }}
-                                        maxLength={20}
-                                        placeholderTextColor={'darkgrey'}
-                                    />
-                                    {username.length > 0 ? (
-                                        <Text
-                                            style={{
-                                                color: isUsernameAvailable
-                                                    ? 'green'
-                                                    : 'red',
-                                                bottom: 18,
-                                                right: 12,
-                                                textAlign: 'right',
-                                            }}>
-                                            {isUsernameAvailable
-                                                ? 'Username is available'
-                                                : 'Username is not available'}
-                                        </Text>
-                                    ) : (
-                                        <></>
-                                    )}
-
-                                    <TextInput
-                                        placeholder="Password"
-                                        style={styles.textInput3}
-                                        secureTextEntry={true}
-                                        onChangeText={handlePasswordChange}
-                                        maxLength={20}
-                                        placeholderTextColor={'darkgrey'}
-                                    />
-                                    {passError !== '' ? (
-                                        <Text
-                                            style={{
-                                                color: 'red',
-                                                bottom: 18,
-                                                left: 10,
-                                                textAlign: 'left',
-                                            }}>
-                                            {passError}
-                                        </Text>
-                                    ) : (
-                                        <></>
-                                    )}
-                                </View>
-                                <View style={styles.btnContainer}>
-                                    {loading ? (
-                                        <ActivityIndicator
-                                            size="large"
-                                            color="#0000ff"
-                                        />
-                                    ) : (
-                                        <Button
-                                            title="Signup"
-                                            titleStyle={styles.submitText}
-                                            onPress={() => createUser()}
-                                            containerStyle={styles.submitBtn}
+                                    </TouchableOpacity>
+                                    {showPicker && (
+                                        <DateTimePicker
+                                            value={backDate}
+                                            mode="date"
+                                            display="spinner"
+                                            minimumDate={new Date(1970, 0, 1)}
+                                            maximumDate={backDate}
+                                            onChange={handleDateChange}
                                         />
                                     )}
                                 </View>
                             </View>
-                        </TouchableWithoutFeedback>
-                    </KeyboardAvoidingView>
-                </ImageBackground>
-            </View>
+
+                            <View style={styles.inputView}>
+                                <TextInput
+                                    placeholder="Email"
+                                    cursorColor={'#3f70c4'}
+                                    style={styles.textInput3}
+                                    onChangeText={text => {
+                                        setEmail(text);
+                                        if (emailPattern.test(text)) {
+                                            setIsEmailValid(true);
+                                        } else {
+                                            setIsEmailValid(false);
+                                        }
+                                    }}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                                {email.length > 0 && !isEmailValid ? (
+                                    <Text style={styles.errorText}>
+                                        Email address is not valid!
+                                    </Text>
+                                ) : (
+                                    <></>
+                                )}
+                                <TextInput
+                                    placeholder="Mobile no. (e.g. 03xxxxxxxxx)"
+                                    style={styles.textInput3}
+                                    cursorColor={'#3f70c4'}
+                                    onChangeText={text => {
+                                        setPhone(text);
+                                        if (phonePattern.test(text)) {
+                                            setIsPhoneValid(true);
+                                        } else {
+                                            setIsPhoneValid(false);
+                                        }
+                                    }}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                                {phone.length > 0 && !isPhoneValid ? (
+                                    <Text style={styles.errorText}>
+                                        Phone number is not valid!
+                                    </Text>
+                                ) : (
+                                    <></>
+                                )}
+                                <TextInput
+                                    placeholder="Username"
+                                    cursorColor={'#3f70c4'}
+                                    style={styles.textInput3}
+                                    onChangeText={async text => {
+                                        setUsername(text);
+                                        await checkUsername(text);
+                                    }}
+                                    maxLength={20}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                                {username.length > 0 ? (
+                                    <Text
+                                        style={{
+                                            color: isUsernameAvailable
+                                                ? 'green'
+                                                : 'red',
+                                            bottom: 18,
+                                            right: 10,
+                                            textAlign: 'right',
+                                            fontSize: 13,
+                                        }}>
+                                        {isUsernameAvailable
+                                            ? 'Username is available'
+                                            : 'Username is not available'}
+                                    </Text>
+                                ) : (
+                                    <></>
+                                )}
+
+                                <TextInput
+                                    placeholder="Password"
+                                    cursorColor={'#3f70c4'}
+                                    style={styles.textInput3}
+                                    secureTextEntry={true}
+                                    onChangeText={handlePasswordChange}
+                                    maxLength={20}
+                                    placeholderTextColor={'darkgrey'}
+                                />
+                                {passError !== '' ? (
+                                    <Text style={styles.errorText}>
+                                        {passError}
+                                    </Text>
+                                ) : (
+                                    <></>
+                                )}
+                            </View>
+                        </View>
+                    </TouchableWithoutFeedback>
+                    <View style={styles.btnContainer}>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#0000ff" />
+                        ) : (
+                            <Button
+                                title="Signup"
+                                titleStyle={styles.submitText}
+                                onPress={() => createUser()}
+                                containerStyle={styles.submitBtn}
+                            />
+                        )}
+                    </View>
+                </KeyboardAvoidingView>
+            </ScrollView>
         </SafeAreaView>
     );
 };

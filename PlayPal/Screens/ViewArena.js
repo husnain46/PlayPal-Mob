@@ -267,7 +267,7 @@ const ViewArena = ({navigation, route}) => {
                     <FlatList
                         showsVerticalScrollIndicator={false}
                         scrollEnabled={false}
-                        data={arena.rating}
+                        data={arena.rating.slice(0, 3)}
                         renderItem={renderReviewList}
                         keyExtractor={item => item.ratingId}
                         contentContainerStyle={{paddingBottom: 10}}

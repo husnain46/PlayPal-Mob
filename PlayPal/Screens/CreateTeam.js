@@ -151,6 +151,7 @@ const CreateTeam = ({navigation, route}) => {
                     wins: 0,
                     loses: 0,
                     draws: 0,
+                    invites: [],
                 };
                 await firestore().collection('teams').doc(teamId).set(teamData);
 

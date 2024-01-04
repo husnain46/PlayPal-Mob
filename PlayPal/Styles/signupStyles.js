@@ -4,34 +4,23 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#041e38',
-    },
-    bgImageView: {
-        width: '91%',
-        height: '95%',
-        justifyContent: 'center',
-        marginTop: 20,
-        alignSelf: 'center',
-    },
-    bgImage: {
-        flex: 1,
-        borderRadius: 15,
-        overflow: 'hidden',
         alignItems: 'center',
+    },
+    bgContainer: {
+        borderRadius: 15,
+        backgroundColor: 'white',
+        width: '92%',
+        margin: 20,
     },
     logoView: {
         alignItems: 'center',
         justifyContent: 'center',
         alignSelf: 'center',
-        marginTop: 20,
+        marginTop: 10,
     },
     logoImg: {
         width: 200,
         height: 90,
-    },
-    inner: {
-        marginTop: 10,
-        justifyContent: 'center',
-        alignContent: 'center',
     },
     nameView: {
         width: 300,
@@ -89,6 +78,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         fontSize: 17,
         marginEnd: 30,
+        color: 'black',
     },
     textInput2: {
         height: 40,
@@ -96,20 +86,22 @@ const styles = StyleSheet.create({
         borderColor: '#000000',
         borderBottomWidth: 1,
         fontSize: 17,
+        color: 'black',
     },
     textInput3: {
         height: 40,
         width: 280,
-        marginBottom: 25,
+        marginBottom: 20,
         borderBottomWidth: 1,
         alignSelf: 'center',
         fontSize: 17,
+        color: 'black',
     },
     btnContainer: {
         alignSelf: 'center',
-        marginTop: 10,
-        borderRadius: 20,
         height: 80,
+        justifyContent: 'center',
+        marginTop: 10,
     },
     submitBtn: {
         borderRadius: 8,
@@ -120,6 +112,13 @@ const styles = StyleSheet.create({
         fontSize: 18,
         letterSpacing: 0.5,
         fontWeight: '600',
+    },
+    errorText: {
+        color: 'red',
+        bottom: 18,
+        right: 10,
+        textAlign: 'right',
+        fontSize: 13,
     },
 });
 

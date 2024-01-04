@@ -257,7 +257,8 @@ const FindArena = ({navigation}) => {
                                 <Chip
                                     key={index}
                                     icon={sportIcon}
-                                    style={styles.sportChip}>
+                                    style={styles.sportChip}
+                                    textStyle={{fontSize: 12}}>
                                     {sport}
                                 </Chip>
                             );

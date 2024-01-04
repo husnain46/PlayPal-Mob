@@ -6,7 +6,7 @@ const styles = StyleSheet.create({
     },
     carouselImage: {
         width: Dimensions.get('window').width,
-        height: 250,
+        height: 230,
     },
     paginationContainer: {
         marginTop: -10,

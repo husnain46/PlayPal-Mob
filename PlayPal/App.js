@@ -36,6 +36,9 @@ import ForgotPassword from './Screens/ForgotPassword';
 import Toast, {BaseToast, ErrorToast} from 'react-native-toast-message';
 import {useEffect, useState} from 'react';
 import {ActivityIndicator} from 'react-native';
+import InviteTeams from './Screens/InviteTeams';
+import PaymentScreen from './Screens/PaymentScreen';
+import {StripeProvider} from '@stripe/stripe-react-native';
 
 const Stack = createStackNavigator();
 
@@ -67,7 +70,10 @@ const toastConfig = {
     info: props => (
         <BaseToast
             {...props}
-            style={{borderLeftColor: 'blue'}}
+            style={{
+                borderLeftColor: 'blue',
+                maxHeight: 100,
+            }}
             contentContainerStyle={{paddingHorizontal: 15}}
             text1Style={{
                 fontSize: 14,
@@ -79,6 +85,9 @@ const toastConfig = {
 
 export default function App() {
     const [routeName, setRouteName] = useState(null);
+
+    const publishableKey =
+        'pk_test_51OLMpjA4Z4f7DIp7bmDzwp8cKRp2AgXRtMtUAopNMeyvBOrbUJjonpfTn5dfVGR27HvvxHjBvk6HwQ1Lmbcp5ecG00uHV6BPXL';
 
     useEffect(() => {
         const unsubscribe = auth().onAuthStateChanged(user => {
@@ -103,7 +112,7 @@ export default function App() {
 
     return (
         <NetworkStatus>
-            <>
+            <StripeProvider publishableKey={publishableKey}>
                 <NavigationContainer>
                     <Stack.Navigator
                         initialRouteName={routeName}
@@ -164,6 +173,10 @@ export default function App() {
                             name="ViewTournament"
                             component={ViewTournament}
                         />
+                        <Stack.Screen
+                            name="InviteTeams"
+                            component={InviteTeams}
+                        />
                         <Stack.Screen name="Matches" component={Matches} />
                         <Stack.Screen
                             name="EditTournament"
@@ -183,10 +196,14 @@ export default function App() {
                         <Stack.Screen name="ViewArena" component={ViewArena} />
                         <Stack.Screen name="Reviews" component={Reviews} />
                         <Stack.Screen name="Slots" component={Slots} />
+                        <Stack.Screen
+                            name="PaymentScreen"
+                            component={PaymentScreen}
+                        />
                     </Stack.Navigator>
                 </NavigationContainer>
                 <Toast config={toastConfig} />
-            </>
+            </StripeProvider>
         </NetworkStatus>
     );
 }

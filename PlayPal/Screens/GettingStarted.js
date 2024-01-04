@@ -29,11 +29,18 @@ const GettingStarted = ({navigation}) => {
                 style={styles.bgImage}
                 resizeMode="stretch">
                 <View style={styles.content}>
-                    <Image
-                        source={require('../Assets/Icons/Logo.png')}
-                        style={styles.logoImg}
-                        resizeMode="contain"
-                    />
+                    <View
+                        style={{
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: 120,
+                        }}>
+                        <Image
+                            source={require('../Assets/Icons/mainLogo.png')}
+                            style={styles.logoImg}
+                            resizeMode="contain"
+                        />
+                    </View>
                     <Text style={styles.mottoTxt}>
                         "Ignite your passion for sports"
                     </Text>
@@ -71,16 +78,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     logoImg: {
-        marginTop: 80,
         width: 250,
-        height: 60,
+        height: 80,
     },
     mottoTxt: {
-        fontSize: 24,
-        marginTop: 40,
+        fontSize: 22,
         fontWeight: 'bold',
         fontStyle: 'italic',
         color: '#442e65',
+        marginTop: 10,
     },
     btnView: {
         flexDirection: 'row',

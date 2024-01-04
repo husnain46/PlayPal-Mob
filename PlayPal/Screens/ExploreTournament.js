@@ -170,7 +170,7 @@ const ExploreTournament = ({navigation}) => {
                         }}>
                         <View style={{flexWrap: 'wrap'}}>
                             <Title style={styles.title}>{item.name}</Title>
-                            <Text style={styles.subtitle}> {sportName} </Text>
+                            <Text style={styles.subtitle}>({sportName})</Text>
                             <Divider style={styles.divider} />
 
                             <View style={{flexDirection: 'row'}}>
@@ -518,10 +518,10 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginLeft: 2,
     },
     subtitle: {
         fontSize: 17,
+        color: 'grey',
     },
     divider: {
         marginTop: 10,

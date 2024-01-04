@@ -38,17 +38,26 @@ const FindPlayers = ({navigation}) => {
         try {
             const myId = auth().currentUser.uid;
 
-            const usersCollection = firestore().collection('users');
+            const usersCollection = firestore()
+                .collection('users')
+                .where('city', '!=', '');
+
             const snapshot = await usersCollection.get();
             if (!snapshot.empty) {
+                let myCity;
                 const userData = snapshot.docs.map(doc => {
+                    if (doc.id == myId) {
+                        myCity = doc.data().city;
+                    }
                     return {...doc.data(), id: doc.id};
                 });
 
-                const newUsersData = userData.filter(user => user.id !== myId);
+                const newUsersData = userData
+                    .filter(user => user.id !== myId)
+                    .filter(user => user.city === myCity);
 
                 setFilteredUsers(newUsersData);
-                setPlayersData(userData);
+                setPlayersData(newUsersData);
                 setIsLoading(false);
             }
         } catch (error) {

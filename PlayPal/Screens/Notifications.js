@@ -7,13 +7,14 @@ import Toast from 'react-native-toast-message';
 import {ActivityIndicator} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useCallback} from 'react';
+import {Button} from '@rneui/themed';
 
 const Notifications = ({navigation, route}) => {
     const {user} = route.params;
     const [notifications, setNotifications] = useState([]);
     const [userData, setUserData] = useState([]);
     const myId = auth().currentUser.uid;
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
 
     const checkNotification = user => {
         navigation.navigate('ViewProfile', {user});
@@ -27,6 +28,10 @@ const Notifications = ({navigation, route}) => {
         navigation.navigate('MyProfile', {user});
     };
 
+    const gotoTournament = tournamentId => {
+        navigation.navigate('ViewTournament', {tournamentId});
+    };
+
     const markAsRead = async nId => {
         await firestore()
             .collection('notifications')
@@ -34,20 +39,103 @@ const Notifications = ({navigation, route}) => {
             .update({read: true});
     };
 
-    useFocusEffect(
-        useCallback(() => {
-            const fetchNotifications = async () => {
-                try {
-                    setLoading(true);
-                    const querySnapshot = await firestore()
-                        .collection('notifications')
-                        .where('receiverId', '==', myId)
-                        .get();
+    const clearNotifications = async () => {
+        try {
+            setLoading(true);
+            setNotifications([]);
 
-                    const notificationsData = await Promise.all(
-                        querySnapshot.docs.map(async doc => {
-                            const notification = doc.data();
+            const querySnapshot = await firestore()
+                .collection('notifications')
+                .where('receiverId', '==', myId)
+                .get();
 
+            const batch = firestore().batch();
+
+            querySnapshot.forEach(doc => {
+                const notificationData = doc.data();
+                const {type} = notificationData;
+
+                if (type === 'no_final' || type === 'tour_started') {
+                    // Update the status field in the document
+                    batch.update(doc.ref, {status: false, read: true});
+                } else {
+                    // If no update needed, delete the document
+                    batch.delete(doc.ref);
+                }
+            });
+
+            await batch.commit().then(setLoading(false));
+        } catch (error) {
+            setLoading(false);
+            Toast.show({
+                type: 'error',
+                text2: 'An error occurred!',
+            });
+        }
+    };
+
+    useEffect(() => {
+        const fetchNotifications = async () => {
+            try {
+                setLoading(true);
+                const querySnapshot = await firestore()
+                    .collection('notifications')
+                    .where('receiverId', '==', myId)
+                    .orderBy('timestamp', 'desc')
+                    .get();
+
+                // const tourQuery = await firestore()
+                //     .collection('notifications')
+                //     .where('receiverId', 'array-contains', myId)
+                //     .orderBy('timestamp', 'desc')
+                //     .get();
+
+                // const mergedNotifications = querySnapshot.docs.concat(
+                //     tourQuery.docs,
+                // );
+
+                const notificationsData = await Promise.all(
+                    querySnapshot.docs.map(async doc => {
+                        const notification = doc.data();
+                        if (
+                            notification.type === 'tour_invite' ||
+                            notification.type === 'tour_accepted'
+                        ) {
+                            if (notification.type === 'tour_invite') {
+                                return {
+                                    id: doc.id,
+                                    senderId: notification.senderId,
+                                    receiverId: notification.receiverId,
+                                    newMessage: notification.message,
+                                    type: notification.type,
+                                    tourId: notification.tourId,
+                                    timestamp: notification.timestamp,
+                                };
+                            } else if (notification.type === 'tour_accepted') {
+                                return {
+                                    id: doc.id,
+                                    senderId: notification.senderId,
+                                    receiverId: notification.receiverId,
+                                    newMessage: notification.message,
+                                    type: notification.type,
+                                    tourId: notification.tourId,
+                                    timestamp: notification.timestamp,
+                                };
+                            }
+                        } else if (
+                            notification.type === 'no_final' ||
+                            notification.type === 'tour_started'
+                        ) {
+                            return {
+                                id: doc.id,
+                                receiverId: notification.receiverId,
+                                newMessage: notification.message,
+                                type: notification.type,
+                                tourId: notification.tourId,
+                                timestamp: notification.timestamp,
+                                status: notification.status,
+                            };
+                        } else {
                             const userRef = await firestore()
                                 .collection('users')
                                 .doc(notification.senderId)
@@ -73,6 +161,7 @@ const Notifications = ({navigation, route}) => {
                                     receiverId: notification.receiverId,
                                     newMessage,
                                     type: notification.type,
+                                    timestamp: notification.timestamp,
                                 };
                             } else if (
                                 notification.type === 'friend_accepted'
@@ -86,6 +175,7 @@ const Notifications = ({navigation, route}) => {
                                     receiverId: notification.receiverId,
                                     newMessage,
                                     type: notification.type,
+                                    timestamp: notification.timestamp,
                                 };
                             } else if (notification.type === 'team_request') {
                                 const newMessage =
@@ -99,6 +189,7 @@ const Notifications = ({navigation, route}) => {
                                     receiverId: notification.receiverId,
                                     newMessage,
                                     type: notification.type,
+                                    timestamp: notification.timestamp,
                                 };
                             } else if (
                                 notification.type === 'team_accept_request'
@@ -109,6 +200,7 @@ const Notifications = ({navigation, route}) => {
                                     receiverId: notification.receiverId,
                                     newMessage: notification.message,
                                     type: notification.type,
+                                    timestamp: notification.timestamp,
                                 };
                             } else if (notification.type === 'team_invite') {
                                 const newMessage =
@@ -121,58 +213,114 @@ const Notifications = ({navigation, route}) => {
                                     newMessage,
                                     type: notification.type,
                                     teamId: notification.teamId,
+                                    timestamp: notification.timestamp,
                                 };
                             }
-                        }),
-                    );
+                        }
+                    }),
+                );
 
-                    setNotifications(notificationsData);
-                    setLoading(false);
-                } catch (error) {
-                    setLoading(false);
+                const filteredNotifications = notificationsData.filter(
+                    notification =>
+                        notification && notification.status !== false,
+                );
 
-                    Toast.show({
-                        type: 'error',
-                        text2: error.message,
-                    });
-                }
-            };
+                setNotifications(filteredNotifications);
+                setLoading(false);
+            } catch (error) {
+                setLoading(false);
+                console.log(error);
+                Toast.show({
+                    type: 'error',
+                    text2: error.message,
+                });
+            }
+        };
 
-            fetchNotifications();
-        }, [navigation]),
-    );
+        fetchNotifications();
+    }, []);
 
     const renderItem = ({item}) => {
         const senderUserData = userData.find(user => user.id === item.senderId);
-        return (
-            <View style={styles.notificationItem}>
-                <Text style={styles.notificationText}>{item.newMessage}</Text>
-                <IconButton
-                    icon={'arrow-right-circle-outline'}
-                    size={32}
-                    style={{height: 40, width: 50}}
-                    onPress={() => {
-                        if (
-                            item.type === 'friend_request' ||
-                            item.type === 'friend_accepted'
-                        ) {
-                            checkNotification(senderUserData);
-                        } else if (item.type === 'team_request') {
-                            gotoTeams();
-                        } else if (item.type === 'team_invite') {
-                            gotoMyProfile();
-                        }
+        const timestamp = item.timestamp.toDate().toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+        });
 
-                        markAsRead(item.id);
-                    }}
-                />
+        return (
+            <View style={styles.notificationItemView}>
+                <View style={styles.notificationItem}>
+                    <Text style={styles.notificationText}>
+                        {item.newMessage}
+                    </Text>
+
+                    <IconButton
+                        icon={'arrow-right-circle-outline'}
+                        size={32}
+                        style={{
+                            height: 40,
+                            width: '15%',
+                            margin: -3,
+                        }}
+                        onPress={() => {
+                            if (
+                                item.type === 'friend_request' ||
+                                item.type === 'friend_accepted'
+                            ) {
+                                checkNotification(senderUserData);
+                            } else if (item.type === 'team_request') {
+                                gotoTeams();
+                            } else if (item.type === 'team_invite') {
+                                gotoMyProfile();
+                            } else if (
+                                item.type === 'tour_invite' ||
+                                item.type === 'tour_accepted' ||
+                                item.type === 'no_final' ||
+                                item.type === 'tour_started'
+                            ) {
+                                gotoTournament(item.tourId);
+                            }
+
+                            markAsRead(item.id);
+                        }}
+                    />
+                </View>
+
+                <Text style={styles.timestampText}>({timestamp})</Text>
             </View>
         );
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.title}>Notifications</Text>
+            <View
+                style={{
+                    width: '100%',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 15,
+                }}>
+                <Text style={styles.title}>Notifications</Text>
+                <Button
+                    title={'Clear'}
+                    color={'transparent'}
+                    titleStyle={{
+                        color: '#6a4ea7',
+                        fontSize: 15,
+                    }}
+                    containerStyle={{
+                        borderWidth: 1,
+                        borderColor: '#6a4ea7',
+                        fontSize: 17,
+                        borderRadius: 15,
+                        width: 70,
+                    }}
+                    onPress={() => clearNotifications()}
+                />
+            </View>
             {loading ? (
                 <ActivityIndicator size={'large'} style={{marginTop: 50}} />
             ) : (
@@ -182,7 +330,7 @@ const Notifications = ({navigation, route}) => {
                     renderItem={renderItem}
                     ListEmptyComponent={() => (
                         <View style={styles.emptyContainer}>
-                            <Text style={{fontSize: 16}}>
+                            <Text style={{fontSize: 16, color: 'grey'}}>
                                 No notification yet!
                             </Text>
                         </View>
@@ -201,21 +349,29 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 16,
         color: '#4a5a96',
     },
-    notificationItem: {
+    notificationItemView: {
         padding: 5,
+        width: '100%',
         borderBottomWidth: 1,
         borderBottomColor: 'gray',
+    },
+    notificationItem: {
+        width: '100%',
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
+        marginBottom: 3,
     },
     notificationText: {
-        flex: 1,
+        width: '85%',
+        fontSize: 15,
+        color: 'black',
+    },
+    timestampText: {
         width: '100%',
-        fontSize: 17,
+        fontSize: 13,
         color: 'grey',
     },
     arrowIcon: {

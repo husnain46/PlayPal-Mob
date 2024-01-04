@@ -208,13 +208,17 @@ const EditTeam = ({navigation, route}) => {
     };
 
     const deleteAlertRef = useRef([]);
+    const clashAlertRef = useRef([]);
 
     const handleDeleteTeam = async () => {
-        setLoading(true);
         try {
+            deleteAlertRef.current.close();
+            setLoading(true);
+            const currentDate = new Date();
             const tournamentSnap = await firestore()
                 .collection('tournaments')
                 .where('teamIds', 'array-contains', myTeam.teamId)
+                .where('end_date', '>=', currentDate)
                 .get();
 
             if (tournamentSnap.empty) {
@@ -230,7 +234,7 @@ const EditTeam = ({navigation, route}) => {
                     text1: `Your team ${myTeam.name} deleted!`,
                 });
             } else {
-                deleteAlertRef.current.open();
+                clashAlertRef.current.open();
             }
 
             setLoading(false);
@@ -340,16 +344,32 @@ const EditTeam = ({navigation, route}) => {
                 </Modal>
 
                 <AlertPro
-                    ref={ref => (deleteAlertRef.current = ref)}
+                    ref={ref => (clashAlertRef.current = ref)}
                     title={''}
                     message={
                         'Your team is in a tournament right now. You cannot delete this team!'
                     }
                     showCancel={false}
                     textConfirm="Ok"
-                    onConfirm={() => deleteAlertRef.current.close()}
+                    onConfirm={() => clashAlertRef.current.close()}
                     customStyles={{
                         message: {marginTop: -20, marginBottom: 10},
+                    }}
+                />
+
+                <AlertPro
+                    ref={ref => (deleteAlertRef.current = ref)}
+                    title={'Delete team?'}
+                    message={'Are you sure you want to delete this team?'}
+                    onCancel={() => deleteAlertRef.current.close()}
+                    textCancel={'No'}
+                    onConfirm={() => handleDeleteTeam()}
+                    textConfirm="Yes"
+                    customStyles={{
+                        buttonConfirm: {backgroundColor: 'red'},
+                        buttonCancel: {backgroundColor: '#64bbde'},
+                        container: {borderWidth: 2, borderColor: 'grey'},
+                        message: {fontSize: 16},
                     }}
                 />
 
@@ -437,7 +457,7 @@ const EditTeam = ({navigation, route}) => {
                         style={{borderRadius: 10}}
                         mode="contained"
                         buttonColor="red"
-                        onPress={() => handleDeleteTeam()}>
+                        onPress={() => deleteAlertRef.current.open()}>
                         <Text style={styles.deletText}>Delete team</Text>
                     </Button>
                 </View>

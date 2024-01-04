@@ -63,13 +63,41 @@ const Team = ({navigation}) => {
                         setTeams([]);
                     } else {
                         // Extract team data from the query result
-                        querySnapshot.forEach(doc => {
-                            const team = {
-                                teamId: doc.id,
-                                ...doc.data(),
-                            };
-                            mySportsIds.push(doc.data().sportId);
-                            fetchedTeams.push(team);
+                        querySnapshot.forEach(async doc => {
+                            let newRank = 'Freshies'; // Initialize rank
+
+                            const wins = doc.data().wins;
+
+                            if (wins >= 10 && wins < 20) {
+                                newRank = 'Emerging';
+                            } else if (wins >= 20) {
+                                newRank = 'Champions';
+                            }
+
+                            if (newRank !== 'Freshies') {
+                                const team = {
+                                    teamId: doc.id,
+                                    ...doc.data(),
+                                    rank: newRank,
+                                };
+
+                                // Update rank in Firestore document
+                                await firestore()
+                                    .collection('teams')
+                                    .doc(doc.id)
+                                    .update({rank: newRank});
+
+                                mySportsIds.push(doc.data().sportId);
+                                fetchedTeams.push(team);
+                            } else {
+                                const team = {
+                                    teamId: doc.id,
+                                    ...doc.data(),
+                                };
+
+                                mySportsIds.push(doc.data().sportId);
+                                fetchedTeams.push(team);
+                            }
                         });
 
                         setTeams(fetchedTeams);
@@ -80,8 +108,7 @@ const Team = ({navigation}) => {
                     setLoading(false);
                     Toast.show({
                         type: 'error',
-                        text1: 'Error',
-                        text2: error.message,
+                        text2: 'Error loading teams!',
                     });
                 }
             };
@@ -155,7 +182,7 @@ const Team = ({navigation}) => {
                                 scrollEnabled={false}
                                 ListEmptyComponent={() => (
                                     <Text style={styles.text2}>
-                                        You are not in a team yet
+                                        You are not in a team yet!
                                     </Text>
                                 )}
                             />
@@ -229,7 +256,7 @@ const styles = StyleSheet.create({
     yourTeamView: {
         alignItems: 'center',
         width: '90%',
-        marginTop: 20,
+        marginTop: 10,
     },
     text1: {
         fontSize: 20,
@@ -240,6 +267,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginTop: 30,
         color: 'grey',
+        textAlign: 'center',
     },
     divider: {
         marginTop: 10,

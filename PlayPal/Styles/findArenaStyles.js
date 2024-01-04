@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         alignContent: 'center',
-        marginTop: 10,
+        marginTop: 5,
     },
     searchBar: {
         width: '85%',
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
         borderColor: 'grey',
     },
     listView: {
-        marginTop: 30,
+        marginTop: 20,
         width: '100%',
         alignSelf: 'center',
     },
@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'grey',
         elevation: 5,
-        padding: 10,
+        padding: 12,
     },
     cardImage: {
-        height: 160,
+        height: 150,
         borderRadius: 10,
     },
     arenaTitle: {
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     },
     locationText: {
         marginVertical: 2,
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '400',
         textAlign: 'center',
         color: 'grey',
@@ -174,7 +174,9 @@ const styles = StyleSheet.create({
         width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 5,
+        marginTop: 10,
+        marginBottom: 5,
+        paddingHorizontal: 2,
         justifyContent: 'space-between',
     },
     infoSubView: {
@@ -182,8 +184,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     starIcon: {
-        width: 18,
-        height: 18,
+        width: 16,
+        height: 16,
     },
     rating: {
         marginLeft: 10,
@@ -193,16 +195,17 @@ const styles = StyleSheet.create({
     },
     numRating: {
         marginLeft: 10,
-        fontSize: 14,
+        fontSize: 13,
+        color: 'grey',
     },
     priceLabel: {
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '500',
         color: 'black',
         marginRight: 5,
     },
     price: {
-        fontSize: 16,
+        fontSize: 15,
         color: 'green',
     },
     sportsView: {

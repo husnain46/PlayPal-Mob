@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
     },
     ageFilterView: {
         alignSelf: 'center',
+        width: '100%',
         marginTop: 20,
     },
     agefilterLabel: {
@@ -59,7 +60,7 @@ const styles = StyleSheet.create({
     },
     modalView: {
         width: '100%',
-        height: 430,
+        height: 320,
         backgroundColor: 'white',
         borderRadius: 15,
         paddingVertical: 10,
@@ -70,9 +71,8 @@ const styles = StyleSheet.create({
     },
     dropView: {
         alignSelf: 'flex-start',
+        marginTop: 20,
         width: '100%',
-        marginTop: 10,
-        marginBottom: 20,
     },
     dropdown: {
         height: 50,
@@ -140,21 +140,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     pickerView: {
-        alignSelf: 'flex-start',
         width: '90%',
-    },
-    pickerBox: {
-        fontSize: 16,
-        backgroundColor: 'white',
-        height: 50,
-    },
-    pickerStyle: {
-        borderRadius: 10,
-        height: 50,
-
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: 'darkgrey',
     },
     filterLabel: {
         fontSize: 16,
@@ -164,7 +150,7 @@ const styles = StyleSheet.create({
     },
     filterBtnView: {
         flexDirection: 'row',
-        marginTop: 45,
+        marginTop: 35,
         width: '100%',
         justifyContent: 'space-between',
     },
@@ -214,6 +200,14 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         alignItems: 'center',
     },
+    cardDetailView2: {
+        width: '100%',
+        flexDirection: 'row',
+        marginTop: 10,
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
     cardLabel: {
         fontSize: 16,
         fontWeight: '600',
@@ -248,6 +242,49 @@ const styles = StyleSheet.create({
     cityText: {
         fontSize: 16,
         color: 'black',
+    },
+    inviteBtn: {
+        width: 80,
+        height: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'white',
+        borderRadius: 8,
+        borderWidth: 1.5,
+    },
+    inviteText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: 'black',
+    },
+    inviteIcon: {
+        width: 15,
+        height: 15,
+        tintColor: 'black',
+        marginLeft: 5,
+        top: 1,
+    },
+    invitedBtn: {
+        width: 80,
+        height: 30,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#2abd89',
+        borderRadius: 8,
+    },
+    invitedText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: 'white',
+    },
+    invitedIcon: {
+        width: 15,
+        height: 15,
+        tintColor: 'white',
+        marginLeft: 5,
+        top: 1,
     },
 });
 

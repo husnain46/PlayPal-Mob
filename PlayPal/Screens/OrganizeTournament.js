@@ -335,7 +335,7 @@ const OrganizeTournament = ({navigation, route}) => {
                 </View>
 
                 <View style={styles.dropView}>
-                    <Text style={styles.dropLabel}>Your city:</Text>
+                    <Text style={styles.dropLabel}>Tournament city:</Text>
                     <Dropdown
                         style={styles.dropdown}
                         selectedTextStyle={styles.selectedTextStyle}
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     },
     textInput2: {
         width: '100%',
-        height: 50,
+
         backgroundColor: 'white',
     },
     inputOutline: {

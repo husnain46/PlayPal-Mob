@@ -8,7 +8,7 @@ import {
     FlatList,
     StyleSheet,
 } from 'react-native';
-import {Card, Divider, Icon} from '@rneui/themed';
+import {Button, Card, Divider, Icon} from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import bookingData from '../Assets/bookingData.json';
 
@@ -25,6 +25,10 @@ const Slots = ({navigation, route}) => {
         month: 'short',
         day: 'numeric',
         weekday: 'short',
+    };
+
+    const gotoPaymentScreen = () => {
+        navigation.navigate('PaymentScreen');
     };
 
     const handleDateChange = async (event, selected) => {
@@ -65,11 +69,12 @@ const Slots = ({navigation, route}) => {
         return a;
     };
 
-    const renderItem = ({item}) => {
+    const renderItem = ({item, index}) => {
+        let slotNumber = index + 1;
         return (
             <Card containerStyle={styles.cardContainer}>
                 <View style={styles.cardHeader}>
-                    <Text style={styles.slotTitle}>Slot {item.slotNumber}</Text>
+                    <Text style={styles.slotTitle}>Slot {slotNumber}</Text>
 
                     <Text style={styles.priceText}>PKR {item.price}</Text>
                 </View>
@@ -79,18 +84,33 @@ const Slots = ({navigation, route}) => {
                     style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        height: 25,
+                        width: '100%',
+                        justifyContent: 'space-between',
                     }}>
-                    <Icon
-                        name="time-slot"
-                        color={'black'}
-                        size={17}
-                        type="entypo"
-                        style={{marginRight: 10, marginLeft: 1}}
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                        }}>
+                        <Icon
+                            name="time-slot"
+                            color={'black'}
+                            size={17}
+                            type="entypo"
+                            style={{marginRight: 10, marginLeft: 1}}
+                        />
+                        <Text style={styles.timeText}>
+                            {`${item.startTime}  ➔  ${item.endTime}`}
+                        </Text>
+                    </View>
+                    <Button
+                        title={'Book'}
+                        titleStyle={styles.bookBtnText}
+                        color={'#19bd89'}
+                        style={{alignItems: 'center'}}
+                        containerStyle={styles.bookBtnContainer}
+                        onPress={() => gotoPaymentScreen()}
                     />
-                    <Text style={styles.timeText}>
-                        {`${item.startTime}  ➔  ${item.endTime}`}
-                    </Text>
                 </View>
             </Card>
         );
@@ -263,6 +283,16 @@ const styles = StyleSheet.create({
         color: 'black',
         textAlign: 'right',
         fontWeight: '700',
+    },
+    bookBtnContainer: {
+        width: 60,
+        justifyContent: 'center',
+        borderRadius: 8,
+    },
+    bookBtnText: {
+        fontSize: 15,
+        color: 'white',
+        margin: -3,
     },
 });
 

@@ -301,12 +301,14 @@ const AddMatch = ({navigation, route}) => {
                     style={styles.dropdown}
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
+                    itemTextStyle={{color: 'black', fontSize: 14}}
                     iconStyle={styles.iconStyle}
                     data={finalExists ? newMatchTypes : matchTypes}
                     maxHeight={300}
                     labelField="label"
                     valueField="value"
                     placeholder={'Select Match Title'}
+                    placeholderStyle={{color: 'grey', fontSize: 14}}
                     value={matchTitle}
                     onChange={item => setMatchTitle(item.value)}
                 />
@@ -321,7 +323,9 @@ const AddMatch = ({navigation, route}) => {
                     style={styles.dropdown}
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
+                    itemTextStyle={{color: 'black', fontSize: 14}}
                     iconStyle={styles.iconStyle}
+                    placeholderStyle={{color: 'grey', fontSize: 14}}
                     data={filteredTeams(selectedTeam2)}
                     maxHeight={300}
                     labelField="label"
@@ -342,6 +346,8 @@ const AddMatch = ({navigation, route}) => {
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
                     iconStyle={styles.iconStyle}
+                    itemTextStyle={{color: 'black', fontSize: 14}}
+                    placeholderStyle={{color: 'grey', fontSize: 14}}
                     data={filteredTeams(selectedTeam1)}
                     maxHeight={300}
                     labelField="label"
@@ -384,7 +390,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     screenTitle: {
-        fontSize: 26,
+        fontSize: 22,
         color: '#4a5a96',
         fontWeight: '700',
         marginTop: 30,
@@ -452,8 +458,8 @@ const styles = StyleSheet.create({
     datePlaceholder: {
         paddingHorizontal: 0,
         fontSize: 16,
-        fontWeight: '500',
-        color: '#4a5a96',
+        fontWeight: '400',
+        color: 'grey',
     },
     dropView: {
         width: 300,
@@ -481,7 +487,7 @@ const styles = StyleSheet.create({
         borderColor: 'grey',
     },
     selectedTextStyle: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#11867F',
     },
     iconStyle: {

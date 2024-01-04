@@ -223,44 +223,43 @@ const MyProfile = ({navigation, route}) => {
         let isFull = item.size === item.playersId.length;
         return (
             <View style={styles.teamInvitesView}>
+                <TouchableOpacity
+                    onPress={() => gotoViewTeam(item, sportName)}
+                    style={{width: '70%'}}>
+                    <Text style={styles.teamLabel}>
+                        {`${num})  ${item.name}`}
+                    </Text>
+                </TouchableOpacity>
                 <View
                     style={{
                         flexDirection: 'row',
-                        justifyContent: 'space-between',
                         alignItems: 'center',
+                        width: '30%',
+                        justifyContent: 'space-evenly',
                     }}>
-                    <TouchableOpacity
-                        onPress={() => gotoViewTeam(item, sportName)}>
-                        <View
-                            style={{
-                                flexDirection: 'row',
-                            }}>
-                            <Text style={styles.teamLabel}>
-                                {`${num})  ${item.name}`}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                    <View
+                    <IconButton
+                        icon={'window-close'}
+                        iconColor="red"
+                        size={22}
+                        onPress={() => handleRemoveInvite(item.id)}
+                    />
+                    <Text
                         style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
+                            fontSize: 25,
+                            color: 'darkgrey',
+                            top: -2,
+                            marginHorizontal: 8,
                         }}>
-                        <IconButton
-                            icon={'close-thick'}
-                            iconColor="red"
-                            size={28}
-                            onPress={() => handleRemoveInvite(item.id)}
-                        />
-                        <Text style={{fontSize: 25, top: -1}}>|</Text>
-                        <IconButton
-                            icon={'check-bold'}
-                            iconColor="#26a65b"
-                            size={28}
-                            onPress={() =>
-                                handleAcceptInvite(item.id, item.name, isFull)
-                            }
-                        />
-                    </View>
+                        |
+                    </Text>
+                    <IconButton
+                        icon={'check'}
+                        iconColor="#26a65b"
+                        size={22}
+                        onPress={() =>
+                            handleAcceptInvite(item.id, item.name, isFull)
+                        }
+                    />
                 </View>
             </View>
         );
@@ -281,8 +280,8 @@ const MyProfile = ({navigation, route}) => {
                         backgroundColor: 'transparent',
                     },
                     container: {
-                        borderWidth: 1,
-                        borderColor: '#9900cc',
+                        borderWidth: 2,
+                        borderColor: 'grey',
                         borderRadius: 15,
                         shadowColor: '#000000',
                         shadowOpacity: 0.1,
@@ -344,30 +343,34 @@ const MyProfile = ({navigation, route}) => {
                 }}
             />
 
-            <TouchableOpacity
-                style={styles.invitesBtn}
-                onPress={() => setReqModal(true)}>
-                <Text
-                    style={{
-                        fontSize: 18,
-                        color: 'white',
-                        fontWeight: '600',
-                    }}>
-                    Invites
-                </Text>
+            <View
+                style={{
+                    width: 100,
+                    alignSelf: 'center',
+                    flexDirection: 'row-reverse',
+                }}>
+                <TouchableOpacity
+                    style={styles.invitesBtn}
+                    onPress={() => setReqModal(true)}>
+                    <Text
+                        style={{
+                            fontSize: 17,
+                            color: 'white',
+                            fontWeight: '700',
+                        }}>
+                        Invites
+                    </Text>
+                </TouchableOpacity>
                 {badgeCount > 0 && (
                     <Badge
                         status="error"
                         value={badgeCount}
                         containerStyle={{
-                            marginRight: -20,
-                            right: -10,
-                            marginBottom: 40,
+                            position: 'absolute',
                         }}
                     />
                 )}
-            </TouchableOpacity>
-
+            </View>
             <Modal
                 transparent={true}
                 animationType={'none'}
@@ -459,9 +462,10 @@ const MyProfile = ({navigation, route}) => {
                                 ListEmptyComponent={() => (
                                     <Text
                                         style={{
-                                            fontSize: 20,
+                                            fontSize: 16,
                                             textAlign: 'center',
                                             marginTop: 40,
+                                            color: 'darkgrey',
                                         }}>
                                         No invites yet!
                                     </Text>
@@ -510,42 +514,20 @@ const MyProfile = ({navigation, route}) => {
             <Button
                 mode="contained"
                 icon="account-edit"
-                labelStyle={{fontSize: 17}}
+                labelStyle={{fontSize: 20}}
                 style={styles.editButton}
                 onPress={() => navigation.navigate('EditProfile', {user})}>
-                Edit Profile
+                <Text style={styles.editBtnText}>Edit Profile</Text>
             </Button>
 
-            <TouchableOpacity
-                style={{
-                    width: '92%',
-                    height: 40,
-                    alignSelf: 'center',
-                    marginBottom: 30,
-                    borderRadius: 20,
-                    borderWidth: 2,
-                    borderColor: 'red',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
+            <Button
+                mode="outlined"
+                icon="logout"
+                labelStyle={{fontSize: 20, color: 'red'}}
+                style={styles.logoutBtn}
                 onPress={() => showLogoutAlert()}>
-                <Icon
-                    name="logout"
-                    style={{marginRight: 10}}
-                    type="Feather"
-                    size={23}
-                    color={'red'}
-                />
-                <Text
-                    style={{
-                        fontSize: 18,
-                        color: 'red',
-                        fontWeight: '700',
-                    }}>
-                    Logout
-                </Text>
-            </TouchableOpacity>
+                <Text style={styles.logoutText}>Logout</Text>
+            </Button>
         </ScrollView>
     );
 };
@@ -598,10 +580,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     reqModalInnerView: {
-        width: '90%',
+        width: '92%',
         height: 600,
         borderRadius: 15,
-        borderWidth: 1,
+        borderWidth: 2,
         backgroundColor: 'white',
         alignSelf: 'center',
         elevation: 20,
@@ -613,26 +595,28 @@ const styles = StyleSheet.create({
         color: 'black',
     },
     teamInvitesView: {
-        width: '80%',
+        width: '85%',
         alignSelf: 'center',
         height: 50,
         marginTop: 20,
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         borderWidth: 2,
         borderColor: 'grey',
         borderRadius: 10,
         padding: 5,
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     invitesBtn: {
         width: 100,
-        height: 45,
+        height: 40,
         flexDirection: 'row',
         backgroundColor: '#28b57a',
-        alignItems: 'center',
-        justifyContent: 'center',
         borderRadius: 10,
         marginBottom: 15,
         alignSelf: 'center',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     detailsContainer1: {
         backgroundColor: 'white',
@@ -678,9 +662,27 @@ const styles = StyleSheet.create({
     },
     editButton: {
         width: '92%',
-        height: 40,
         alignSelf: 'center',
         marginVertical: 20,
+        borderRadius: 10,
+    },
+    editBtnText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: 'white',
+    },
+    logoutBtn: {
+        width: '92%',
+        alignSelf: 'center',
+        marginBottom: 20,
+        borderRadius: 10,
+        borderColor: 'red',
+        borderWidth: 1.5,
+    },
+    logoutText: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: 'red',
     },
     loadingContainer: {
         flex: 1,
