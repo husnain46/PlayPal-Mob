@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     yourTeamView: {
         alignItems: 'center',
         width: '90%',
-        marginTop: 10,
+        marginTop: 20,
     },
     text1: {
         fontSize: 20,

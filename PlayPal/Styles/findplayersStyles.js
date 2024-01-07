@@ -3,30 +3,29 @@ import {StyleSheet} from 'react-native';
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#EDEDED',
     },
     searchView: {
+        width: '85%',
         flexDirection: 'row',
         alignSelf: 'center',
-        width: '85%',
         alignItems: 'center',
         justifyContent: 'space-between',
         alignContent: 'center',
-        marginTop: 20,
+        marginTop: 12,
+        height: 80,
     },
     searchBar: {
         width: '85%',
         height: 50,
         justifyContent: 'center',
         backgroundColor: 'white',
-        elevation: 10,
         borderRadius: 10,
-        borderWidth: 1,
+        borderWidth: 2,
+        borderColor: '#8b8b8b',
     },
     filter: {
-        width: 25,
-        height: 25,
-        top: 2,
+        width: 27,
+        height: 27,
     },
     ageFilterView: {
         alignSelf: 'center',

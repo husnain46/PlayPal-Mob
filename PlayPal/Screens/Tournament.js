@@ -247,7 +247,7 @@ const Tournament = ({navigation}) => {
                 }}
                 style={{width: '100%'}}>
                 <View style={styles.yourTeamView}>
-                    <Text style={styles.text1}>My tournaments</Text>
+                    <Text style={styles.text1}>My Tournaments</Text>
                     <Divider style={styles.divider2} />
                     <View style={styles.listView}>
                         {loading ? (
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     yourTeamView: {
         alignItems: 'center',
         width: '90%',
-        marginTop: 10,
+        marginTop: 20,
     },
     text1: {
         fontSize: 20,

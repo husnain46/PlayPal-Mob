@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         alignContent: 'center',
-        marginTop: 5,
+        marginTop: 25,
     },
     searchBar: {
         width: '85%',
@@ -27,13 +27,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: 'white',
         borderRadius: 10,
-        borderWidth: 1,
-        borderColor: 'darkgrey',
+        borderWidth: 2,
+        borderColor: '#8b8b8b',
     },
     filter: {
-        width: 25,
-        height: 25,
-        top: 2,
+        width: 27,
+        height: 27,
     },
     centeredView: {
         flex: 1,

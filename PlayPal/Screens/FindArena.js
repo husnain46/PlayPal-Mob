@@ -271,11 +271,11 @@ const FindArena = ({navigation}) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Text style={styles.titleScreen}>Sports Arenas</Text>
+            {/* <Text style={styles.titleScreen}>Sports Arenas</Text> */}
 
             <View style={styles.searchView}>
                 <SearchBar
-                    placeholder="Search name"
+                    placeholder="Search arena name"
                     onChangeText={handleSearch}
                     value={searchQuery}
                     containerStyle={styles.searchBar}

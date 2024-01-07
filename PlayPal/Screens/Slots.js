@@ -1,24 +1,28 @@
-import React, {useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
     SafeAreaView,
     View,
-    ScrollView,
     TouchableOpacity,
     Text,
     FlatList,
     StyleSheet,
+    ActivityIndicator,
 } from 'react-native';
 import {Button, Card, Divider, Icon} from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import bookingData from '../Assets/bookingData.json';
+import {useFocusEffect} from '@react-navigation/native';
+import firestore from '@react-native-firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import Toast from 'react-native-toast-message';
 
 const Slots = ({navigation, route}) => {
-    const {slots, arenaId} = route.params;
+    const {arenaId} = route.params;
 
-    const [selectedDate, setSelectedDate] = useState();
+    const [selectedDate, setSelectedDate] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [availableSlots, setAvailableSlots] = useState([]);
     const [dateBool, setDateBool] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const options = {
         year: 'numeric',
@@ -27,9 +31,26 @@ const Slots = ({navigation, route}) => {
         weekday: 'short',
     };
 
-    const gotoPaymentScreen = () => {
-        navigation.navigate('PaymentScreen');
+    const gotoPaymentScreen = (slot_id, slot_price) => {
+        navigation.navigate('PaymentScreen', {
+            arena_id: arenaId,
+            slot_id,
+            slot_price,
+            slot_date: selectedDate.getTime(),
+        });
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            const clearSlots = () => {
+                setAvailableSlots([]);
+                setSelectedDate('');
+                setDateBool(false);
+            };
+
+            clearSlots();
+        }, [navigation]),
+    );
 
     const handleDateChange = async (event, selected) => {
         setShowDatePicker(false);
@@ -40,33 +61,58 @@ const Slots = ({navigation, route}) => {
         }
         if (selected) {
             setSelectedDate(selected);
-
+            setLoading(true);
             const available = await filterAvailableSlots(selected);
             setAvailableSlots(available);
             setDateBool(true);
+            setLoading(false);
         }
     };
 
-    const filterAvailableSlots = async date => {
-        const dateSelected = date.toLocaleDateString('en-GB');
+    const filterAvailableSlots = async dateSelected => {
+        try {
+            const formattedDate = dateSelected.toLocaleDateString('en-GB', {
+                weekday: 'long',
+            });
 
-        const formattedDate = date.toLocaleDateString('en-GB', {
-            weekday: 'long',
-        });
+            const day = formattedDate.split(',')[0];
 
-        const day = formattedDate.split(',')[0];
+            const slotsSnapshot = await firestore()
+                .collection('arenas')
+                .doc(arenaId)
+                .get();
 
-        const bookedSlots = Object.values(bookingData).filter(
-            booking =>
-                booking.date === dateSelected && booking.arenaId === arenaId,
-        );
+            if (slotsSnapshot.exists) {
+                const slots = slotsSnapshot.data().slots;
 
-        const a = slots.filter(
-            slot =>
-                slot.days.includes(day) &&
-                !bookedSlots.some(booking => booking.slotId === slot.slotId),
-        );
-        return a;
+                const bookingRef = await firestore()
+                    .collection('bookings')
+                    .where('arenaId', '==', arenaId)
+                    .get();
+
+                const bookedSlots = bookingRef.docs.filter(
+                    doc =>
+                        doc.data().bookingDate.toDate().toDateString() ===
+                            dateSelected.toDateString() &&
+                        doc.data().arenaId === arenaId,
+                );
+
+                const available = slots.filter(
+                    slot =>
+                        slot.days.includes(day) &&
+                        !bookedSlots.some(
+                            booking => booking.data().slotId === slot.slotId,
+                        ),
+                );
+
+                return available;
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text2: 'Error loading slots!',
+            });
+        }
     };
 
     const renderItem = ({item, index}) => {
@@ -109,7 +155,9 @@ const Slots = ({navigation, route}) => {
                         color={'#19bd89'}
                         style={{alignItems: 'center'}}
                         containerStyle={styles.bookBtnContainer}
-                        onPress={() => gotoPaymentScreen()}
+                        onPress={() =>
+                            gotoPaymentScreen(item.slotId, item.price)
+                        }
                     />
                 </View>
             </Card>
@@ -164,6 +212,12 @@ const Slots = ({navigation, route}) => {
                     <Text style={styles.promptText}>
                         Select a date to see available slots
                     </Text>
+                ) : loading ? (
+                    <ActivityIndicator
+                        style={{marginTop: 30}}
+                        size={35}
+                        color={'darkblue'}
+                    />
                 ) : (
                     <FlatList
                         data={availableSlots}

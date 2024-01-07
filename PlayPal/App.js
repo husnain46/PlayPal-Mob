@@ -39,6 +39,7 @@ import {ActivityIndicator} from 'react-native';
 import InviteTeams from './Screens/InviteTeams';
 import PaymentScreen from './Screens/PaymentScreen';
 import {StripeProvider} from '@stripe/stripe-react-native';
+import MyBookings from './Screens/MyBookings';
 
 const Stack = createStackNavigator();
 
@@ -142,6 +143,11 @@ export default function App() {
                             name="Notifications"
                             component={Notifications}
                         />
+                        <Stack.Screen
+                            name="MyBookings"
+                            component={MyBookings}
+                        />
+
                         <Stack.Screen name="MyProfile" component={MyProfile} />
                         <Stack.Screen
                             name="EditProfile"

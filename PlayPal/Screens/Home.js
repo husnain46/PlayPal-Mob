@@ -13,15 +13,19 @@ import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
 import levelIcon from '../Assets/Icons/level.png';
 import {IconButton} from 'react-native-paper';
-import {Card, Divider} from '@rneui/themed';
+import {Button, Card, Divider} from '@rneui/themed';
 import {ActivityIndicator} from 'react-native';
 import {useCallback} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
+import RatingModal from '../Custom/RatingModal';
 
 const Home = ({navigation}) => {
     const [friends, setFriends] = useState();
     const [myData, setMyData] = useState();
     const [loading, setLoading] = useState(true);
+    const [ratingRequests, setRatingRequests] = useState(true);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+
     const myId = auth().currentUser.uid;
 
     const gotoChat = async (user, chatId) => {
@@ -32,6 +36,20 @@ const Home = ({navigation}) => {
 
     const gotoViewProfile = user => {
         navigation.navigate('ViewProfile', {user});
+    };
+
+    const gotoMyBookings = () => {
+        navigation.navigate('MyBookings');
+    };
+
+    const toggleModal = isVisible => {
+        setIsModalVisible(isVisible);
+    };
+    const handleRatingSubmission = (rating, review) => {
+        // Here you can perform actions with the rating and review data
+        // For example, submitting it to the database or performing other logic
+        console.log('Submitted Rating:', rating);
+        console.log('Submitted Review:', review);
     };
 
     const fetchChatId = async userId => {
@@ -128,6 +146,33 @@ const Home = ({navigation}) => {
         }, []),
     );
 
+    useEffect(() => {
+        const handleRatings = async () => {
+            try {
+                const currentDate = new Date();
+
+                const bookingRef = await firestore()
+                    .collection('bookings')
+                    .where('userId', '==', myId)
+                    .where('bookingDate', '<', currentDate)
+                    .where('reviewed', '==', false)
+                    .where('type', '==', 'inApp')
+                    .get();
+
+                if (!bookingRef.empty) {
+                    const arenaArray = bookingRef.docs.map(
+                        doc => doc.data().arenaId,
+                    );
+
+                    setRatingRequests(arenaArray);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+        handleRatings();
+    }, []);
+
     const renderFriendItem = ({item}) => {
         const friendName = `${item.firstName} ${item.lastName}`;
 
@@ -215,6 +260,21 @@ const Home = ({navigation}) => {
                 </Card>
             </View>
 
+            <RatingModal
+                isVisible={isModalVisible}
+                toggleModal={toggleModal}
+                handleRatingSubmission={handleRatingSubmission}
+            />
+
+            <View style={styles.bookingView}>
+                <Button
+                    title={'My Bookings'}
+                    color={'#4a5a96'}
+                    containerStyle={styles.bookingBtn}
+                    onPress={() => gotoMyBookings()}
+                />
+            </View>
+
             <Text style={styles.friendsTitle}>Friends</Text>
             <Divider style={styles.divider} width={1} />
             {loading ? (
@@ -247,18 +307,34 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         width: '90%',
         justifyContent: 'center',
-        marginBottom: 60,
+        marginBottom: 30,
         alignSelf: 'center',
     },
     card: {
         width: '50%',
         height: 100,
         borderRadius: 12,
+        borderWidth: 1,
+        borderColor: 'lightgrey',
     },
     cardText: {
         textAlign: 'center',
         fontSize: 17,
         color: 'grey',
+    },
+    bookingView: {
+        width: '97%',
+        height: 60,
+        alignSelf: 'center',
+        marginBottom: 40,
+        marginTop: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    bookingBtn: {
+        borderRadius: 12,
+        width: '60%',
+        elevation: 10,
     },
     friendsTitle: {
         fontSize: 24,
