@@ -43,10 +43,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'center',
+        width: '100%',
     },
     modalView: {
-        width: 300,
-        height: 400,
+        width: '90%',
+        height: 500,
         backgroundColor: 'white',
         borderRadius: 15,
         padding: 25,
@@ -74,6 +75,56 @@ const styles = StyleSheet.create({
     modalText: {
         marginBottom: 15,
         textAlign: 'center',
+    },
+    dropView: {
+        alignSelf: 'center',
+        marginBottom: 20,
+        width: '90%',
+    },
+    dropdown: {
+        height: 50,
+        width: '100%',
+        borderColor: 'grey',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: 'white',
+    },
+    dropLabel: {
+        fontSize: 16,
+        marginBottom: 10,
+        fontWeight: '600',
+        color: 'black',
+    },
+    dropContainer: {
+        borderBottomWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'grey',
+        maxHeight: 200,
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        color: '#11867F',
+    },
+    iconStyle: {
+        width: 25,
+        height: 25,
+        tintColor: 'black',
+    },
+    dropItemText: {
+        height: 22,
+        color: 'black',
+    },
+    dropItem: {
+        height: 45,
+        justifyContent: 'center',
+    },
+    dropSearch: {
+        height: 40,
+        fontSize: 16,
+        borderColor: 'black',
+        color: 'black',
     },
     pickerView: {
         alignSelf: 'center',

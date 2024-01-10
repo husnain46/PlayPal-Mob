@@ -82,7 +82,7 @@ const EditTournament = ({navigation, route}) => {
     };
 
     const confirmDelete = (tId, index) => {
-        const arrayIndex = teamsData.findIndex(team => team.id === tId);
+        const arrayIndex = teamsData.findIndex(team => team.teamId === tId);
         alertRefs.current[index].close();
 
         if (arrayIndex !== -1) {
@@ -96,7 +96,7 @@ const EditTournament = ({navigation, route}) => {
         try {
             setLoading(true);
 
-            const updatedTeams = teamsList.map(item => item.id);
+            const updatedTeams = teamsList.map(item => item.teamId);
 
             const tournamentData = {
                 name: tourName,
@@ -171,7 +171,7 @@ const EditTournament = ({navigation, route}) => {
         return (
             <View style={styles.teamCard}>
                 <Text style={styles.teamName}>{`${num}) ${item.name}`}</Text>
-                {item.id === data.organizer ? (
+                {item.teamId === data.organizer ? (
                     <></>
                 ) : (
                     <Icon
@@ -183,7 +183,7 @@ const EditTournament = ({navigation, route}) => {
                         onPress={() => showAlert(index)}
                     />
                 )}
-                {renderAlert(item.id, item.name, index)}
+                {renderAlert(item.teamId, item.name, index)}
             </View>
         );
     };
@@ -266,7 +266,9 @@ const EditTournament = ({navigation, route}) => {
                 <View style={styles.dropView}>
                     <Text style={styles.labelText}>Tournament city:</Text>
                     <DropDownPicker
-                        style={styles.dropDown}
+                        style={
+                            isStarted ? styles.disabledDrop : styles.dropDown
+                        }
                         labelStyle={{fontSize: 17}}
                         disabled={isStarted}
                         open={open}
@@ -308,7 +310,7 @@ const EditTournament = ({navigation, route}) => {
                 <FlatList
                     data={teamsList}
                     renderItem={renderItem}
-                    keyExtractor={item => item.id}
+                    keyExtractor={item => item.teamId}
                     scrollEnabled={false}
                     contentContainerStyle={{
                         paddingHorizontal: 10,
@@ -318,6 +320,7 @@ const EditTournament = ({navigation, route}) => {
                 <View style={styles.updateView}>
                     <Button
                         style={{borderRadius: 10}}
+                        disabled={isStarted}
                         mode="contained"
                         buttonColor="red"
                         onPress={() => canDelete()}>
@@ -405,6 +408,14 @@ const styles = StyleSheet.create({
         zIndex: 2,
         marginRight: 50,
         marginTop: 20,
+    },
+    disabledDrop: {
+        width: 250,
+        borderColor: 'darkgrey',
+        borderWidth: 2,
+        height: 60,
+        borderRadius: 10,
+        opacity: 0.4,
     },
     dropDown: {
         width: 250,

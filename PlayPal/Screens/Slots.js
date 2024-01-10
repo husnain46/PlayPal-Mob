@@ -23,6 +23,7 @@ const Slots = ({navigation, route}) => {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [dateBool, setDateBool] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [bookingData, setBookingData] = useState([]);
 
     const options = {
         year: 'numeric',
@@ -51,6 +52,24 @@ const Slots = ({navigation, route}) => {
             clearSlots();
         }, [navigation]),
     );
+
+    useEffect(() => {
+        const fetchBookingsData = firestore()
+            .collection('bookings')
+            .where('arenaId', '==', arenaId)
+            .onSnapshot(snapshot => {
+                const bookedSlots = [];
+                snapshot.forEach(doc => {
+                    const bookingData = doc.data();
+                    bookedSlots.push(bookingData);
+                });
+
+                setBookingData(bookedSlots);
+            });
+
+        // Cleanup the listener when the component unmounts
+        return () => fetchBookingsData();
+    }, [arenaId]);
 
     const handleDateChange = async (event, selected) => {
         setShowDatePicker(false);
@@ -85,23 +104,23 @@ const Slots = ({navigation, route}) => {
             if (slotsSnapshot.exists) {
                 const slots = slotsSnapshot.data().slots;
 
-                const bookingRef = await firestore()
-                    .collection('bookings')
-                    .where('arenaId', '==', arenaId)
-                    .get();
+                // const bookingRef = await firestore()
+                //     .collection('bookings')
+                //     .where('arenaId', '==', arenaId)
+                //     .get();
 
-                const bookedSlots = bookingRef.docs.filter(
+                const bookedSlots = bookingData.filter(
                     doc =>
-                        doc.data().bookingDate.toDate().toDateString() ===
+                        doc.bookingDate.toDate().toDateString() ===
                             dateSelected.toDateString() &&
-                        doc.data().arenaId === arenaId,
+                        doc.arenaId === arenaId,
                 );
 
                 const available = slots.filter(
                     slot =>
                         slot.days.includes(day) &&
                         !bookedSlots.some(
-                            booking => booking.data().slotId === slot.slotId,
+                            booking => booking.slotId === slot.slotId,
                         ),
                 );
 

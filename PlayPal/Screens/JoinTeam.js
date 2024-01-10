@@ -192,8 +192,9 @@ const JoinTeam = ({navigation}) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Title style={styles.topTitle}>Explore Teams</Title>
-            <Divider width={1} style={styles.divider} color="grey" />
+            <View style={styles.headerView}>
+                <Text style={styles.title}>Explore Teams</Text>
+            </View>
 
             <View style={styles.searchView}>
                 <SearchBar

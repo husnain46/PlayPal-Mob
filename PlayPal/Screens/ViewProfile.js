@@ -9,7 +9,7 @@ import {
     SafeAreaView,
     Modal,
 } from 'react-native';
-import {Avatar, Text, ListItem, Divider} from '@rneui/themed';
+import {Avatar, Text, ListItem, Divider, Badge} from '@rneui/themed';
 import getAge from '../Functions/getAge';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import getSportsByIds from '../Functions/getSportsByIds';
@@ -35,6 +35,7 @@ const ViewProfile = ({navigation, route}) => {
     const [isCaptain, setIsCaptain] = useState(false);
     const [myTeam, setMyTeam] = useState({});
     const [isTeamMate, setIsTeamMate] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const currentDate = new Date();
 
     useFocusEffect(
@@ -69,6 +70,23 @@ const ViewProfile = ({navigation, route}) => {
                         } else {
                             // Found an existing chat, return the chatId
                             setChatId(chatId);
+
+                            // Fetch messages without senderId == receiverId and myId in readBy array
+                            const chatData = await firestore()
+                                .collection('chats')
+                                .doc(chatId)
+                                .get();
+
+                            const messages = chatData.data().messages || [];
+                            const unreadMsg = messages.filter(message => {
+                                return (
+                                    message.sender === receiverId && // Not sent by receiver
+                                    (!message.readBy ||
+                                        !message.readBy.includes(senderId)) // Not read by me
+                                );
+                            }).length;
+
+                            setUnreadCount(unreadMsg);
                         }
                     } catch (error) {
                         Toast.show({
@@ -764,6 +782,17 @@ const ViewProfile = ({navigation, route}) => {
                             onPress={() => gotoChat()}>
                             <Icons name="chat" size={25} color={'white'} />
                             <Text style={styles.addButtonText}>Chat</Text>
+                            {unreadCount > 0 && (
+                                <Badge
+                                    status="error"
+                                    value={unreadCount}
+                                    containerStyle={{
+                                        position: 'absolute',
+                                        alignSelf: 'flex-end',
+                                        bottom: 45,
+                                    }}
+                                />
+                            )}
                         </TouchableOpacity>
                     ) : (
                         <></>

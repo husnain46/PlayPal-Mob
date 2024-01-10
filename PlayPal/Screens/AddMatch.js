@@ -70,6 +70,12 @@ const AddMatch = ({navigation, route}) => {
 
     const handleDateChange = (event, selected) => {
         setShowPicker1(false);
+
+        if (event.type === 'dismissed') {
+            // User canceled the date picker, no need to update the state.
+            return;
+        }
+
         if (selected) {
             setSelectedDate(selected);
         }
@@ -77,6 +83,12 @@ const AddMatch = ({navigation, route}) => {
 
     const handleTimeChange = (event, selected) => {
         setShowPicker2(false);
+
+        if (event.type === 'dismissed') {
+            // User canceled the date picker, no need to update the state.
+            return;
+        }
+
         if (selected) {
             setSelectedTime(selected);
         }

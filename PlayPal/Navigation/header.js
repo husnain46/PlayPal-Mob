@@ -19,27 +19,6 @@ export default function Header({navigation}) {
     const [badgeCount, setBadgeCount] = useState(0);
     const myId = auth().currentUser.uid;
 
-    const getPlayersIdsForTeams = async teamIds => {
-        const allPlayers = [];
-
-        // Create an array of promises for each team document retrieval
-        const promises = teamIds.map(async teamId => {
-            const teamDoc = await firestore()
-                .collection('teams')
-                .doc(teamId)
-                .get();
-
-            if (teamDoc.exists) {
-                const players = teamDoc.data().playersId;
-                allPlayers.push(...players);
-            }
-        });
-
-        await Promise.all(promises);
-
-        return allPlayers;
-    };
-
     useEffect(() => {
         // Set up real-time listener for new unread notifications
         const unsubscribe = firestore()
@@ -59,6 +38,7 @@ export default function Header({navigation}) {
 
     const checkedTournaments = {}; // Store checked tournaments
     const startedTournaments = {};
+    const endedTournaments = {};
 
     useEffect(() => {
         // Fetch user data from Firestore
@@ -136,13 +116,17 @@ export default function Header({navigation}) {
                 for (const team of teamsData) {
                     const tournamentRef = firestore()
                         .collection('tournaments')
-                        .where('teamIds', 'array-contains', team.id)
-                        .where('end_date', '>=', currentDate);
+                        .where('teamIds', 'array-contains', team.id);
 
                     let isCaptain = team.captainId === myId;
 
                     const tournamentSnapshot = await tournamentRef.get();
-
+                    // console.log(
+                    //     tournamentSnapshot.docs[1]
+                    //         .data()
+                    //         .end_date.toDate()
+                    //         .toDateString(),
+                    // );
                     tournamentSnapshot.forEach(async doc => {
                         const tournamentData = doc.data();
                         const startDate = tournamentData.start_date.toDate();
@@ -152,14 +136,14 @@ export default function Header({navigation}) {
                         if (!startedTournaments[doc.id]) {
                             startedTournaments[doc.id] = true;
 
-                            const existingTourNoti = await firestore()
+                            const existingTourNotif = await firestore()
                                 .collection('notifications')
                                 .where('receiverId', '==', myId)
                                 .where('tourId', '==', doc.id)
                                 .where('type', '==', 'tour_started')
                                 .get();
 
-                            if (existingTourNoti.empty) {
+                            if (existingTourNotif.empty) {
                                 if (startDate <= currentDate) {
                                     const notification = {
                                         receiverId: myId,
@@ -173,6 +157,70 @@ export default function Header({navigation}) {
                                     await firestore()
                                         .collection('notifications')
                                         .add(notification);
+                                }
+                            }
+                        }
+
+                        if (!endedTournaments[doc.id]) {
+                            endedTournaments[doc.id] = true;
+
+                            if (endDate <= currentDate) {
+                                const existingRef = firestore()
+                                    .collection('notifications')
+                                    .where('receiverId', '==', myId)
+                                    .where('tourId', '==', doc.id);
+
+                                const existingNotify1 = await existingRef
+                                    .where('type', '==', 'tour_ended')
+                                    .get();
+
+                                const existingNotify2 = await existingRef
+                                    .where('type', '==', 'tour_abandoned')
+                                    .get();
+
+                                if (
+                                    existingNotify1.empty &&
+                                    existingNotify2.empty
+                                ) {
+                                    const timeDiffer =
+                                        endDate.getTime() -
+                                        currentDate.getTime();
+                                    const daysDiffer =
+                                        timeDiffer / (1000 * 3600 * 24);
+                                    const roundedDays =
+                                        Math.round(daysDiffer * 100) / 100;
+
+                                    if (roundedDays <= 0) {
+                                        let notifyMsg = 'Tournament ended!';
+                                        let notifyType = 'tour_ended';
+
+                                        if (
+                                            tournamentData.matches.some(
+                                                match =>
+                                                    match.title !== 'Final',
+                                            )
+                                        ) {
+                                            notifyMsg = `${tournamentData.name} got abandoned!\nFinal match was not scheduled/held.`;
+                                            notifyType = 'tour_abandoned';
+                                        } else {
+                                            notifyMsg = `${tournamentData.winner} won the ${tournamentData.name}.`;
+                                            notifyType = 'tour_ended';
+                                        }
+
+                                        const notification = {
+                                            receiverId: myId,
+                                            message: notifyMsg,
+                                            type: notifyType,
+                                            tourId: doc.id,
+                                            read: false,
+                                            timestamp: endDate,
+                                            status: true,
+                                        };
+
+                                        await firestore()
+                                            .collection('notifications')
+                                            .add(notification);
+                                    }
                                 }
                             }
                         }
@@ -219,8 +267,8 @@ export default function Header({navigation}) {
 
                                         let newMessage =
                                             isOrganizer && isCaptain
-                                                ? `${tournamentData.name} is ending ${daysMsg}! As an organizer team captain, you must schedule the FINAL match of the tournament now.`
-                                                : `${tournamentData.name} is ending ${daysMsg}! ${organizerName} has not scheduled the FINAL match of the tournament yet.`;
+                                                ? `${tournamentData.name} is ending ${daysMsg}!\nAs an organizer team captain, you must schedule the FINAL match of the tournament now.`
+                                                : `${tournamentData.name} is ending ${daysMsg}!\n${organizerName} has not scheduled the FINAL match of the tournament yet.`;
 
                                         const notification = {
                                             receiverId: myId,

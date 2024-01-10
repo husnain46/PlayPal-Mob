@@ -587,14 +587,19 @@ const ViewTeam = ({navigation, route}) => {
                 .collection('tournaments')
                 .where('teamIds', 'array-contains', team.teamId)
                 .where('end_date', '<', currentDate)
-                .where('status', '==', 'Ended')
                 .get();
 
             if (!tourRef.empty) {
-                const tournaments = tourRef.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
+                const tournaments = tourRef.docs
+                    .filter(doc => {
+                        const {status} = doc.data();
+                        return status === 'ended' || status === 'abandoned';
+                    })
+                    .map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                    }));
+
                 setPlayedTournaments(tournaments);
 
                 setTourLoading(false);

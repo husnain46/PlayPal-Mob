@@ -5,14 +5,13 @@ import {
     TouchableOpacity,
     TouchableWithoutFeedback,
     Keyboard,
-    TextInput,
     Image,
     Text,
     ImageBackground,
     Platform,
     Dimensions,
 } from 'react-native';
-import {RadioButton} from 'react-native-paper';
+import {RadioButton, TextInput} from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import styles from '../Styles/signupStyles';
 import auth from '@react-native-firebase/auth';
@@ -42,6 +41,7 @@ const SignUp = ({navigation}) => {
     const usernamePattern = /^[a-zA-Z0-9_.]{6,20}$/;
     const [passError, setPassError] = useState('');
     const emailPattern = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+    const [showPass, setShowPass] = useState(true);
 
     useEffect(() => {
         const currentDate = new Date();
@@ -192,6 +192,11 @@ const SignUp = ({navigation}) => {
 
     const handleDateChange = (event, selected) => {
         setShowPicker(false);
+        if (event.type === 'dismissed') {
+            // User canceled the date picker, no need to update the state.
+            return;
+        }
+
         if (selected) {
             setSelectedDate(selected.toLocaleDateString('en-GB'));
         }
@@ -201,42 +206,51 @@ const SignUp = ({navigation}) => {
         <SafeAreaView style={styles.container}>
             <ScrollView
                 style={styles.bgContainer}
-                contentContainerStyle={{alignItems: 'center'}}>
-                <KeyboardAvoidingView
-                    behavior={'padding'}
-                    style={{flex: 1}}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 10}>
-                    <View style={styles.logoView}>
-                        <Image
-                            source={require('../Assets/Icons/mainLogo.png')}
-                            style={styles.logoImg}
-                            resizeMode="contain"
-                        />
-                    </View>
+                contentContainerStyle={{
+                    alignItems: 'center',
+                }}>
+                <View style={styles.logoView}>
+                    <Image
+                        source={require('../Assets/Icons/mainLogo.png')}
+                        style={styles.logoImg}
+                        resizeMode="contain"
+                    />
+                </View>
 
-                    <TouchableWithoutFeedback
-                        onPress={Keyboard.dismiss}
-                        style={{flex: 1}}>
-                        <View style={{marginTop: 20}}>
-                            <View style={styles.nameView}>
-                                <TextInput
-                                    placeholder="First Name"
-                                    style={styles.textInput1}
-                                    cursorColor={'#3f70c4'}
-                                    onChangeText={text => setFirstName(text)}
-                                    maxLength={15}
-                                    placeholderTextColor={'darkgrey'}
-                                />
-                                <TextInput
-                                    placeholder="Last Name"
-                                    style={styles.textInput2}
-                                    onChangeText={text => setLastName(text)}
-                                    maxLength={15}
-                                    cursorColor={'#3f70c4'}
-                                    placeholderTextColor={'darkgrey'}
-                                />
-                            </View>
-                            <View style={styles.radioView}>
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <View style={{width: '100%'}}>
+                        <View style={styles.nameView}>
+                            <TextInput
+                                style={styles.textInput1}
+                                mode="flat"
+                                contentStyle={{paddingLeft: 5}}
+                                placeholder="First name"
+                                textContentType="name"
+                                cursorColor={'#3f70c4'}
+                                onChangeText={text => setFirstName(text)}
+                                maxLength={15}
+                                placeholderTextColor={'darkgrey'}
+                            />
+                            <TextInput
+                                style={styles.textInput1}
+                                mode="flat"
+                                contentStyle={{paddingLeft: 5}}
+                                placeholder="Last name"
+                                textContentType="name"
+                                cursorColor={'#3f70c4'}
+                                onChangeText={text => setLastName(text)}
+                                maxLength={15}
+                                placeholderTextColor={'darkgrey'}
+                            />
+                        </View>
+
+                        <View style={styles.radioView}>
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    marginEnd: 30,
+                                }}>
                                 <Text style={styles.radioText}>Male</Text>
                                 <RadioButton
                                     value="first"
@@ -247,7 +261,13 @@ const SignUp = ({navigation}) => {
                                     }
                                     onPress={() => setGender('Male')}
                                 />
+                            </View>
 
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                }}>
                                 <Text style={styles.radioText}>Female</Text>
                                 <RadioButton
                                     value="Female"
@@ -259,41 +279,47 @@ const SignUp = ({navigation}) => {
                                     onPress={() => setGender('Female')}
                                 />
                             </View>
+                        </View>
 
-                            <View style={styles.dobView}>
-                                <Text style={styles.dobText}>
-                                    Date of birth:
-                                </Text>
-                                <View style={styles.dateView}>
-                                    <TouchableOpacity
-                                        style={styles.dateBox}
-                                        onPress={() => setShowPicker(true)}>
-                                        {selectedDate ? (
-                                            <Text style={styles.dobText}>
-                                                {selectedDate}
-                                            </Text>
-                                        ) : (
-                                            <Text style={{color: 'darkgrey'}}>
-                                                Select date of birth
-                                            </Text>
-                                        )}
-                                    </TouchableOpacity>
-                                    {showPicker && (
-                                        <DateTimePicker
-                                            value={backDate}
-                                            mode="date"
-                                            display="spinner"
-                                            minimumDate={new Date(1970, 0, 1)}
-                                            maximumDate={backDate}
-                                            onChange={handleDateChange}
-                                        />
-                                    )}
-                                </View>
-                            </View>
+                        <View style={styles.dobView}>
+                            <Text style={styles.dobText}>Date of birth:</Text>
 
+                            <TouchableOpacity
+                                style={styles.dateBox}
+                                onPress={() => setShowPicker(true)}>
+                                {selectedDate ? (
+                                    <Text style={styles.dobText}>
+                                        {selectedDate}
+                                    </Text>
+                                ) : (
+                                    <Text style={{color: 'darkgrey'}}>
+                                        Select date of birth
+                                    </Text>
+                                )}
+                            </TouchableOpacity>
+                            {showPicker && (
+                                <DateTimePicker
+                                    value={backDate}
+                                    mode="date"
+                                    display="spinner"
+                                    minimumDate={new Date(1970, 0, 1)}
+                                    maximumDate={backDate}
+                                    onChange={handleDateChange}
+                                />
+                            )}
+                        </View>
+                        <KeyboardAvoidingView
+                            behavior={'position'}
+                            style={{width: '100%'}}
+                            keyboardVerticalOffset={
+                                Platform.OS === 'ios' ? 40 : 70
+                            }>
                             <View style={styles.inputView}>
                                 <TextInput
                                     placeholder="Email"
+                                    textContentType="emailAddress"
+                                    inputMode="email"
+                                    contentStyle={{paddingLeft: 5}}
                                     cursorColor={'#3f70c4'}
                                     style={styles.textInput3}
                                     onChangeText={text => {
@@ -316,6 +342,9 @@ const SignUp = ({navigation}) => {
                                 <TextInput
                                     placeholder="Mobile no. (e.g. 03xxxxxxxxx)"
                                     style={styles.textInput3}
+                                    textContentType="telephoneNumber"
+                                    inputMode="numeric"
+                                    contentStyle={{paddingLeft: 5}}
                                     cursorColor={'#3f70c4'}
                                     onChangeText={text => {
                                         setPhone(text);
@@ -337,6 +366,9 @@ const SignUp = ({navigation}) => {
                                 <TextInput
                                     placeholder="Username"
                                     cursorColor={'#3f70c4'}
+                                    textContentType="username"
+                                    inputMode="text"
+                                    contentStyle={{paddingLeft: 5}}
                                     style={styles.textInput3}
                                     onChangeText={async text => {
                                         setUsername(text);
@@ -351,8 +383,7 @@ const SignUp = ({navigation}) => {
                                             color: isUsernameAvailable
                                                 ? 'green'
                                                 : 'red',
-                                            bottom: 18,
-                                            right: 10,
+                                            bottom: 16,
                                             textAlign: 'right',
                                             fontSize: 13,
                                         }}>
@@ -368,10 +399,20 @@ const SignUp = ({navigation}) => {
                                     placeholder="Password"
                                     cursorColor={'#3f70c4'}
                                     style={styles.textInput3}
-                                    secureTextEntry={true}
+                                    textContentType="password"
+                                    contentStyle={{paddingLeft: 5}}
+                                    secureTextEntry={showPass}
                                     onChangeText={handlePasswordChange}
                                     maxLength={20}
                                     placeholderTextColor={'darkgrey'}
+                                    right={
+                                        <TextInput.Icon
+                                            icon={!showPass ? 'eye-off' : 'eye'}
+                                            onPress={() =>
+                                                setShowPass(!showPass)
+                                            }
+                                        />
+                                    }
                                 />
                                 {passError !== '' ? (
                                     <Text style={styles.errorText}>
@@ -381,21 +422,19 @@ const SignUp = ({navigation}) => {
                                     <></>
                                 )}
                             </View>
-                        </View>
-                    </TouchableWithoutFeedback>
-                    <View style={styles.btnContainer}>
-                        {loading ? (
-                            <ActivityIndicator size="large" color="#0000ff" />
-                        ) : (
-                            <Button
-                                title="Signup"
-                                titleStyle={styles.submitText}
-                                onPress={() => createUser()}
-                                containerStyle={styles.submitBtn}
-                            />
-                        )}
+                        </KeyboardAvoidingView>
                     </View>
-                </KeyboardAvoidingView>
+                </TouchableWithoutFeedback>
+                <View style={styles.btnContainer}>
+                    <Button
+                        title="Signup"
+                        titleStyle={styles.submitText}
+                        onPress={() => createUser()}
+                        containerStyle={styles.submitBtn}
+                        loading={loading}
+                        loadingProps={{color: 'white'}}
+                    />
+                </View>
             </ScrollView>
         </SafeAreaView>
     );

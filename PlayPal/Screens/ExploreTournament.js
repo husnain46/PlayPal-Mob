@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Picker} from '@react-native-picker/picker';
-import {SearchBar} from '@rneui/themed';
+import {SearchBar, Tab, TabView} from '@rneui/themed';
 import {
     Image,
     Modal,
@@ -21,6 +21,11 @@ import firestore from '@react-native-firebase/firestore';
 
 const ExploreTournament = ({navigation}) => {
     const [tournamentsData, setTournamentsData] = useState([]);
+    const [upcomingTours, setUpcomingTours] = useState([]);
+    const [ongoingTours, setOngoingTours] = useState([]);
+    const [upcomingFiltered, setUpcomingFiltered] = useState([]);
+    const [ongoingFiltered, setOngoingFiltered] = useState([]);
+
     const [modalVisible, setModalVisible] = useState(false);
     const [sportsFilter, setSportsFilter] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -28,6 +33,7 @@ const ExploreTournament = ({navigation}) => {
     const [open, setOpen] = useState(false);
     const [items, setItems] = useState(cityData);
     const [isLoading, setIsLoading] = useState(true);
+    const [tabIndex, setTabIndex] = useState(0);
 
     const searchCity = query => {
         const filteredItems = items.filter(item =>
@@ -44,42 +50,45 @@ const ExploreTournament = ({navigation}) => {
     };
 
     useEffect(() => {
-        const fetchTournaments = async () => {
-            try {
-                const currentDate = new Date();
+        const currentDate = new Date();
 
-                const tournamentRef = await firestore()
-                    .collection('tournaments')
-                    .where('end_date', '>=', currentDate)
-                    .get();
+        const unsubscribe = firestore()
+            .collection('tournaments')
+            .where('end_date', '>=', currentDate)
+            .onSnapshot(
+                querySnapshot => {
+                    const ongoingData = [];
 
-                if (!tournamentRef.empty) {
-                    const tData = tournamentRef.docs.map(doc => {
-                        return {id: doc.id, ...doc.data()};
+                    const upcomingData = [];
+
+                    querySnapshot.forEach(doc => {
+                        const startDate = doc.data().start_date.toDate();
+                        if (startDate <= currentDate) {
+                            ongoingData.push({id: doc.id, ...doc.data()});
+                        } else {
+                            upcomingData.push({id: doc.id, ...doc.data()});
+                        }
                     });
 
-                    setTournamentsData(tData);
-                    setFilteredData(tData);
+                    setUpcomingTours(upcomingData);
+                    setOngoingTours(ongoingData);
+
+                    setOngoingFiltered(ongoingData);
+                    setUpcomingFiltered(upcomingData);
+
                     setIsLoading(false);
-                } else {
+                },
+                error => {
                     setIsLoading(false);
+                    Toast.show({
+                        type: 'error',
+                        text1: 'An error occurred!',
+                        text2: error.message,
+                    });
+                },
+            );
 
-                    setTournamentsData([]);
-                }
-            } catch (error) {
-                setIsLoading(false);
-
-                Toast.show({
-                    type: 'error',
-                    text1: 'An error occurred!',
-                    text2: error.message,
-                });
-            }
-        };
-
-        fetchTournaments();
-
-        return () => {};
+        return () => unsubscribe();
     }, []);
 
     const sportIcons = {
@@ -94,6 +103,14 @@ const ExploreTournament = ({navigation}) => {
         default: require('../Assets/Icons/no image.png'),
     };
 
+    const handleTabChange = index => {
+        resetFilters();
+        setTabIndex(index);
+        setSearchQuery('');
+
+        // Reset search query when the tab changes
+    };
+
     const resetFilters = () => {
         setSportsFilter(null);
         setSelectedCity('');
@@ -102,7 +119,8 @@ const ExploreTournament = ({navigation}) => {
     const handleSearch = text => {
         setSearchQuery(text);
 
-        const searchFilteredData = tournamentsData;
+        const searchFilteredData =
+            tabIndex === 0 ? ongoingTours : upcomingTours;
 
         const filtered = searchFilteredData.filter(data => {
             const isNameMatched = data.name
@@ -118,13 +136,18 @@ const ExploreTournament = ({navigation}) => {
             return isNameMatched && isSportsMatched && isCityMatched;
         });
 
-        setFilteredData(filtered);
+        if (tabIndex === 0) {
+            setOngoingFiltered(filtered);
+        } else {
+            setUpcomingFiltered(filtered);
+        }
     };
 
-    const [filteredData, setFilteredData] = useState([]);
-
     const applyFilters = () => {
-        const filtered = tournamentsData.filter(data => {
+        const searchFilteredData =
+            tabIndex === 0 ? ongoingTours : upcomingTours;
+
+        const filtered = searchFilteredData.filter(data => {
             const isNameMatched = data.name
                 .toLowerCase()
                 .includes(searchQuery.toLowerCase());
@@ -138,7 +161,12 @@ const ExploreTournament = ({navigation}) => {
             return isNameMatched && isSportsMatched && isCityMatched;
         });
 
-        setFilteredData(filtered);
+        if (tabIndex === 0) {
+            setOngoingFiltered(filtered);
+        } else {
+            setUpcomingFiltered(filtered);
+        }
+
         setModalVisible(false);
     };
 
@@ -211,8 +239,21 @@ const ExploreTournament = ({navigation}) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Title style={styles.topTitle}>Explore Tournaments</Title>
-            <Divider style={styles.divider2} />
+            <View style={styles.headerView}>
+                <Title style={styles.topTitle}>Explore Tournaments</Title>
+            </View>
+
+            <View style={{marginBottom: 15}}>
+                <Tab
+                    value={tabIndex}
+                    style={{width: '80%', alignSelf: 'center'}}
+                    onChange={handleTabChange}
+                    titleStyle={{color: '#4a5a96', fontSize: 17}}
+                    indicatorStyle={{backgroundColor: '#4a5a96', height: 3}}>
+                    <Tab.Item title="Ongoing" />
+                    <Tab.Item title="Upcoming" />
+                </Tab>
+            </View>
 
             <View style={styles.searchView}>
                 <SearchBar
@@ -346,24 +387,52 @@ const ExploreTournament = ({navigation}) => {
                     />
                 </View>
             ) : (
-                <View style={styles.listView}>
-                    <FlatList
-                        data={filteredData}
-                        renderItem={renderItem}
-                        keyExtractor={filteredData.id}
-                        ListEmptyComponent={() => (
-                            <Text
-                                style={{
-                                    fontSize: 18,
-                                    color: '#124163',
-                                    textAlign: 'center',
-                                }}>
-                                No tournament found!
-                            </Text>
-                        )}
-                        contentContainerStyle={{paddingBottom: 180}}
-                    />
-                </View>
+                <TabView
+                    value={tabIndex}
+                    onChange={handleTabChange}
+                    animationType="spring">
+                    <TabView.Item style={{width: '100%'}}>
+                        <View style={styles.listView}>
+                            <FlatList
+                                data={ongoingFiltered}
+                                renderItem={renderItem}
+                                keyExtractor={item => item.id}
+                                ListEmptyComponent={() => (
+                                    <Text
+                                        style={{
+                                            fontSize: 18,
+                                            color: '#124163',
+                                            textAlign: 'center',
+                                        }}>
+                                        No tournament found!
+                                    </Text>
+                                )}
+                                contentContainerStyle={{paddingBottom: 180}}
+                            />
+                        </View>
+                    </TabView.Item>
+
+                    <TabView.Item style={{width: '100%'}}>
+                        <View style={styles.listView}>
+                            <FlatList
+                                data={upcomingFiltered}
+                                renderItem={renderItem}
+                                keyExtractor={item => item.id}
+                                ListEmptyComponent={() => (
+                                    <Text
+                                        style={{
+                                            fontSize: 18,
+                                            color: '#124163',
+                                            textAlign: 'center',
+                                        }}>
+                                        No tournament found!
+                                    </Text>
+                                )}
+                                contentContainerStyle={{paddingBottom: 180}}
+                            />
+                        </View>
+                    </TabView.Item>
+                </TabView>
             )}
         </SafeAreaView>
     );
@@ -374,12 +443,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#EDEDED',
     },
+    headerView: {
+        width: '100%',
+        borderBottomEndRadius: 20,
+        borderBottomStartRadius: 20,
+        backgroundColor: '#4a5a96',
+        alignItems: 'center',
+        height: 70,
+        justifyContent: 'center',
+    },
     topTitle: {
         fontSize: 22,
         fontWeight: '600',
-        color: '#4A5B96',
-        textAlign: 'center',
-        marginTop: 20,
+        fontStyle: 'italic',
+        color: 'white',
     },
     searchView: {
         width: '85%',
@@ -536,7 +613,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
         marginBottom: 10,
         alignSelf: 'center',
-        backgroundColor: 'grey',
+        backgroundColor: 'white',
     },
     dateText: {
         fontSize: 14,

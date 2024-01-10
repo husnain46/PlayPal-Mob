@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 import {ActivityIndicator} from 'react-native';
 import {useFocusEffect} from '@react-navigation/native';
 import {useCallback} from 'react';
-import {Button} from '@rneui/themed';
+import {Button, Divider} from '@rneui/themed';
 
 const Notifications = ({navigation, route}) => {
     const {user} = route.params;
@@ -55,7 +55,12 @@ const Notifications = ({navigation, route}) => {
                 const notificationData = doc.data();
                 const {type} = notificationData;
 
-                if (type === 'no_final' || type === 'tour_started') {
+                if (
+                    type === 'no_final' ||
+                    type === 'tour_started' ||
+                    type === 'tour_ended' ||
+                    type === 'tour_abandoned'
+                ) {
                     // Update the status field in the document
                     batch.update(doc.ref, {status: false, read: true});
                 } else {
@@ -124,7 +129,9 @@ const Notifications = ({navigation, route}) => {
                             }
                         } else if (
                             notification.type === 'no_final' ||
-                            notification.type === 'tour_started'
+                            notification.type === 'tour_started' ||
+                            notification.type === 'tour_ended' ||
+                            notification.type === 'tour_abandoned'
                         ) {
                             return {
                                 id: doc.id,
@@ -301,7 +308,8 @@ const Notifications = ({navigation, route}) => {
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: 15,
+                    marginVertical: 10,
+                    paddingHorizontal: 15,
                 }}>
                 <Text style={styles.title}>Notifications</Text>
                 <Button
@@ -310,6 +318,7 @@ const Notifications = ({navigation, route}) => {
                     titleStyle={{
                         color: '#6a4ea7',
                         fontSize: 15,
+                        margin: -3,
                     }}
                     containerStyle={{
                         borderWidth: 1,
@@ -317,10 +326,15 @@ const Notifications = ({navigation, route}) => {
                         fontSize: 17,
                         borderRadius: 15,
                         width: 70,
+                        height: 35,
                     }}
                     onPress={() => clearNotifications()}
                 />
             </View>
+            <Divider
+                style={{width: '95%', alignSelf: 'center', marginBottom: 10}}
+                width={1}
+            />
             {loading ? (
                 <ActivityIndicator size={'large'} style={{marginTop: 50}} />
             ) : (
@@ -328,6 +342,9 @@ const Notifications = ({navigation, route}) => {
                     data={notifications}
                     keyExtractor={item => item.id}
                     renderItem={renderItem}
+                    contentContainerStyle={{
+                        padding: 12,
+                    }}
                     ListEmptyComponent={() => (
                         <View style={styles.emptyContainer}>
                             <Text style={{fontSize: 16, color: 'grey'}}>
@@ -344,10 +361,9 @@ const Notifications = ({navigation, route}) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
     },
     title: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
         color: '#4a5a96',
     },
@@ -356,6 +372,7 @@ const styles = StyleSheet.create({
         width: '100%',
         borderBottomWidth: 1,
         borderBottomColor: 'gray',
+        marginBottom: 15,
     },
     notificationItem: {
         width: '100%',

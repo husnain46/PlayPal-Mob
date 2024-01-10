@@ -29,7 +29,7 @@ import StartMatch from './Screens/StartMatch';
 import CricketMatch from './Screens/CricketMatch';
 import EditTeam from './Screens/EditTeam';
 import ViewArena from './Screens/ViewArena';
-import Reviews from './Screens/Reviews';
+import CheckReviews from './Screens/CheckReviews';
 import Slots from './Screens/Slots';
 import VerifyMail from './Screens/VerifyMail';
 import ForgotPassword from './Screens/ForgotPassword';
@@ -40,6 +40,8 @@ import InviteTeams from './Screens/InviteTeams';
 import PaymentScreen from './Screens/PaymentScreen';
 import {StripeProvider} from '@stripe/stripe-react-native';
 import MyBookings from './Screens/MyBookings';
+import Reviews from './Screens/Reviews';
+import ChangePassword from './Screens/ChangePassword';
 
 const Stack = createStackNavigator();
 
@@ -147,11 +149,15 @@ export default function App() {
                             name="MyBookings"
                             component={MyBookings}
                         />
-
+                        <Stack.Screen name="Reviews" component={Reviews} />
                         <Stack.Screen name="MyProfile" component={MyProfile} />
                         <Stack.Screen
                             name="EditProfile"
                             component={EditProfile}
+                        />
+                        <Stack.Screen
+                            name="ChangePassword"
+                            component={ChangePassword}
                         />
                         <Stack.Screen
                             name="ViewProfile"
@@ -200,7 +206,10 @@ export default function App() {
                         />
                         <Stack.Screen name="EditTeam" component={EditTeam} />
                         <Stack.Screen name="ViewArena" component={ViewArena} />
-                        <Stack.Screen name="Reviews" component={Reviews} />
+                        <Stack.Screen
+                            name="CheckReviews"
+                            component={CheckReviews}
+                        />
                         <Stack.Screen name="Slots" component={Slots} />
                         <Stack.Screen
                             name="PaymentScreen"

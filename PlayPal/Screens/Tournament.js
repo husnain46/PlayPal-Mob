@@ -46,7 +46,8 @@ const Tournament = ({navigation}) => {
                     for (const team of teamsData) {
                         const tournamentRef = firestore()
                             .collection('tournaments')
-                            .where('teamIds', 'array-contains', team.id);
+                            .where('teamIds', 'array-contains', team.id)
+                            .where('status', '!=', 'Ended');
 
                         const tournamentSnapshot = await tournamentRef.get();
                         const tournaments = [];
@@ -62,7 +63,10 @@ const Tournament = ({navigation}) => {
                             const endDate_next = new Date(endDate);
                             endDate_next.setDate(endDate_next.getDate() + 1);
 
-                            if (endDate >= currentDate) {
+                            if (
+                                endDate >= currentDate &&
+                                tournamentData.status !== 'Abandoned'
+                            ) {
                                 tournaments.push({
                                     id: doc.id,
                                     ...tournamentData,
@@ -71,7 +75,8 @@ const Tournament = ({navigation}) => {
 
                             if (
                                 startDate <= currentDate &&
-                                endDate >= currentDate
+                                endDate >= currentDate &&
+                                tournamentData.status === 'Upcoming'
                             ) {
                                 // Update the status to 'Ongoing' if start_date is passed
                                 //  and end_date is ahead
@@ -113,6 +118,7 @@ const Tournament = ({navigation}) => {
                     setLoading(false);
                 } catch (error) {
                     setLoading(false);
+                    console.log(error);
                     Toast.show({
                         type: 'error',
                         text1: 'An error occurred!',

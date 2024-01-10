@@ -5,17 +5,20 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#EDEDED',
     },
-    topTitle: {
+    headerView: {
+        width: '100%',
+        borderBottomEndRadius: 20,
+        borderBottomStartRadius: 20,
+        backgroundColor: '#4a5a96',
+        alignItems: 'center',
+        height: 70,
+        justifyContent: 'center',
+    },
+    title: {
         fontSize: 22,
         fontWeight: '600',
-        textAlign: 'center',
-        marginTop: 20,
-        color: '#4a5a96',
-    },
-    divider: {
-        width: '90%',
-        alignSelf: 'center',
-        marginTop: 5,
+        fontStyle: 'italic',
+        color: 'white',
     },
     searchView: {
         flexDirection: 'row',

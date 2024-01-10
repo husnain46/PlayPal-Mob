@@ -25,8 +25,8 @@ const ViewArena = ({navigation, route}) => {
 
     let sportsList = getSportsByIds(arena.sports);
 
-    const gotoReviews = () => {
-        navigation.navigate('Reviews', {
+    const gotoCheckReviews = () => {
+        navigation.navigate('CheckReviews', {
             reviews: arena.rating,
             arenaRating: arenaRating,
             ratingCount: ratingCount,
@@ -86,13 +86,17 @@ const ViewArena = ({navigation, route}) => {
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                     }}>
-                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                    <View
+                        style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            width: '62%',
+                        }}>
                         <Rating
                             readonly={true}
                             startingValue={item.ratingValue}
-                            imageSize={13}
+                            imageSize={15}
                         />
-
                         <Text style={styles.ratingValue}>
                             {item.ratingValue}
                         </Text>
@@ -106,7 +110,11 @@ const ViewArena = ({navigation, route}) => {
 
                     <Text style={styles.timeElapsed}>({reviewTime})</Text>
                 </View>
-                <Text style={styles.reviewText}>{item.review}</Text>
+                {item.review === '' ? (
+                    <></>
+                ) : (
+                    <Text style={styles.reviewText}>{item.review}</Text>
+                )}
             </View>
         );
     };
@@ -252,25 +260,43 @@ const ViewArena = ({navigation, route}) => {
                                 source={require('../Assets/Icons/star.png')}
                                 style={styles.starIcon}
                             />
-                            <Text style={styles.rating}>{arenaRating}</Text>
+                            {arena.rating.length === 0 ? (
+                                <></>
+                            ) : (
+                                <Text style={styles.rating}>{arenaRating}</Text>
+                            )}
                             <Text style={styles.numRating}>
                                 ({ratingCount})
                             </Text>
                         </View>
+
                         <Button
                             style={{bottom: 2}}
+                            disabled={arena.rating.length === 0 ? true : false}
                             labelStyle={{textDecorationLine: 'underline'}}
-                            onPress={() => gotoReviews()}>
+                            onPress={() => gotoCheckReviews()}>
                             See all
                         </Button>
                     </View>
+
                     <FlatList
                         showsVerticalScrollIndicator={false}
                         scrollEnabled={false}
                         data={arena.rating.slice(0, 3)}
                         renderItem={renderReviewList}
-                        keyExtractor={item => item.ratingId}
+                        keyExtractor={(item, index) => index.toString()}
                         contentContainerStyle={{paddingBottom: 10}}
+                        ListEmptyComponent={() => (
+                            <Text
+                                style={{
+                                    fontSize: 16,
+                                    color: 'grey',
+                                    textAlign: 'center',
+                                    marginTop: 10,
+                                }}>
+                                No reviews yet!
+                            </Text>
+                        )}
                     />
                 </View>
             </ScrollView>

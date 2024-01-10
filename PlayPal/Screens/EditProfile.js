@@ -65,10 +65,10 @@ const EditProfile = ({navigation, route}) => {
         let uid = auth().currentUser.uid;
 
         if (
-            !selectedCity ||
-            !contact ||
-            !areaName ||
-            !bioAndInterest ||
+            selectedCity === '' ||
+            contact === '' ||
+            areaName === '' ||
+            bioAndInterest === '' ||
             selectedSports.length === 0
         ) {
             Toast.show({

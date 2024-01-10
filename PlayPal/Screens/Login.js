@@ -5,7 +5,6 @@ import {
     TouchableOpacity,
     TouchableWithoutFeedback,
     Keyboard,
-    TextInput,
     ScrollView,
     Image,
     StyleSheet,
@@ -18,11 +17,13 @@ import auth from '@react-native-firebase/auth';
 import {StackActions} from '@react-navigation/native';
 import {Button} from '@rneui/themed';
 import Toast from 'react-native-toast-message';
+import {TextInput} from 'react-native-paper';
 
 const Login = ({navigation}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [showPass, setShowPass] = useState(true);
 
     const handleSignIn = async () => {
         if (email && password) {
@@ -123,6 +124,7 @@ const Login = ({navigation}) => {
                                 <TextInput
                                     placeholder="Email"
                                     cursorColor={'#3f70c4'}
+                                    contentStyle={{paddingLeft: 5}}
                                     style={styles.textInput}
                                     onChangeText={text => setEmail(text)}
                                     placeholderTextColor={'darkgrey'}
@@ -131,29 +133,37 @@ const Login = ({navigation}) => {
                                     placeholder="Password"
                                     cursorColor={'#3f70c4'}
                                     style={styles.textInput}
-                                    secureTextEntry={true}
+                                    textContentType="password"
+                                    contentStyle={{
+                                        paddingLeft: 5,
+                                    }}
+                                    secureTextEntry={showPass}
                                     onChangeText={text => setPassword(text)}
                                     placeholderTextColor={'darkgrey'}
+                                    right={
+                                        <TextInput.Icon
+                                            style={{right: -5}}
+                                            icon={!showPass ? 'eye-off' : 'eye'}
+                                            onPress={() =>
+                                                setShowPass(!showPass)
+                                            }
+                                        />
+                                    }
                                 />
                             </View>
                             <View style={styles.btnContainer}>
-                                {isLoading ? (
-                                    <ActivityIndicator
-                                        size="large"
-                                        color="#0000ff"
-                                    />
-                                ) : (
-                                    <Button
-                                        containerStyle={{
-                                            borderRadius: 8,
-                                            elevation: 5,
-                                            width: 130,
-                                        }}
-                                        title="Login"
-                                        titleStyle={{fontSize: 17}}
-                                        onPress={() => handleSignIn()}
-                                    />
-                                )}
+                                <Button
+                                    containerStyle={{
+                                        borderRadius: 8,
+                                        elevation: 5,
+                                        width: 130,
+                                    }}
+                                    title="Login"
+                                    titleStyle={{fontSize: 17}}
+                                    onPress={() => handleSignIn()}
+                                    loading={isLoading}
+                                    loadingProps={{color: 'white'}}
+                                />
                             </View>
 
                             <View style={styles.footerView}>
@@ -210,11 +220,10 @@ const styles = StyleSheet.create({
         height: 40,
         width: '85%',
         color: 'black',
-        borderColor: '#000000',
         marginBottom: 20,
-        borderBottomWidth: 1,
         alignSelf: 'center',
         fontSize: 17,
+        backgroundColor: 'white',
     },
     btnContainer: {
         width: 150,

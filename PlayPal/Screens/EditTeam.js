@@ -34,6 +34,7 @@ const EditTeam = ({navigation, route}) => {
     const [loading, setLoading] = useState(false);
     const [playersData, setPlayersData] = useState([]);
     const [listLoading, setListLoading] = useState(true);
+    const [hasPlayed, setHasPlayed] = useState(false);
 
     const cityList = cityData.map(item => ({
         label: item.city,
@@ -69,6 +70,22 @@ const EditTeam = ({navigation, route}) => {
                 setListLoading(false);
             }
         };
+
+        const checkTournaments = async () => {
+            try {
+                const tournamentSnap = await firestore()
+                    .collection('tournaments')
+                    .where('teamIds', 'array-contains', myTeam.teamId)
+                    .get();
+
+                if (!tournamentSnap.empty) {
+                    setHasPlayed(true);
+                }
+            } catch (error) {
+                console.log(error);
+            }
+        };
+        checkTournaments();
 
         fetchPlayersData();
     }, []);
@@ -214,28 +231,15 @@ const EditTeam = ({navigation, route}) => {
         try {
             deleteAlertRef.current.close();
             setLoading(true);
-            const currentDate = new Date();
-            const tournamentSnap = await firestore()
-                .collection('tournaments')
-                .where('teamIds', 'array-contains', myTeam.teamId)
-                .where('end_date', '>=', currentDate)
-                .get();
 
-            if (tournamentSnap.empty) {
-                await firestore()
-                    .collection('teams')
-                    .doc(myTeam.teamId)
-                    .delete();
+            await firestore().collection('teams').doc(myTeam.teamId).delete();
 
-                navigation.navigate('BottomTab', {screen: 'Team'});
+            navigation.navigate('BottomTab', {screen: 'Team'});
 
-                Toast.show({
-                    type: 'success',
-                    text1: `Your team ${myTeam.name} deleted!`,
-                });
-            } else {
-                clashAlertRef.current.open();
-            }
+            Toast.show({
+                type: 'success',
+                text1: `Your team ${myTeam.name} is deleted!`,
+            });
 
             setLoading(false);
         } catch (error) {
@@ -456,6 +460,7 @@ const EditTeam = ({navigation, route}) => {
                     <Button
                         style={{borderRadius: 10}}
                         mode="contained"
+                        disabled={hasPlayed}
                         buttonColor="red"
                         onPress={() => deleteAlertRef.current.open()}>
                         <Text style={styles.deletText}>Delete team</Text>

@@ -34,60 +34,64 @@ const FindArena = ({navigation}) => {
     const [filteredData, setFilteredData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchArenas = async () => {
-            try {
-                const arenaRef = await firestore()
-                    .collection('arenas')
-                    .where('holiday', '==', false)
-                    .get();
+    useFocusEffect(
+        useCallback(() => {
+            const fetchArenas = async () => {
+                try {
+                    const arenaRef = await firestore()
+                        .collection('arenas')
+                        .where('holiday', '==', false)
+                        .get();
 
-                if (!arenaRef.empty) {
-                    const aData = arenaRef.docs.map(doc => {
-                        return {id: doc.id, ...doc.data()};
-                    });
+                    if (!arenaRef.empty) {
+                        const aData = arenaRef.docs.map(doc => {
+                            return {id: doc.id, ...doc.data()};
+                        });
 
-                    const filtered = aData.filter(data => {
-                        const isNameMatched = data.name
-                            .toLowerCase()
-                            .includes(searchQuery.toLowerCase());
+                        const filtered = aData.filter(data => {
+                            const isNameMatched = data.name
+                                .toLowerCase()
+                                .includes(searchQuery.toLowerCase());
 
-                        const isCityMatched =
-                            !cityFilter || data.city.includes(cityFilter);
+                            const isCityMatched =
+                                !cityFilter || data.city.includes(cityFilter);
 
-                        const isSportsMatched =
-                            !sportFilter ||
-                            data.sports.some(sport =>
-                                sport.includes(sportFilter),
+                            const isSportsMatched =
+                                !sportFilter ||
+                                data.sports.some(sport =>
+                                    sport.includes(sportFilter),
+                                );
+
+                            return (
+                                isNameMatched &&
+                                isCityMatched &&
+                                isSportsMatched
                             );
+                        });
 
-                        return (
-                            isNameMatched && isCityMatched && isSportsMatched
-                        );
+                        setArenasData(aData);
+                        setFilteredData(filtered);
+                        setIsLoading(false);
+                    } else {
+                        setIsLoading(false);
+
+                        setArenasData([]);
+                    }
+                } catch (error) {
+                    setIsLoading(false);
+
+                    Toast.show({
+                        type: 'error',
+                        text2: 'Error loading arenas data!',
                     });
-
-                    setArenasData(aData);
-                    setFilteredData(filtered);
-                    setIsLoading(false);
-                } else {
-                    setIsLoading(false);
-
-                    setArenasData([]);
                 }
-            } catch (error) {
-                setIsLoading(false);
+            };
 
-                Toast.show({
-                    type: 'error',
-                    text2: 'Error loading arenas data!',
-                });
-            }
-        };
+            fetchArenas();
 
-        fetchArenas();
-
-        return () => {};
-    }, []);
+            return () => {};
+        }, []),
+    );
 
     const gotoViewArena = (arena, arenaRating, ratingCount, arenaId) => {
         navigation.navigate('ViewArena', {
@@ -167,7 +171,9 @@ const FindArena = ({navigation}) => {
 
         const averageRating = totalRating / ratings.length;
 
-        return averageRating;
+        const formattedAverage = averageRating.toFixed(1);
+
+        return parseFloat(formattedAverage);
     };
 
     const resetFilters = () => {
@@ -214,7 +220,8 @@ const FindArena = ({navigation}) => {
     };
 
     const renderItem = ({item}) => {
-        let arenaRating = getAverageRating(item.rating);
+        let aRating = getAverageRating(item.rating);
+        let arenaRating = aRating.toFixed(1);
         let ratingCount = getRatingCount(item.rating.length);
         let sportsList = getSportsByIds(item.sports);
         let startingPrice = getStartingPrice(item.slots);
@@ -239,7 +246,11 @@ const FindArena = ({navigation}) => {
                                 source={require('../Assets/Icons/star.png')}
                                 style={styles.starIcon}
                             />
-                            <Text style={styles.rating}>{arenaRating}</Text>
+                            {ratingCount !== 0 ? (
+                                <Text style={styles.rating}>{arenaRating}</Text>
+                            ) : (
+                                <></>
+                            )}
                             <Text style={styles.numRating}>
                                 ({ratingCount})
                             </Text>

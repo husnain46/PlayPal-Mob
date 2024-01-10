@@ -15,7 +15,7 @@ import AlertPro from 'react-native-alert-pro';
 import Toast from 'react-native-toast-message';
 
 const Matches = ({navigation, route}) => {
-    const {data, teamsData, isOrganizer, isCricket} = route.params;
+    const {data, teamsData, isOrganizer, isCricket, isEnded} = route.params;
     const [matches, setMatches] = useState(data.matches);
 
     const alertRefs = useRef([]);
@@ -136,8 +136,8 @@ const Matches = ({navigation, route}) => {
         const t1 = item.teams.team1;
         const t2 = item.teams.team2;
 
-        const team1 = teamsData.find(team => team.id === t1);
-        const team2 = teamsData.find(team => team.id === t2);
+        const team1 = teamsData.find(team => team.teamId === t1);
+        const team2 = teamsData.find(team => team.teamId === t2);
 
         const currentTime = new Date().getTime();
         const matchTime = item.time.toDate().getTime();
@@ -165,6 +165,7 @@ const Matches = ({navigation, route}) => {
                         <IconButton
                             icon={'square-edit-outline'}
                             size={35}
+                            disabled={isEnded}
                             onPress={() => gotoEditMatch(item)}
                             style={{left: 10}}
                         />
@@ -259,6 +260,7 @@ const Matches = ({navigation, route}) => {
                                 item.status === 'Upcoming' ||
                                 item.status === 'Started' ? (
                                     <Button
+                                        disabled={isEnded}
                                         containerStyle={styles.startButton}
                                         mode="contained"
                                         onPress={() => {
@@ -295,6 +297,7 @@ const Matches = ({navigation, route}) => {
             </View>
         );
     };
+
     return (
         <SafeAreaView style={styles.container}>
             <Text style={styles.titleText}>Matches</Text>
@@ -304,6 +307,7 @@ const Matches = ({navigation, route}) => {
                 <></>
             ) : isOrganizer ? (
                 <Button
+                    disabled={isEnded}
                     onPress={() => gotoAddMatch()}
                     containerStyle={styles.matchBtn}
                     color={'#3c5885'}

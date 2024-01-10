@@ -1,4 +1,4 @@
-import {Icon} from '@rneui/themed';
+import {Divider, Icon} from '@rneui/themed';
 import React, {useRef, useState, useEffect} from 'react';
 import {Alert, Image, KeyboardAvoidingView, SafeAreaView} from 'react-native';
 import {
@@ -12,6 +12,7 @@ import {
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
+import auth from '@react-native-firebase/auth';
 
 const ChatScreen = ({navigation, route}) => {
     const {user, chatId, senderId} = route.params;
@@ -21,6 +22,8 @@ const ChatScreen = ({navigation, route}) => {
     const flatListRef = useRef(null);
 
     useEffect(() => {
+        const myId = auth().currentUser.uid;
+
         const unsubscribe = firestore()
             .collection('chats')
             .doc(chatId)
@@ -29,7 +32,26 @@ const ChatScreen = ({navigation, route}) => {
                     if (snapshot.exists) {
                         const chatData = snapshot.data();
                         if (chatData.messages) {
-                            const sortedMessages = chatData.messages.sort(
+                            const updatedMessages = chatData.messages.map(
+                                message => {
+                                    if (
+                                        !message.readBy ||
+                                        !message.readBy.includes(myId)
+                                    ) {
+                                        // If readBy doesn't exist or myId is not in readBy, update readBy
+                                        const updatedReadBy = message.readBy
+                                            ? [...message.readBy, myId]
+                                            : [myId];
+                                        return {
+                                            ...message,
+                                            readBy: updatedReadBy,
+                                        };
+                                    }
+                                    return message;
+                                },
+                            );
+
+                            const sortedMessages = updatedMessages.sort(
                                 (a, b) => {
                                     return (
                                         new Date(a.timestamp) -
@@ -37,7 +59,14 @@ const ChatScreen = ({navigation, route}) => {
                                     );
                                 },
                             );
+
                             setMessages(sortedMessages);
+
+                            // Update firestore with updated messages
+                            firestore()
+                                .collection('chats')
+                                .doc(chatId)
+                                .update({messages: updatedMessages});
                         } else {
                             setMessages([]);
                         }
@@ -85,11 +114,13 @@ const ChatScreen = ({navigation, route}) => {
         if (inputMessage.trim() === '') {
             return;
         }
+        const myId = auth().currentUser.uid;
 
         const message = {
             sender: senderId,
             text: inputMessage,
             timestamp: new Date().toISOString(),
+            readBy: [myId],
         };
 
         try {
@@ -125,6 +156,41 @@ const ChatScreen = ({navigation, route}) => {
         return '-';
     };
 
+    const renderItem = ({item, index}) => {
+        // Check if it's the first message or if the current message's date differs from the previous one
+        const showDateSeparator =
+            index === 0 ||
+            new Date(item.timestamp).toDateString() !==
+                new Date(messages[index - 1].timestamp).toDateString();
+
+        return (
+            <>
+                {showDateSeparator && (
+                    <View style={styles.dateSeparator}>
+                        <Divider width={1} style={styles.divider} />
+                        <Text style={styles.dateText}>
+                            {new Date(item.timestamp).toDateString()}
+                        </Text>
+                        <Divider width={1} style={styles.divider} />
+                    </View>
+                )}
+                <View
+                    style={
+                        item.sender === senderId
+                            ? styles.userMessageContainer
+                            : styles.otherMessageContainer
+                    }>
+                    <View style={styles.messageContent}>
+                        <Text style={styles.messageText}>{item.text}</Text>
+                    </View>
+                    <Text style={styles.timestampText}>
+                        {formatTimestamp(item.timestamp)}
+                    </Text>
+                </View>
+            </>
+        );
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <KeyboardAvoidingView>
@@ -154,23 +220,7 @@ const ChatScreen = ({navigation, route}) => {
                     data={messages}
                     contentContainerStyle={{paddingTop: 10, paddingBottom: 20}}
                     keyExtractor={(item, index) => index.toString()}
-                    renderItem={({item}) => (
-                        <View
-                            style={
-                                item.sender === senderId
-                                    ? styles.userMessageContainer
-                                    : styles.otherMessageContainer
-                            }>
-                            <View style={styles.messageContent}>
-                                <Text style={styles.messageText}>
-                                    {item.text}
-                                </Text>
-                            </View>
-                            <Text style={styles.timestampText}>
-                                {formatTimestamp(item.timestamp)}
-                            </Text>
-                        </View>
-                    )}
+                    renderItem={renderItem}
                     onContentSizeChange={() =>
                         flatListRef.current.scrollToEnd({animated: true})
                     }
@@ -246,6 +296,25 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         padding: 10,
     },
+    dateSeparator: {
+        width: '98%',
+        alignItems: 'center',
+        marginTop: 10,
+        alignSelf: 'center',
+        marginBottom: 10,
+        justifyContent: 'space-between',
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 15,
+        flexDirection: 'row',
+    },
+    divider: {
+        width: '32%',
+    },
+    dateText: {
+        fontSize: 12,
+        color: 'black',
+    },
     messageContent: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -257,7 +326,7 @@ const styles = StyleSheet.create({
     },
     timestampText: {
         fontSize: 12,
-        color: '#CCCCCC',
+        color: '#d9d7d7',
         alignSelf: 'flex-end',
         marginTop: 5,
     },

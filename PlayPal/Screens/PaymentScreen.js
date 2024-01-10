@@ -67,10 +67,31 @@ const PaymentScreen = ({navigation, route}) => {
         );
     };
 
+    const checkExistingBooking = async (arenaId, date, slotId) => {
+        try {
+            const bookingRef = await firestore()
+                .collection('bookings')
+                .where('arenaId', '==', arenaId)
+                .where('slotId', '==', slotId)
+                .get();
+
+            // Manually check for the booking date in the retrieved data
+            const existingBooking = bookingRef.docs.find(doc => {
+                const bookingDate = doc.data().bookingDate.toDate(); // Convert Firestore Timestamp to JavaScript Date
+                return bookingDate.toDateString() === date.toDateString();
+            });
+
+            return !!existingBooking;
+        } catch (error) {
+            console.error('Error checking existing booking:', error);
+            return false;
+        }
+    };
+
     const fetchPaymentIntentClientSecret = async amount => {
         try {
             const response = await fetch(
-                'http://192.168.1.5:3000/payment-intent',
+                'http://192.168.1.8:3000/payment-intent',
                 {
                     method: 'POST',
                     headers: {
@@ -107,6 +128,23 @@ const PaymentScreen = ({navigation, route}) => {
             try {
                 setLoading(true);
 
+                const exists = await checkExistingBooking(
+                    arena_id,
+                    selectedDate,
+                    slot_id,
+                );
+
+                if (exists) {
+                    setErrorTitle('Booking Error');
+                    setErrorMessage(
+                        'The slot is already booked!\nPlease select some other feasible slot to book.',
+                    );
+                    alertRefs.current.open();
+                    setLoading(false);
+
+                    return;
+                }
+
                 const clientSecret = await fetchPaymentIntentClientSecret(
                     slot_price,
                 );
@@ -138,7 +176,6 @@ const PaymentScreen = ({navigation, route}) => {
                 );
 
                 if (error) {
-                    console.log(error);
                     // Check the error code to determine a more specific title
                     if (
                         error.code === 'payment_intent_authentication_failure'

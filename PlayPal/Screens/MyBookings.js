@@ -95,7 +95,9 @@ const MyBookings = ({navigation}) => {
                 });
 
                 const resolvedBookings = await Promise.all(fetchedBookings);
-
+                resolvedBookings.sort((a, b) => {
+                    return b.createdAt.toDate() - a.createdAt.toDate();
+                });
                 setBookingsData(resolvedBookings);
                 setLoading(false);
             } catch (error) {
@@ -269,6 +271,7 @@ const MyBookings = ({navigation}) => {
                                     {title}
                                 </Text>
                             )}
+                            contentContainerStyle={{paddingBottom: 40}}
                             ListEmptyComponent={() => (
                                 <View style={styles.emptyContainer}>
                                     <Text style={{fontSize: 16, color: 'grey'}}>
@@ -290,6 +293,7 @@ const MyBookings = ({navigation}) => {
                                     {title}
                                 </Text>
                             )}
+                            contentContainerStyle={{paddingBottom: 40}}
                             ListEmptyComponent={() => (
                                 <View style={styles.emptyContainer}>
                                     <Text style={{fontSize: 16, color: 'grey'}}>

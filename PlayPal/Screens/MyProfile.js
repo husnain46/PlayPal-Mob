@@ -39,6 +39,7 @@ const MyProfile = ({navigation, route}) => {
     const [inviteLoading, setInviteLoading] = useState(false);
     const [teamInvites, setTeamInvites] = useState(user.teamReq);
     const [teamsData, setTeamsData] = useState(false);
+    const [sportMatched, setSportMatched] = useState(false);
 
     const alertRef = useRef();
 
@@ -53,15 +54,50 @@ const MyProfile = ({navigation, route}) => {
 
     const inviteAlertRef = useRef();
 
-    const handleAcceptInvite = async (tId, tName, isFull) => {
+    const renderAlert = sportName => {
+        return (
+            <AlertPro
+                ref={ref => (inviteAlertRef.current = ref)}
+                title={sportMatched ? '' : 'Team is full!'}
+                message={
+                    sportMatched
+                        ? `You are already in a ${sportName} Team! You cannot join another team of same sport.`
+                        : 'You cannot accept the invite right now!'
+                }
+                onConfirm={() => inviteAlertRef.current.close()}
+                showCancel={false}
+                textConfirm="Ok"
+                customStyles={{
+                    buttonConfirm: {backgroundColor: '#4a5a96'},
+                    container: {borderWidth: 2, borderColor: 'lightgrey'},
+                }}
+            />
+        );
+    };
+
+    const handleAcceptInvite = async (tId, tName, isFull, tSport) => {
         try {
             if (isFull) {
+                setSportMatched(false);
                 inviteAlertRef.current.open();
             } else {
                 setInviteLoading(true);
 
+                const myTeamRef = await firestore()
+                    .collection('teams')
+                    .where('playersId', 'array-contains', user.id)
+                    .where('sportId', '==', tSport)
+                    .get();
+
+                if (!myTeamRef.empty) {
+                    setSportMatched(true);
+                    inviteAlertRef.current.open();
+                } else {
+                    setSportMatched(false);
+                }
+
                 setTeamsData(prevTeams =>
-                    prevTeams.filter(team => team.id !== tId),
+                    prevTeams.filter(team => team.teamId !== tId),
                 );
 
                 const teamRef = firestore().collection('teams').doc(tId);
@@ -108,7 +144,7 @@ const MyProfile = ({navigation, route}) => {
             setInviteLoading(true);
 
             setTeamsData(prevTeams =>
-                prevTeams.filter(team => team.id !== tId),
+                prevTeams.filter(team => team.teamId !== tId),
             );
 
             await firestore()
@@ -172,7 +208,7 @@ const MyProfile = ({navigation, route}) => {
                         .get();
                     if (teamDoc.exists) {
                         const tData = teamDoc.data();
-                        tData.id = tId;
+                        tData.teamId = tId;
 
                         return tData;
                     } else {
@@ -241,7 +277,7 @@ const MyProfile = ({navigation, route}) => {
                         icon={'window-close'}
                         iconColor="red"
                         size={22}
-                        onPress={() => handleRemoveInvite(item.id)}
+                        onPress={() => handleRemoveInvite(item.teamId)}
                     />
                     <Text
                         style={{
@@ -257,9 +293,15 @@ const MyProfile = ({navigation, route}) => {
                         iconColor="#26a65b"
                         size={22}
                         onPress={() =>
-                            handleAcceptInvite(item.id, item.name, isFull)
+                            handleAcceptInvite(
+                                item.teamId,
+                                item.name,
+                                isFull,
+                                item.sportId,
+                            )
                         }
                     />
+                    {renderAlert(sportName)}
                 </View>
             </View>
         );
@@ -290,7 +332,7 @@ const MyProfile = ({navigation, route}) => {
                         elevation: 30,
                     },
                     buttonCancel: {
-                        backgroundColor: '#ffa31a',
+                        backgroundColor: '#10c479',
                     },
                     buttonConfirm: {
                         backgroundColor: 'red',
@@ -330,47 +372,41 @@ const MyProfile = ({navigation, route}) => {
                 </Card.Content>
             </Card>
 
-            <AlertPro
-                ref={ref => (inviteAlertRef.current = ref)}
-                title={'Team is full!'}
-                message={'You cannot accept the invite right now!'}
-                onConfirm={() => inviteAlertRef.current.close()}
-                showCancel={false}
-                textConfirm="Ok"
-                customStyles={{
-                    buttonConfirm: {backgroundColor: '#4a5a96'},
-                    container: {borderWidth: 2, borderColor: 'lightgrey'},
-                }}
-            />
-
-            <View
-                style={{
-                    width: 100,
-                    alignSelf: 'center',
-                    flexDirection: 'row-reverse',
-                }}>
-                <TouchableOpacity
-                    style={styles.invitesBtn}
-                    onPress={() => setReqModal(true)}>
-                    <Text
-                        style={{
-                            fontSize: 17,
-                            color: 'white',
-                            fontWeight: '700',
-                        }}>
-                        Invites
-                    </Text>
-                </TouchableOpacity>
-                {badgeCount > 0 && (
-                    <Badge
-                        status="error"
-                        value={badgeCount}
-                        containerStyle={{
-                            position: 'absolute',
-                        }}
-                    />
-                )}
+            <View style={styles.topBtnView}>
+                <View style={styles.inviteBtnView}>
+                    <Button
+                        mode="contained"
+                        icon="mail"
+                        labelStyle={{fontSize: 20}}
+                        style={styles.invitesBtn}
+                        onPress={() => setReqModal(true)}>
+                        <Text
+                            style={{
+                                fontSize: 17,
+                                color: 'white',
+                                fontWeight: '700',
+                            }}>
+                            Invites
+                        </Text>
+                    </Button>
+                    {badgeCount > 0 && (
+                        <Badge
+                            status="error"
+                            value={badgeCount}
+                            containerStyle={{position: 'absolute'}}
+                        />
+                    )}
+                </View>
+                <Button
+                    mode="contained"
+                    icon="account-edit"
+                    labelStyle={{fontSize: 20}}
+                    style={styles.editButton}
+                    onPress={() => navigation.navigate('EditProfile', {user})}>
+                    <Text style={styles.editBtnText}>Edit Profile</Text>
+                </Button>
             </View>
+
             <Modal
                 transparent={true}
                 animationType={'none'}
@@ -457,7 +493,7 @@ const MyProfile = ({navigation, route}) => {
                         ) : (
                             <FlatList
                                 data={teamsData}
-                                keyExtractor={item => item.id}
+                                keyExtractor={item => item.teamId}
                                 renderItem={renderInvites}
                                 ListEmptyComponent={() => (
                                     <Text
@@ -513,11 +549,12 @@ const MyProfile = ({navigation, route}) => {
 
             <Button
                 mode="contained"
-                icon="account-edit"
+                icon="lock-reset"
                 labelStyle={{fontSize: 20}}
-                style={styles.editButton}
-                onPress={() => navigation.navigate('EditProfile', {user})}>
-                <Text style={styles.editBtnText}>Edit Profile</Text>
+                style={styles.changePassBtn}
+                buttonColor="#FFA400"
+                onPress={() => navigation.navigate('ChangePassword')}>
+                <Text style={styles.changePassTxt}>Change Password</Text>
             </Button>
 
             <Button
@@ -607,16 +644,39 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
+    topBtnView: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '92%',
+        alignSelf: 'center',
+        justifyContent: 'space-around',
+        marginBottom: 15,
+    },
+    inviteBtnView: {
+        width: '42%',
+        alignSelf: 'center',
+        flexDirection: 'row-reverse',
+    },
     invitesBtn: {
-        width: 100,
+        width: '100%',
         height: 40,
         flexDirection: 'row',
         backgroundColor: '#28b57a',
         borderRadius: 10,
-        marginBottom: 15,
         alignSelf: 'center',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    editButton: {
+        width: '42%',
+        alignSelf: 'center',
+        marginVertical: 20,
+        borderRadius: 10,
+    },
+    editBtnText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: 'white',
     },
     detailsContainer1: {
         backgroundColor: 'white',
@@ -660,13 +720,13 @@ const styles = StyleSheet.create({
         height: 1,
         backgroundColor: 'grey',
     },
-    editButton: {
+    changePassBtn: {
         width: '92%',
         alignSelf: 'center',
         marginVertical: 20,
         borderRadius: 10,
     },
-    editBtnText: {
+    changePassTxt: {
         fontSize: 16,
         fontWeight: '700',
         color: 'white',

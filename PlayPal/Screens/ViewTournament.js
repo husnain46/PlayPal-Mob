@@ -46,21 +46,22 @@ const ViewTournament = ({navigation, route}) => {
     const sportName = getSportsByIds([data.sport]);
     const [isTeamInvited, setIsTeamInvited] = useState(false);
     const [inviteLoading, setInviteLoading] = useState(false);
+    const [isEnded, setIsEnded] = useState(false);
 
+    const [abandonModal, setAbandonModal] = useState(false);
     const [isVisible, setIsVisible] = useState(false);
     const alertRefs = useRef([]);
     const noTeamAlertRef = useRef([]);
     const clashAlertRef = useRef([]);
     const sportAlertRef = useRef([]);
     const inviteAlertRef = useRef([]);
+    const currentDate = new Date();
 
     const gotoEditTournament = () => {
         navigation.navigate('EditTournament', {data, teamsData});
     };
 
     const gotoInviteTeams = () => {
-        const currentDate = new Date();
-
         if (data.size === data.teamIds.length) {
             Toast.show({
                 type: 'info',
@@ -85,6 +86,7 @@ const ViewTournament = ({navigation, route}) => {
             teamsData,
             isOrganizer,
             isCricket,
+            isEnded,
         });
     };
 
@@ -109,11 +111,29 @@ const ViewTournament = ({navigation, route}) => {
                         setData(tData);
                         setTeamsCount(tData.teamIds.length);
 
+                        const t_endData = tData.end_date.toDate();
+
                         if (
                             tData.winner !== '' &&
                             tData.matches.some(match => match.title === 'Final')
                         ) {
+                            setIsEnded(true);
                             setIsVisible(true);
+                        }
+
+                        if (
+                            tData.winner === '' &&
+                            tData.matches.some(
+                                match => match.title !== 'Final',
+                            ) &&
+                            t_endData < currentDate
+                        ) {
+                            setIsEnded(true);
+                            setAbandonModal(true);
+                        }
+
+                        if (t_endData < currentDate) {
+                            setIsEnded(true);
                         }
 
                         const fetchTeamsData = async () => {
@@ -185,7 +205,7 @@ const ViewTournament = ({navigation, route}) => {
                                         if (docSnapshot.exists) {
                                             const newTeamData =
                                                 docSnapshot.data();
-                                            newTeamData.id = tId;
+                                            newTeamData.teamId = tId;
 
                                             // getting my team players clashes
                                             const hasCommonId =
@@ -212,6 +232,7 @@ const ViewTournament = ({navigation, route}) => {
                                 const teamDataArray = await Promise.all(
                                     promises,
                                 );
+
                                 const teamInfo = teamDataArray.filter(
                                     tData => tData !== null,
                                 );
@@ -221,10 +242,11 @@ const ViewTournament = ({navigation, route}) => {
                                     const {wins, losses, draws} =
                                         countMatchesOutcome(
                                             tData.matches,
-                                            team.id,
+                                            team.teamId,
                                         );
                                     const points =
                                         wins * 2 + draws - losses * 2;
+
                                     return {...team, points};
                                 });
 
@@ -312,7 +334,7 @@ const ViewTournament = ({navigation, route}) => {
                 ref={ref => (inviteAlertRef.current = ref)}
                 title={''}
                 message={
-                    'Do you want to accept the invitation to play this tournament?'
+                    'Do you want to accept the invitation to play this tournament?\nRemember! Once you accept the invite you cannot leave.'
                 }
                 textConfirm="Yes"
                 textCancel="No"
@@ -333,7 +355,6 @@ const ViewTournament = ({navigation, route}) => {
     };
 
     const handleAcceptInvite = async () => {
-        const currentDate = new Date();
         inviteAlertRef.current.close();
         if (data.size === data.teamIds.length) {
             Toast.show({
@@ -442,7 +463,6 @@ const ViewTournament = ({navigation, route}) => {
                 }
             } catch (error) {
                 setInviteLoading(false);
-                console.log(error);
                 Toast.show({
                     type: 'error',
                     text2: 'An error occurred!',
@@ -692,17 +712,21 @@ const ViewTournament = ({navigation, route}) => {
 
         const {wins, losses, draws} = countMatchesOutcome(
             data.matches,
-            item.id,
+            item.teamId,
         );
 
         const points = wins * 2 + draws;
 
         return (
             <View style={styles.teamCard}>
-                <View style={styles.cardSubView}>
+                <TouchableOpacity
+                    style={styles.cardSubView}
+                    onPress={() =>
+                        navigation.navigate('ViewTeam', {team: item})
+                    }>
                     <Text style={styles.numText}>{`${num})`}</Text>
                     <Text style={styles.teamName}>{item.name}</Text>
-                </View>
+                </TouchableOpacity>
                 <View style={styles.cardSubView2}>
                     <Text style={styles.pointsText}>{wins}</Text>
                 </View>
@@ -751,7 +775,7 @@ const ViewTournament = ({navigation, route}) => {
                     <Text style={styles.bio}>{data.detail}</Text>
                 </View>
 
-                <Divider style={styles.divider} width={2} color="grey" />
+                <Divider style={styles.divider} width={1} color="grey" />
 
                 {data.winner !== '' ? (
                     <></>
@@ -761,10 +785,15 @@ const ViewTournament = ({navigation, route}) => {
                             width: '90%',
                             flexDirection: 'row',
                             justifyContent: 'space-between',
+                            marginBottom: 5,
+                            marginTop: 5,
                         }}>
                         <Button
-                            mode="elevated"
-                            style={styles.editBtn}
+                            mode="outlined"
+                            style={
+                                isEnded ? styles.disabledBtn : styles.editBtn
+                            }
+                            disabled={isEnded}
                             onPress={() => gotoEditTournament()}>
                             <Text style={{fontSize: 16, color: '#374c62'}}>
                                 Edit Tournament
@@ -772,9 +801,18 @@ const ViewTournament = ({navigation, route}) => {
                         </Button>
                         <Button
                             mode="elevated"
-                            style={styles.inviteTeamBtn}
+                            disabled={isEnded}
+                            style={
+                                isEnded
+                                    ? styles.disabledBtn
+                                    : styles.inviteTeamBtn
+                            }
                             onPress={() => gotoInviteTeams()}>
-                            <Text style={{fontSize: 16, color: 'white'}}>
+                            <Text
+                                style={{
+                                    fontSize: 16,
+                                    color: isEnded ? '#374c62' : 'white',
+                                }}>
                                 Invite Teams
                             </Text>
                         </Button>
@@ -787,6 +825,7 @@ const ViewTournament = ({navigation, route}) => {
                         ) : (
                             <Button
                                 mode="contained"
+                                disabled={isEnded}
                                 style={{
                                     borderRadius: 12,
                                     marginLeft: 15,
@@ -800,6 +839,8 @@ const ViewTournament = ({navigation, route}) => {
                         )}
                     </>
                 ) : hasJoined ? (
+                    <></>
+                ) : isEnded ? (
                     <></>
                 ) : (
                     <Button
@@ -935,6 +976,64 @@ const ViewTournament = ({navigation, route}) => {
                     </View>
                 </Modal>
 
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={abandonModal}
+                    onRequestClose={() => setAbandonModal(false)}>
+                    <View
+                        style={{
+                            flex: 1,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}>
+                        <View
+                            style={{
+                                backgroundColor: 'white',
+                                padding: 10,
+                                borderRadius: 10,
+                                alignItems: 'center',
+                                elevation: 100,
+                                width: '80%',
+                                height: 170,
+                                borderWidth: 1,
+                                borderColor: 'red',
+                            }}>
+                            <Text
+                                style={{
+                                    fontSize: 18,
+                                    fontWeight: '600',
+                                    color: 'red',
+                                }}>
+                                Tournament got abandoned!
+                            </Text>
+                            <Text
+                                style={{
+                                    fontSize: 16,
+                                    marginTop: 20,
+                                    width: '70%',
+                                    textAlign: 'center',
+                                    color: 'black',
+                                }}>
+                                Matches weren't scheduled/held properly!
+                            </Text>
+                            <TouchableOpacity
+                                style={{
+                                    marginTop: 30,
+                                }}
+                                onPress={() => setAbandonModal(false)}>
+                                <Text
+                                    style={{
+                                        color: 'blue',
+                                        textDecorationLine: 'underline',
+                                    }}>
+                                    close
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+
                 <AlertPro
                     ref={ref => (alertRefs.current = ref)}
                     title={'Tournament is full!'}
@@ -1015,7 +1114,9 @@ const ViewTournament = ({navigation, route}) => {
                                 color="lightgrey"
                             />
 
-                            <TouchableOpacity onPress={() => gotoViewTeam()}>
+                            <TouchableOpacity
+                                style={{marginTop: 10}}
+                                onPress={() => gotoViewTeam()}>
                                 <Text style={styles.organizer}>
                                     {organizer.name}
                                 </Text>
@@ -1100,17 +1201,31 @@ const ViewTournament = ({navigation, route}) => {
                     </View>
                 </Modal>
 
-                <View style={styles.middleBtnView}>
+                <View
+                    style={
+                        isOrganizer
+                            ? styles.middleBtnView
+                            : styles.middleBtnView2
+                    }>
                     {isOrganizer ? (
-                        <>
+                        <View
+                            style={{
+                                flexDirection: 'row-reverse',
+                                width: '46%',
+                            }}>
                             <Button
                                 mode="contained"
-                                style={styles.reqBtn}
+                                disabled={isEnded}
+                                style={
+                                    isEnded
+                                        ? styles.disabledBtn2
+                                        : styles.reqBtn
+                                }
                                 icon={'android-messages'}
-                                textColor="#374c62"
-                                buttonColor="#d3e8f2"
+                                textColor="white"
+                                buttonColor="#5D5B8E"
                                 onPress={() => setReqModal(true)}>
-                                <Text style={{fontSize: 16, color: '#374c62'}}>
+                                <Text style={{fontSize: 15, color: 'white'}}>
                                     Requests
                                 </Text>
                             </Button>
@@ -1121,11 +1236,10 @@ const ViewTournament = ({navigation, route}) => {
                                     value={badgeCount}
                                     containerStyle={{
                                         position: 'absolute',
-                                        flexDirection: 'row-reverse',
                                     }}
                                 />
                             )}
-                        </>
+                        </View>
                     ) : (
                         <></>
                     )}
@@ -1133,8 +1247,13 @@ const ViewTournament = ({navigation, route}) => {
                         mode="contained"
                         style={styles.matchesBtn}
                         buttonColor="#f2a72e"
+                        contentStyle={{margin: 0}}
                         onPress={() => gotoMatches()}>
-                        <Text style={{fontSize: 16, color: 'white'}}>
+                        <Text
+                            style={{
+                                fontSize: 15,
+                                color: 'white',
+                            }}>
                             View matches
                         </Text>
                     </Button>
@@ -1166,7 +1285,7 @@ const ViewTournament = ({navigation, route}) => {
                 <FlatList
                     data={teamsData}
                     renderItem={renderItem}
-                    keyExtractor={item => item.id}
+                    keyExtractor={item => item.teamId}
                     scrollEnabled={false}
                     contentContainerStyle={{paddingBottom: 20}}
                 />

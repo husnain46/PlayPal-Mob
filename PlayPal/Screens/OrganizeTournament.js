@@ -27,7 +27,7 @@ const OrganizeTournament = ({navigation, route}) => {
     const [tourDetail, setTourDetail] = useState('');
     const [venueName, setVenueName] = useState('');
     const [venueAddress, setVenueAddress] = useState('');
-    const [tourSize, setTourSize] = useState(3);
+    const [tourSize, setTourSize] = useState(2);
     const [loading, setLoading] = useState(false);
     const [showPicker1, setShowPicker1] = useState(false);
     const [showPicker2, setShowPicker2] = useState(false);
@@ -49,7 +49,7 @@ const OrganizeTournament = ({navigation, route}) => {
     const endMinDate = new Date();
     endMinDate.setDate(minDate.getDate() + 3);
 
-    const numbers = Array.from({length: 6}, (_, index) => index + 3);
+    const numbers = Array.from({length: 7}, (_, index) => index + 2);
 
     const cityList = cityData.map(item => ({
         label: item.city,
@@ -58,7 +58,17 @@ const OrganizeTournament = ({navigation, route}) => {
 
     const handleStartDate = (event, selected) => {
         setShowPicker1(false);
+
+        if (event.type === 'dismissed') {
+            // User canceled the date picker, no need to update the state.
+            return;
+        }
+
         if (selected) {
+            selected.setHours(0);
+            selected.setMinutes(0);
+            selected.setSeconds(0);
+
             setStartDate(selected);
             setEndDate('');
         }
@@ -66,7 +76,17 @@ const OrganizeTournament = ({navigation, route}) => {
 
     const handleEndDate = (event, selected) => {
         setShowPicker2(false);
+
+        if (event.type === 'dismissed') {
+            // User canceled the date picker, no need to update the state.
+            return;
+        }
+
         if (selected) {
+            selected.setHours(23);
+            selected.setMinutes(59);
+            selected.setSeconds(59);
+
             setEndDate(selected);
         }
     };
@@ -241,7 +261,6 @@ const OrganizeTournament = ({navigation, route}) => {
                             value={minDate}
                             mode="date"
                             display="compact"
-                            onpre
                             minimumDate={minDate}
                             maximumDate={maxDate}
                             onChange={handleStartDate}

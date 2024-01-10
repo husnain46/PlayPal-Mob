@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
         height: 40,
         fontSize: 16,
         borderColor: 'black',
+        color: 'black',
     },
     button: {
         borderRadius: 20,
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     },
     rating: {
         marginLeft: 10,
-        fontSize: 17,
+        fontSize: 16,
         fontWeight: '600',
         color: 'darkblue',
     },

@@ -24,6 +24,8 @@ import sportsList from '../Assets/sportsList.json';
 import {useFocusEffect} from '@react-navigation/native';
 import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
+import {Dropdown} from 'react-native-element-dropdown';
+import cityData from '../Assets/cityData.json';
 
 const FindPlayers = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
@@ -33,6 +35,14 @@ const FindPlayers = ({navigation}) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [playersData, setPlayersData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [cityFilter, setCityFilter] = useState('');
+    const [isFocus, setIsFocus] = useState(false);
+    const [myCity, setMyCity] = useState('');
+
+    const cityList = cityData.map(item => ({
+        label: item.city,
+        value: item.city,
+    }));
 
     const fetchUserDataFromFirestore = async () => {
         try {
@@ -44,20 +54,24 @@ const FindPlayers = ({navigation}) => {
 
             const snapshot = await usersCollection.get();
             if (!snapshot.empty) {
-                let myCity;
+                let cityName;
                 const userData = snapshot.docs.map(doc => {
                     if (doc.id == myId) {
-                        myCity = doc.data().city;
+                        cityName = doc.data().city;
+                        setMyCity(cityName);
                     }
                     return {...doc.data(), id: doc.id};
                 });
 
-                const newUsersData = userData
-                    .filter(user => user.id !== myId)
-                    .filter(user => user.city === myCity);
+                const newUsersData = userData.filter(user => user.id !== myId);
 
-                setFilteredUsers(newUsersData);
+                const filterData = newUsersData.filter(
+                    user => user.city === cityName,
+                );
+                setFilteredUsers(filterData);
                 setPlayersData(newUsersData);
+                setCityFilter(cityName);
+
                 setIsLoading(false);
             }
         } catch (error) {
@@ -121,8 +135,11 @@ const FindPlayers = ({navigation}) => {
                     user.username.toLowerCase().includes(word),
             );
 
+            const isCityMatched = !cityFilter || user.city.includes(cityFilter);
+
             const isSportsMatched =
                 !sportsFilter || user.preferredSports.includes(sportsFilter);
+
             const isAgeMatched =
                 !ageFilter ||
                 (getAge(user.DOB) <= ageFilter &&
@@ -132,6 +149,7 @@ const FindPlayers = ({navigation}) => {
                 !levelFilter || user.skillLevel === levelFilter;
 
             return (
+                isCityMatched &&
                 isNameMatched &&
                 isSportsMatched &&
                 isAgeMatched &&
@@ -154,16 +172,21 @@ const FindPlayers = ({navigation}) => {
                     .toLowerCase()
                     .includes(searchQuery.trim().toLowerCase());
 
+            const isCityMatched = !cityFilter || user.city.includes(cityFilter);
+
             const isSportsMatched =
                 !sportsFilter || user.preferredSports.includes(sportsFilter);
+
             const isAgeMatched =
                 !ageFilter ||
                 (getAge(user.DOB) <= ageFilter &&
                     getAge(user.DOB) > ageFilter - 10);
+
             const isLevelMatched =
                 !levelFilter || user.skillLevel === levelFilter;
 
             return (
+                isCityMatched &&
                 isNameMatched &&
                 isSportsMatched &&
                 isAgeMatched &&
@@ -276,6 +299,35 @@ const FindPlayers = ({navigation}) => {
                 }}>
                 <View style={styles.centeredView}>
                     <View style={styles.modalView}>
+                        <View style={styles.dropView}>
+                            <Text style={styles.dropLabel}>City:</Text>
+                            <Dropdown
+                                style={styles.dropdown}
+                                selectedTextStyle={styles.selectedTextStyle}
+                                containerStyle={styles.dropContainer}
+                                itemTextStyle={styles.dropItemText}
+                                itemContainerStyle={styles.dropItem}
+                                iconStyle={styles.iconStyle}
+                                inputSearchStyle={styles.dropSearch}
+                                placeholderStyle={{color: 'darkgrey'}}
+                                data={cityList}
+                                maxHeight={200}
+                                labelField="label"
+                                search={true}
+                                valueField="value"
+                                placeholder={!isFocus ? 'Select city' : '...'}
+                                searchPlaceholder={'Search...'}
+                                searchField=""
+                                value={cityFilter}
+                                onFocus={() => setIsFocus(true)}
+                                onBlur={() => setIsFocus(false)}
+                                onChange={item => {
+                                    setCityFilter(item.value);
+                                    setIsFocus(false);
+                                }}
+                            />
+                        </View>
+
                         <View style={styles.pickerView}>
                             <Text style={styles.filterLabel}>
                                 Sports preference:
@@ -388,7 +440,7 @@ const FindPlayers = ({navigation}) => {
                         data={filteredUsers}
                         renderItem={renderItem}
                         keyExtractor={item => item.username}
-                        contentContainerStyle={{paddingBottom: 170}}
+                        contentContainerStyle={{paddingBottom: 200}}
                         ListEmptyComponent={() => (
                             <Text style={styles.emptyListText}>
                                 No player found!

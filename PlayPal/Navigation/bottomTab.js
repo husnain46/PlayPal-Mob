@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import Home from '../Screens/Home';
 import FindPlayers from '../Screens/FindPlayers';
@@ -7,10 +7,25 @@ import Tournament from '../Screens/Tournament';
 import FindArena from '../Screens/FindArena';
 import {View, Image, Text, StyleSheet} from 'react-native';
 import Header from './header';
+import LogoAnimation from '../Custom/LogoAnimation';
 
 const Tab = createBottomTabNavigator();
 
 const BottomTab = ({navigation}) => {
+    const [isHeaderReady, setIsHeaderReady] = useState(false);
+
+    useEffect(() => {
+        // Simulating an asynchronous process for header preparation
+        setTimeout(() => {
+            setIsHeaderReady(true);
+        }, 3000); // Adjust the delay time as needed
+    }, []);
+
+    if (!isHeaderReady) {
+        // Render a loading indicator or placeholder while the header is being prepared
+        return <LogoAnimation />;
+    }
+
     return (
         <Tab.Navigator
             initialRouteName="Home"
