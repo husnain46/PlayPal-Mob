@@ -24,12 +24,24 @@ const AddMatch = ({navigation, route}) => {
     const [selectedTeam2, setSelectedTeam2] = useState('');
     const [loading, setLoading] = useState(false);
     const [minDate, setMinDate] = useState(data.start_date.toDate());
-    const finalExists = data.matches.some(match => match.title === 'Final');
-    const semi1Exists = data.matches.some(
-        match => match.title === 'Semi-Final 1',
+
+    const matchTypes = [
+        {label: 'Group Stage', value: 'Group Stage'},
+        {label: 'Knockout', value: 'Knockout'},
+        {label: 'Semi-Final 1', value: 'Semi-Final 1'},
+        {label: 'Semi-Final 2', value: 'Semi-Final 2'},
+        {label: 'Final', value: 'Final'},
+    ];
+
+    const titlesToFilter = ['Final', 'Semi-Final 1', 'Semi-Final 2'];
+
+    // Check if any of the titles need to be filtered
+    const foundTitles = titlesToFilter.filter(title =>
+        data.matches.some(match => match.title === title),
     );
-    const semi2Exists = data.matches.some(
-        match => match.title === 'Semi-Final 2',
+
+    const filteredTypes = matchTypes.filter(
+        matchType => !foundTitles.includes(matchType.value),
     );
 
     const maxDate = data.end_date.toDate();
@@ -41,14 +53,6 @@ const AddMatch = ({navigation, route}) => {
         team1: '',
         team2: '',
     });
-
-    const matchTypes = [
-        {label: 'Group Stage', value: 'Group Stage'},
-        {label: 'Knockout', value: 'Knockout'},
-        {label: 'Semi-Final 1', value: 'Semi-Final 1'},
-        {label: 'Semi-Final 2', value: 'Semi-Final 2'},
-        {label: 'Final', value: 'Final'},
-    ];
 
     const newMatchTypes = matchTypes.filter(
         matchType => matchType.label !== 'Final',
@@ -65,7 +69,7 @@ const AddMatch = ({navigation, route}) => {
 
     const tournamentTeams = teamsData.map(team => ({
         label: team.name,
-        value: team.id,
+        value: team.teamId,
     }));
 
     const handleDateChange = (event, selected) => {
@@ -95,6 +99,7 @@ const AddMatch = ({navigation, route}) => {
     };
 
     const filteredTeams = teamSelected => {
+        console.log(teamSelected);
         return tournamentTeams.filter(team => team.value !== teamSelected);
     };
 
@@ -315,7 +320,7 @@ const AddMatch = ({navigation, route}) => {
                     containerStyle={styles.dropContainer}
                     itemTextStyle={{color: 'black', fontSize: 14}}
                     iconStyle={styles.iconStyle}
-                    data={finalExists ? newMatchTypes : matchTypes}
+                    data={filteredTypes}
                     maxHeight={300}
                     labelField="label"
                     valueField="value"
@@ -402,10 +407,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     screenTitle: {
-        fontSize: 22,
+        fontSize: 20,
         color: '#4a5a96',
-        fontWeight: '700',
+        fontWeight: '600',
         marginTop: 30,
+        fontStyle: 'italic',
     },
     divider: {
         alignSelf: 'center',
@@ -444,7 +450,9 @@ const styles = StyleSheet.create({
         marginTop: 15,
         flexDirection: 'row',
         alignItems: 'center',
-        width: 300,
+        justifyContent: 'space-between',
+        width: '70%',
+        alignSelf: 'center',
         marginBottom: 10,
     },
     dateLabel: {
@@ -452,34 +460,33 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         color: 'black',
         textAlignVertical: 'center',
-        marginRight: 40,
     },
     dateBox: {
-        width: 160,
+        width: '55%',
         marginLeft: 10,
-        height: 45,
+        height: 40,
         justifyContent: 'center',
         alignItems: 'center',
     },
     dateText: {
-        fontSize: 17,
+        fontSize: 15,
         fontWeight: '500',
         color: '#4a5a96',
         paddingHorizontal: 0,
     },
     datePlaceholder: {
         paddingHorizontal: 0,
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '400',
         color: 'grey',
     },
     dropView: {
-        width: 300,
+        width: '70%',
         marginTop: 20,
     },
     dropdown: {
-        height: 50,
-        width: 250,
+        height: 45,
+        width: '100%',
         borderColor: 'grey',
         borderWidth: 1,
         borderRadius: 8,

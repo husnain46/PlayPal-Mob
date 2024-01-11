@@ -98,8 +98,9 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     ratingTitle: {
-        fontSize: 24,
-        fontWeight: '900',
+        fontSize: 22,
+        fontStyle: 'italic',
+        fontWeight: '700',
         color: '#4a5a96',
         textAlign: 'center',
         width: 250,
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     ratingView: {
-        width: '90%',
+        width: '100%',
         marginTop: 30,
         borderRadius: 10,
         backgroundColor: 'white',
@@ -158,11 +159,14 @@ const styles = StyleSheet.create({
     },
     reviewUserText: {
         fontSize: 14,
-        width: 80,
+        width: '40%',
         color: 'grey',
     },
     timeElapsed: {
         fontSize: 14,
+        width: '40%',
+        right: 5,
+        textAlign: 'right',
         textAlignVertical: 'center',
         color: 'grey',
     },

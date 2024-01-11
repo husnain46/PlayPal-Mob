@@ -45,11 +45,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     arenaTitle: {
-        fontSize: 24,
-        fontWeight: '900',
+        fontSize: 22,
+        fontWeight: '700',
         color: '#4a5a96',
         textAlign: 'center',
-        width: 250,
+        width: '80%',
+        fontStyle: 'italic',
         marginTop: 15,
     },
     cityText: {

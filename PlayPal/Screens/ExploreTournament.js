@@ -100,7 +100,7 @@ const ExploreTournament = ({navigation}) => {
         Badminton: require('../Assets/Icons/badminton.png'),
         Tennis: require('../Assets/Icons/tennis.png'),
         'Table Tennis': require('../Assets/Icons/tableTennis.png'),
-        default: require('../Assets/Icons/no image.png'),
+        default: require('../Assets/Icons/no-image.png'),
     };
 
     const handleTabChange = index => {
@@ -195,13 +195,18 @@ const ExploreTournament = ({navigation}) => {
                         style={{
                             flexDirection: 'row',
                             justifyContent: 'space-between',
+                            paddingTop: 7,
                         }}>
                         <View style={{flexWrap: 'wrap'}}>
                             <Title style={styles.title}>{item.name}</Title>
                             <Text style={styles.subtitle}>({sportName})</Text>
                             <Divider style={styles.divider} />
 
-                            <View style={{flexDirection: 'row'}}>
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                }}>
                                 <Image
                                     style={styles.icon}
                                     source={require('../Assets/Icons/location.png')}
@@ -593,17 +598,17 @@ const styles = StyleSheet.create({
         borderColor: 'darkgrey',
     },
     title: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '600',
     },
     subtitle: {
-        fontSize: 17,
+        fontSize: 16,
         color: 'grey',
     },
     divider: {
         marginTop: 10,
         width: '101%',
-        height: 1.5,
+        height: 1,
         marginBottom: 10,
         backgroundColor: 'grey',
     },
@@ -627,8 +632,8 @@ const styles = StyleSheet.create({
         color: '#fc3003',
     },
     icon: {
-        width: 20,
-        height: 20,
+        width: 17,
+        height: 17,
         marginRight: 15,
     },
     cityText: {

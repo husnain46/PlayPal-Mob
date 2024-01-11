@@ -11,11 +11,11 @@ const styles = StyleSheet.create({
         borderBottomStartRadius: 20,
         backgroundColor: '#4a5a96',
         alignItems: 'center',
-        height: 70,
+        height: 60,
         justifyContent: 'center',
     },
     title: {
-        fontSize: 22,
+        fontSize: 20,
         fontWeight: '600',
         fontStyle: 'italic',
         color: 'white',
@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
         width: '85%',
     },
     searchBar: {
-        width: '85%',
-        height: 50,
+        width: '82%',
+        height: 45,
         justifyContent: 'center',
         backgroundColor: 'white',
         elevation: 10,
@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
         width: 25,
         height: 25,
         top: 2,
+        right: 5,
     },
     ageFilterView: {
         alignSelf: 'center',
@@ -237,8 +238,8 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     cardTitle: {
-        fontSize: 19,
-        fontWeight: 'bold',
+        fontSize: 18,
+        fontWeight: '600',
         marginTop: -5,
         color: '#4a5a96',
         textAlign: 'center',

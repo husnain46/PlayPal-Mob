@@ -188,8 +188,6 @@ const Slots = ({navigation, route}) => {
             <View style={styles.headerView}>
                 <Text style={styles.titleScreen}>Search Slots</Text>
 
-                <Divider width={1} color="white" style={styles.divider} />
-
                 <TouchableOpacity
                     style={styles.dateBtn}
                     onPress={() => setShowDatePicker(true)}>
@@ -277,6 +275,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 15,
         letterSpacing: 0.5,
+        fontStyle: 'italic',
     },
     divider: {
         width: '91%',

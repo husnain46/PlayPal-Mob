@@ -236,7 +236,7 @@ const Notifications = ({navigation, route}) => {
                 setLoading(false);
             } catch (error) {
                 setLoading(false);
-                console.log(error);
+
                 Toast.show({
                     type: 'error',
                     text2: error.message,
@@ -285,7 +285,8 @@ const Notifications = ({navigation, route}) => {
                                 item.type === 'tour_invite' ||
                                 item.type === 'tour_accepted' ||
                                 item.type === 'no_final' ||
-                                item.type === 'tour_started'
+                                item.type === 'tour_started' ||
+                                item.type === 'tour_abandoned'
                             ) {
                                 gotoTournament(item.tourId);
                             }
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 22,
-        fontWeight: 'bold',
+        fontWeight: '600',
         color: '#4a5a96',
     },
     notificationItemView: {

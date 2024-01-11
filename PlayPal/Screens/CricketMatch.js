@@ -5,6 +5,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View,
 } from 'react-native';
 import React, {useRef, useState} from 'react';
@@ -23,8 +24,8 @@ const CricketMatch = ({navigation, route}) => {
     const pattern = /^\d+$/;
     const [error1, setError1] = useState('');
     const [error2, setError2] = useState('');
-    const [t1Wickets, setT1Wickets] = useState(0);
-    const [t2Wickets, setT2Wickets] = useState(0);
+    const [t1Wickets, setT1Wickets] = useState(match.result.wicketsT1);
+    const [t2Wickets, setT2Wickets] = useState(match.result.wicketsT2);
     const [selectedWinner, setSelectedWinner] = useState('');
     const [tieModal, setTieModal] = useState(false);
     const [winnerError, setWinnerError] = useState('');
@@ -44,7 +45,9 @@ const CricketMatch = ({navigation, route}) => {
     ];
 
     const addWicket = (outs, setWickets) => {
-        setWickets(outs + 1);
+        if (outs < 10) {
+            setWickets(outs + 1);
+        }
     };
 
     const removeWicket = (outs, setWickets) => {
@@ -101,6 +104,11 @@ const CricketMatch = ({navigation, route}) => {
                         }
                     });
 
+                    Toast.show({
+                        type: 'success',
+                        text1: `Score updated! ${newScore} - ${outs}`,
+                    });
+
                     await tournamentRef.update({matches: updatedMatches});
                 }
             } catch (error) {
@@ -122,12 +130,12 @@ const CricketMatch = ({navigation, route}) => {
         try {
             const team1Doc = await firestore()
                 .collection('teams')
-                .doc(team1.id)
+                .doc(team1.teamId)
                 .get();
 
             const team2Doc = await firestore()
                 .collection('teams')
-                .doc(team2.id)
+                .doc(team2.teamId)
                 .get();
 
             if (team1Doc.exists && team2Doc.exists) {
@@ -152,16 +160,22 @@ const CricketMatch = ({navigation, route}) => {
 
                 const batch = firestore().batch();
 
-                batch.update(firestore().collection('teams').doc(team1.id), {
-                    wins: winsT1,
-                    draws: drawsT1,
-                    loses: lostT1,
-                });
-                batch.update(firestore().collection('teams').doc(team2.id), {
-                    wins: winsT2,
-                    draws: drawsT2,
-                    loses: lostT2,
-                });
+                batch.update(
+                    firestore().collection('teams').doc(team1.teamId),
+                    {
+                        wins: winsT1,
+                        draws: drawsT1,
+                        loses: lostT1,
+                    },
+                );
+                batch.update(
+                    firestore().collection('teams').doc(team2.teamId),
+                    {
+                        wins: winsT2,
+                        draws: drawsT2,
+                        loses: lostT2,
+                    },
+                );
 
                 let newPoint = 1;
                 isFinal ? (newPoint = 5) : (newPoint = 1);
@@ -199,20 +213,46 @@ const CricketMatch = ({navigation, route}) => {
     const handleEndMatch = async () => {
         try {
             setEndLoading(true);
+            alertRefs.current.close();
 
             const tournamentRef = firestore()
                 .collection('tournaments')
                 .doc(tournamentId);
 
             if (match.title === 'Final') {
-                setTieModal(true);
-
-                setEndLoading(false);
+                if (scoreT1 === scoreT2) {
+                    setTieModal(true);
+                } else {
+                    let newWinner;
+                    if (scoreT1 > scoreT2) {
+                        newWinner = team1.name;
+                    } else if (scoreT2 > scoreT1) {
+                        newWinner = team2.name;
+                    }
+                    setSelectedWinner(newWinner);
+                    await handleFinalWinner(newWinner);
+                }
+                // update data if not updated
 
                 return;
             } else {
                 const tournamentDoc = await tournamentRef.get();
                 const matchesArray = tournamentDoc.data().matches;
+
+                // update data if not updated
+                await updateScoreInFirestore(
+                    team1.teamId,
+                    scoreT1,
+                    1,
+                    t1Wickets,
+                );
+
+                await updateScoreInFirestore(
+                    team2.teamId,
+                    scoreT2,
+                    2,
+                    t2Wickets,
+                );
 
                 const updatedStatus = matchesArray.map(item => {
                     if (
@@ -223,10 +263,8 @@ const CricketMatch = ({navigation, route}) => {
                         let matchStatus;
 
                         if (scoreT1 > scoreT2) {
-                            console.log('1');
                             matchStatus = `${team1.name} won!`;
                         } else if (scoreT2 > scoreT1) {
-                            console.log('2');
                             matchStatus = `${team2.name} won!`;
                         } else if (scoreT1 === scoreT2) {
                             matchStatus = `Match drawn!`;
@@ -276,12 +314,29 @@ const CricketMatch = ({navigation, route}) => {
         }
     };
 
-    const handleFinalWinner = async () => {
+    const handleFinalWinner = async newWinner => {
         try {
-            if (selectedWinner === '') {
+            if (selectedWinner === '' && newWinner === '') {
                 setWinnerError('Please select a winner.');
             } else {
+                setWinnerError('');
+
                 setFinishLoading(true);
+
+                //update data if not updated
+                await updateScoreInFirestore(
+                    team1.teamId,
+                    scoreT1,
+                    1,
+                    t1Wickets,
+                );
+
+                await updateScoreInFirestore(
+                    team2.teamId,
+                    scoreT2,
+                    2,
+                    t2Wickets,
+                );
 
                 const tournamentRef = firestore()
                     .collection('tournaments')
@@ -331,18 +386,19 @@ const CricketMatch = ({navigation, route}) => {
                 await updateTeamData(isFinal);
 
                 await tournamentRef.update({matches: updatedStatus});
-                setFinishLoading(false);
 
                 if (scoreT1 > scoreT2) {
-                    await tournamentRef.update({winner: team1.id});
+                    await tournamentRef.update({winner: team1.name});
                 } else if (scoreT2 > scoreT1) {
-                    await tournamentRef.update({winner: team2.id});
+                    await tournamentRef.update({winner: team2.name});
                 } else if (scoreT1 === scoreT2) {
                     await tournamentRef.update({winner: selectedWinner});
                 }
 
                 setTieModal(false);
+                setFinishLoading(false);
 
+                setEndLoading(false);
                 navigation.goBack();
             }
         } catch (error) {
@@ -399,7 +455,7 @@ const CricketMatch = ({navigation, route}) => {
                             <Icon
                                 name="remove-circle"
                                 color={'#c22115'}
-                                size={30}
+                                size={25}
                                 type="Icons"
                                 onPress={() =>
                                     removeWicket(t1Wickets, setT1Wickets)
@@ -413,7 +469,7 @@ const CricketMatch = ({navigation, route}) => {
                             <Icon
                                 name="add-circle"
                                 color={'royalblue'}
-                                size={30}
+                                size={25}
                                 type="Icons"
                                 onPress={() =>
                                     addWicket(t1Wickets, setT1Wickets)
@@ -440,7 +496,7 @@ const CricketMatch = ({navigation, route}) => {
                         textColor="white"
                         onPress={() =>
                             updateScoreInFirestore(
-                                team1.id,
+                                team1.teamId,
                                 scoreT1,
                                 1,
                                 t1Wickets,
@@ -462,7 +518,7 @@ const CricketMatch = ({navigation, route}) => {
 
                             <Divider
                                 style={styles.divider}
-                                width={1.5}
+                                width={1}
                                 color="grey"
                             />
 
@@ -475,11 +531,13 @@ const CricketMatch = ({navigation, route}) => {
                                     selectedTextStyle={styles.selectedTextStyle}
                                     containerStyle={styles.dropContainer}
                                     iconStyle={styles.iconStyle}
+                                    itemTextStyle={{color: 'black'}}
+                                    placeholderStyle={{color: 'grey'}}
                                     data={teamsList}
                                     maxHeight={300}
                                     labelField="label"
                                     valueField="value"
-                                    placeholder={'Select team 1'}
+                                    placeholder={'Select a team'}
                                     value={selectedWinner}
                                     onChange={item =>
                                         setSelectedWinner(item.value)
@@ -494,11 +552,17 @@ const CricketMatch = ({navigation, route}) => {
                                 )}
                             </View>
 
-                            <Button
-                                style={styles.finishBtn}
-                                mode="contained"
-                                buttonColor="red"
-                                onPress={() => handleFinalWinner()}>
+                            <TouchableOpacity
+                                style={{
+                                    borderRadius: 12,
+                                    marginTop: 100,
+                                    width: '75%',
+                                    backgroundColor: 'red',
+                                    height: 40,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                                onPress={() => handleFinalWinner('')}>
                                 {finishLoading ? (
                                     <ActivityIndicator
                                         color={'white'}
@@ -515,7 +579,7 @@ const CricketMatch = ({navigation, route}) => {
                                         Finish
                                     </Text>
                                 )}
-                            </Button>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </Modal>
@@ -611,7 +675,7 @@ const CricketMatch = ({navigation, route}) => {
                         textColor="white"
                         onPress={() =>
                             updateScoreInFirestore(
-                                team2.id,
+                                team2.teamId,
                                 scoreT2,
                                 2,
                                 t2Wickets,
@@ -623,21 +687,22 @@ const CricketMatch = ({navigation, route}) => {
 
                 <View
                     style={{
-                        marginTop: 30,
-                        marginBottom: 30,
+                        marginTop: 40,
+                        marginBottom: 50,
                         width: '100%',
                         alignItems: 'center',
                     }}>
                     {endLoading ? (
                         <ActivityIndicator
-                            size={'large'}
+                            size={30}
                             style={{alignSelf: 'center'}}
+                            color={'blue'}
                         />
                     ) : (
                         <Button
                             mode="contained"
                             buttonColor="red"
-                            style={{borderRadius: 12, width: '90%'}}
+                            style={{borderRadius: 12, width: '85%'}}
                             onPress={() => alertRefs.current.open()}>
                             <Text
                                 style={{
@@ -662,10 +727,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleScreen: {
-        fontSize: 26,
+        fontSize: 22,
+        fontStyle: 'italic',
         color: '#4a5a96',
-        fontWeight: '700',
-        marginTop: 30,
+        fontWeight: '600',
+        marginTop: 10,
     },
     divider: {
         width: '90%',
@@ -681,27 +747,30 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     teamLabel: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '500',
         color: 'black',
     },
     teamView: {
-        width: '90%',
+        width: '85%',
+
         marginTop: 30,
         marginBottom: 10,
     },
     scoreView: {
         marginTop: 30,
-        width: '65%',
+        width: '70%',
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
     },
     inputField: {
-        width: 150,
         textAlign: 'center',
         fontSize: 18,
+        backgroundColor: 'white',
+        height: 40,
+        paddingTop: 3,
     },
     errorText: {
         fontSize: 14,
@@ -711,48 +780,42 @@ const styles = StyleSheet.create({
         top: 8,
     },
     scoreLabel: {
-        fontSize: 18,
+        fontSize: 17,
         fontWeight: '500',
         color: '#03206e',
-        top: 2,
     },
     subView: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginLeft: 30,
+        width: '60%',
     },
     wicketsView: {
         marginTop: 30,
         marginBottom: 30,
         flexDirection: 'row',
         alignItems: 'center',
-        width: '65%',
+        width: '74%',
         alignSelf: 'center',
         justifyContent: 'space-between',
     },
     wicketLabel: {
-        fontSize: 18,
+        fontSize: 17,
         fontWeight: '500',
         color: '#03206e',
     },
     counterView: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        marginLeft: 15,
+        justifyContent: 'space-between',
+        width: '62%',
     },
     surface: {
-        padding: 8,
-        width: 70,
-        height: 45,
-        borderWidth: 1.5,
-        borderColor: 'darkgrey',
+        width: 60,
+        height: 40,
+        borderWidth: 1,
+        borderColor: 'grey',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'white',
-        borderRadius: 8,
-        marginHorizontal: 15,
+        borderRadius: 5,
     },
     scoreText: {
         fontSize: 18,
@@ -767,5 +830,62 @@ const styles = StyleSheet.create({
     updateLabel: {
         fontWeight: '600',
         fontSize: 18,
+    },
+    reqModalView: {
+        flex: 1,
+        justifyContent: 'center',
+    },
+    reqModalInnerView: {
+        width: '80%',
+        height: 350,
+        borderRadius: 15,
+        borderWidth: 1,
+        backgroundColor: 'white',
+        alignSelf: 'center',
+        alignItems: 'center',
+        elevation: 20,
+    },
+    modelTitle: {
+        fontSize: 18,
+        marginTop: 15,
+        textAlign: 'center',
+        color: '#4a5a96',
+        fontWeight: '500',
+    },
+    dropView: {
+        width: '75%',
+        marginTop: 20,
+    },
+    dropdown: {
+        height: 50,
+        width: '100%',
+        borderColor: 'grey',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+        backgroundColor: 'white',
+        alignSelf: 'center',
+    },
+    dropLabel: {
+        fontSize: 17,
+        fontWeight: '500',
+        color: 'black',
+        marginBottom: 10,
+        textAlign: 'left',
+    },
+    dropContainer: {
+        borderBottomWidth: 1,
+        borderLeftWidth: 1,
+        borderRightWidth: 1,
+        borderColor: 'grey',
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        color: '#11867F',
+    },
+    iconStyle: {
+        width: 25,
+        height: 25,
+        tintColor: 'black',
     },
 });

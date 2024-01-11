@@ -201,6 +201,7 @@ const JoinTeam = ({navigation}) => {
                     placeholder="Search team"
                     onChangeText={handleSearch}
                     value={searchQuery}
+                    inputStyle={{fontSize: 16, marginTop: 0, marginLeft: 10}}
                     containerStyle={styles.searchBar}
                     platform="android"
                     cancelButtonTitle="Cancel"

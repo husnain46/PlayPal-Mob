@@ -50,7 +50,6 @@ const NetworkStatus = ({children}) => {
                     style={{width: 100, height: 100, marginBottom: 30}}
                 />
                 <Text>No internet connection</Text>
-                {/* Customize this message/UI based on your app */}
             </View>
         );
     }
@@ -73,7 +72,6 @@ const NetworkStatus = ({children}) => {
                         textAlign: 'center',
                         width: '90%',
                     }}>{`Error connecting to server!\nTry reloading the app or open the app after sometime.`}</Text>
-                {/* Customize this message/UI based on your app */}
             </View>
         );
     }

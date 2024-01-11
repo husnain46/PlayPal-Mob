@@ -253,12 +253,17 @@ const FindPlayers = ({navigation}) => {
                         {`${item.area}, ${item.city}`}
                     </Text>
                 </View>
+
                 <Button
                     style={{
                         marginTop: 5,
-                        width: 130,
+                        width: '40%',
                         alignSelf: 'center',
+                        height: 35,
+                        borderRadius: 12,
+                        justifyContent: 'center',
                     }}
+                    labelStyle={{height: 20, width: '80%'}}
                     mode="outlined"
                     onPress={() => gotoViewProfile(item)}>
                     View Profile
@@ -272,7 +277,7 @@ const FindPlayers = ({navigation}) => {
             <View style={styles.searchView}>
                 <SearchBar
                     placeholder="Search name/username"
-                    style={{fontSize: 16, marginLeft: 5}}
+                    inputStyle={{fontSize: 16, marginTop: 0, marginLeft: 0}}
                     onChangeText={handleSearch}
                     value={searchQuery}
                     containerStyle={styles.searchBar}
@@ -282,7 +287,9 @@ const FindPlayers = ({navigation}) => {
                     cancelButtonProps={{color: 'grey'}}
                 />
 
-                <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <TouchableOpacity
+                    onPress={() => setModalVisible(true)}
+                    style={{width: '10%'}}>
                     <Image
                         style={styles.filter}
                         source={require('../Assets/Icons/filter.png')}

@@ -149,6 +149,26 @@ const EditTeam = ({navigation, route}) => {
         }
     };
 
+    const checkIfCaptain = async playerId => {
+        try {
+            const teamDoc = await firestore()
+                .collection('teams')
+                .where('captainId', '==', playerId)
+                .get();
+
+            if (teamDoc.empty) {
+                return false;
+            } else {
+                return true;
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'error',
+                text2: 'An unexpected error occurred!',
+            });
+        }
+    };
+
     const renderAlert = (pId, pName, index) => {
         return (
             <AlertPro
@@ -179,8 +199,27 @@ const EditTeam = ({navigation, route}) => {
         }
     };
 
+    const handleCaptainChange = async () => {
+        if (selectedCaptain === myTeam.captainId) {
+            console.log('s');
+            updateTeam();
+        } else {
+            const isCap = await checkIfCaptain(selectedCaptain);
+            if (isCap) {
+                Toast.show({
+                    type: 'error',
+                    text1: 'Select some other captain',
+                    text2: 'The Selected captain is already a captain.',
+                });
+            } else {
+                updateTeam();
+            }
+        }
+    };
+
     const updateTeam = async () => {
         setLoading(true);
+
         try {
             let imageUri = imageSelected;
             if (
@@ -286,6 +325,7 @@ const EditTeam = ({navigation, route}) => {
             />
         );
     }
+
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView
@@ -294,15 +334,15 @@ const EditTeam = ({navigation, route}) => {
                 <View style={styles.titleView}>
                     <Text style={styles.titleScreen}>Edit Team</Text>
                     <Button
-                        mode="outlined"
+                        mode="contained"
                         style={styles.saveBtn}
                         buttonColor="#11ab7a"
-                        onPress={() => updateTeam()}>
+                        onPress={() => handleCaptainChange()}>
                         <Text style={styles.saveText}>Save</Text>
                     </Button>
                 </View>
 
-                <Divider style={styles.divider} width={2} color="grey" />
+                <Divider style={styles.divider} width={1} color="grey" />
 
                 <View style={styles.inputView1}>
                     <Text style={styles.labelText}>Team name:</Text>
@@ -432,6 +472,7 @@ const EditTeam = ({navigation, route}) => {
                         selectedTextStyle={styles.selectedTextStyle}
                         containerStyle={styles.dropContainer}
                         iconStyle={styles.iconStyle}
+                        itemTextStyle={{color: 'black'}}
                         data={playersData}
                         maxHeight={300}
                         labelField="label"
@@ -502,18 +543,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleScreen: {
-        fontSize: 26,
-        fontWeight: '700',
+        fontSize: 22,
+        fontWeight: '600',
         color: '#4a5a96',
     },
     saveBtn: {
         borderRadius: 10,
-        elevation: 20,
+        height: 35,
     },
     saveText: {
         fontSize: 17,
         color: 'white',
         fontWeight: '600',
+        marginTop: 7,
     },
     divider: {
         alignSelf: 'center',
@@ -604,8 +646,9 @@ const styles = StyleSheet.create({
     },
     dropSearch: {
         height: 40,
-        fontSize: 16,
+        fontSize: 14,
         borderColor: 'black',
+        color: 'black',
     },
     teamLabel: {
         fontSize: 18,

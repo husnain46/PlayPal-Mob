@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
     },
     input: {
         marginBottom: 30,
+        backgroundColor: 'white',
     },
 });
 

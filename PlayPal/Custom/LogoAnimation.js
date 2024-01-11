@@ -16,13 +16,13 @@ const LogoAnimation = () => {
         Animated.sequence([
             Animated.timing(logoAnim, {
                 toValue: 50,
-                duration: 1000,
+                duration: 600,
                 easing: Easing.linear,
                 useNativeDriver: true,
             }),
             Animated.timing(logoAnim, {
                 toValue: 0,
-                duration: 500,
+                duration: 400,
                 easing: Easing.linear,
                 useNativeDriver: true,
             }),
@@ -33,7 +33,7 @@ const LogoAnimation = () => {
             duration: 1000,
             easing: Easing.ease,
             useNativeDriver: true,
-            delay: 1500,
+            delay: 1000,
         }).start();
     }, [logoAnim, textAnim]);
 

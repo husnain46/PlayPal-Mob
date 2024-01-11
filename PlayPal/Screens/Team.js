@@ -23,6 +23,7 @@ const Team = ({navigation}) => {
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
     const [myTeamSports, setMyTeamSports] = useState([]);
+
     const myId = auth().currentUser.uid;
     const alertRefs = useRef([]);
 
@@ -62,8 +63,8 @@ const Team = ({navigation}) => {
                         setLoading(false);
                         setTeams([]);
                     } else {
-                        // Extract team data from the query result
-                        querySnapshot.forEach(async doc => {
+                        // Use for...of loop for asynchronous operations
+                        for (const doc of querySnapshot.docs) {
                             let newRank = 'Freshies'; // Initialize rank
 
                             const wins = doc.data().wins;
@@ -98,7 +99,7 @@ const Team = ({navigation}) => {
                                 mySportsIds.push(doc.data().sportId);
                                 fetchedTeams.push(team);
                             }
-                        });
+                        }
 
                         setTeams(fetchedTeams);
                         setMyTeamSports(mySportsIds);
@@ -256,12 +257,13 @@ const styles = StyleSheet.create({
     yourTeamView: {
         alignItems: 'center',
         width: '90%',
-        marginTop: 20,
+        marginTop: 15,
     },
     text1: {
         fontSize: 20,
-        fontWeight: '500',
+        fontWeight: '600',
         color: '#4A5B96',
+        fontStyle: 'italic',
     },
     text2: {
         fontSize: 16,
@@ -270,9 +272,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     divider: {
-        marginTop: 10,
+        marginTop: 5,
         width: '100%',
-        height: 1.5,
+        height: 1,
         backgroundColor: 'grey',
     },
     listView: {
@@ -325,10 +327,10 @@ const styles = StyleSheet.create({
         marginTop: 20,
     },
     cardTitle: {
-        fontSize: 19,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        marginTop: -5,
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 5,
+        marginTop: -10,
         color: '#4a5a96',
         textAlign: 'center',
     },

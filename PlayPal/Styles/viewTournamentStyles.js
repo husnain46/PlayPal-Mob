@@ -46,13 +46,17 @@ const styles = StyleSheet.create({
     disabledBtn: {
         backgroundColor: 'lightgrey',
         borderRadius: 12,
-        borderWidth: 2,
+        width: '46%',
+
+        borderWidth: 1.5,
         borderColor: 'grey',
         opacity: 0.4, // Adjust the opacity to make it visually disabled
     },
     editBtn: {
         borderRadius: 12,
-        borderWidth: 2,
+        width: '46%',
+
+        borderWidth: 1.5,
         borderColor: 'grey',
         backgroundColor: 'white',
     },
@@ -61,7 +65,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#2abd89',
 
         justifyContent: 'center',
-        width: '45%',
+        width: '46%',
     },
     detailView: {
         width: '90%',

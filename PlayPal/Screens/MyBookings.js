@@ -6,7 +6,8 @@ import {
     View,
     FlatList,
     SectionList,
-    Pressable,
+    TouchableOpacity,
+    Image,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
@@ -177,7 +178,9 @@ const MyBookings = ({navigation}) => {
         return (
             <Card containerStyle={styles.cardContainer}>
                 <View style={{marginBottom: 10}}>
-                    <Text style={{fontWeight: '500', fontSize: 16}} selectable>
+                    <Text
+                        style={{fontWeight: '500', fontSize: 15, color: 'grey'}}
+                        selectable>
                         Booking# {item.id}
                     </Text>
                 </View>
@@ -186,20 +189,21 @@ const MyBookings = ({navigation}) => {
                         style={{
                             flexDirection: 'row',
                             alignItems: 'center',
+                            width: '57%',
                         }}>
                         <Icon
                             name="time-slot"
                             color={'black'}
-                            size={17}
+                            size={15}
                             type="entypo"
-                            style={{marginRight: 10, marginLeft: 1}}
+                            style={{marginRight: 5}}
                         />
                         <Text style={styles.timeText}>
                             {`${item.slotData.startTime}  ➔  ${item.slotData.endTime}`}
                         </Text>
                     </View>
 
-                    <Text style={styles.priceText}>
+                    <Text style={styles.dateText}>
                         {item.bookingDate
                             .toDate()
                             .toLocaleDateString('en-GB', options)}
@@ -207,7 +211,7 @@ const MyBookings = ({navigation}) => {
                 </View>
                 <Divider width={1} color="black" style={styles.divider} />
 
-                <Pressable
+                <TouchableOpacity
                     style={{
                         flexDirection: 'row',
                         alignItems: 'center',
@@ -217,14 +221,40 @@ const MyBookings = ({navigation}) => {
                     onPress={() =>
                         gotoArena(arena, arenaRating, ratingCount, item.arenaId)
                     }>
-                    <Text
-                        style={{
-                            fontSize: 18,
-                            fontWeight: '500',
-                            color: 'black',
-                        }}>
-                        {arena.name}
-                    </Text>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        {arena.hasOwnProperty('arenaPics') ? (
+                            <Image
+                                source={{uri: arena.arenaPics[0]}}
+                                resizeMode="stretch"
+                                style={{
+                                    width: 50,
+                                    height: 45,
+                                    borderRadius: 10,
+                                    marginRight: 10,
+                                }}
+                            />
+                        ) : (
+                            <Image
+                                source={require('../Assets/Icons/no-image.png')}
+                                resizeMode="stretch"
+                                style={{
+                                    width: 50,
+                                    height: 50,
+                                    borderRadius: 10,
+                                    marginRight: 10,
+                                }}
+                            />
+                        )}
+
+                        <Text
+                            style={{
+                                fontSize: 18,
+                                fontWeight: '500',
+                                color: 'black',
+                            }}>
+                            {arena.name}
+                        </Text>
+                    </View>
                     <Icon
                         name="chevron-with-circle-right"
                         color={'black'}
@@ -232,7 +262,7 @@ const MyBookings = ({navigation}) => {
                         type="entypo"
                         style={{}}
                     />
-                </Pressable>
+                </TouchableOpacity>
             </Card>
         );
     };
@@ -345,7 +375,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
     },
     cardContainer: {
-        width: '90%',
+        width: '95%',
         alignSelf: 'center',
         marginBottom: 5,
         borderRadius: 10,
@@ -353,6 +383,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'darkgrey',
         paddingVertical: 10,
+        paddingHorizontal: 12,
     },
     cardHeader: {
         width: '100%',
@@ -360,11 +391,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
     },
-    slotTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        color: '#2d5091',
-    },
+
     divider: {
         width: '100%',
         marginTop: 5,
@@ -372,16 +399,17 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     timeText: {
-        fontSize: 16,
+        fontSize: 15,
         color: '#2d5091',
         fontWeight: '500',
-        marginVertical: 5,
+        bottom: 1,
     },
-    priceText: {
-        fontSize: 16,
+    dateText: {
+        fontSize: 15,
+        width: '43%',
         color: 'black',
         textAlign: 'right',
-        fontWeight: '700',
+        fontWeight: '600',
     },
 });
 

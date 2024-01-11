@@ -186,10 +186,11 @@ const Reviews = ({navigation}) => {
                     <Text
                         style={{
                             fontWeight: '500',
-                            fontSize: 16,
+                            fontSize: 15,
                             color: 'grey',
+                            marginVertical: 5,
                         }}
-                        selectable>
+                        selectable={true}>
                         Booking#: {item.id}
                     </Text>
                 </View>
@@ -202,16 +203,16 @@ const Reviews = ({navigation}) => {
                         <Icon
                             name="time-slot"
                             color={'black'}
-                            size={17}
+                            size={15}
                             type="entypo"
-                            style={{marginRight: 10, marginLeft: 1}}
+                            style={{marginRight: 10}}
                         />
                         <Text style={styles.timeText}>
                             {`${item.slotData.startTime}  ➔  ${item.slotData.endTime}`}
                         </Text>
                     </View>
 
-                    <Text style={styles.priceText}>
+                    <Text style={styles.dateText}>
                         {item.bookingDate
                             .toDate()
                             .toLocaleDateString('en-GB', options)}
@@ -277,7 +278,7 @@ const styles = StyleSheet.create({
         marginTop: 30,
     },
     cardContainer: {
-        width: '90%',
+        width: '95%',
         alignSelf: 'center',
         marginBottom: 5,
         borderRadius: 10,
@@ -285,6 +286,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'darkgrey',
         paddingVertical: 10,
+        paddingHorizontal: 12,
     },
     cardHeader: {
         flexDirection: 'row',
@@ -312,16 +314,15 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     timeText: {
-        fontSize: 16,
+        fontSize: 15,
         color: '#2d5091',
         fontWeight: '500',
-        marginVertical: 5,
     },
-    priceText: {
-        fontSize: 16,
+    dateText: {
+        fontSize: 15,
         color: 'black',
         textAlign: 'right',
-        fontWeight: '700',
+        fontWeight: '600',
     },
 });
 

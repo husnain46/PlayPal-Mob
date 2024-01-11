@@ -105,13 +105,13 @@ const styles = StyleSheet.create({
         paddingBottom: 15,
     },
     detailLabel: {
-        fontSize: 17,
+        fontSize: 16,
         color: 'black',
-        fontWeight: '700',
-        marginRight: 5,
+        fontWeight: '600',
+        marginRight: 7,
     },
     detailText: {
-        fontSize: 17,
+        fontSize: 16,
         color: 'black',
     },
     cardView: {
@@ -142,14 +142,15 @@ const styles = StyleSheet.create({
         width: '100%',
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: -5,
     },
     modelTitle: {
-        fontSize: 22,
+        fontSize: 18,
         flex: 1,
         left: 25,
         textAlign: 'center',
         color: '#4a5a96',
-        fontWeight: '700',
+        fontWeight: '600',
     },
     emptyList: {
         fontSize: 16,
@@ -294,11 +295,10 @@ const styles = StyleSheet.create({
     },
     card1: {
         marginVertical: 10,
-        borderRadius: 15,
-        elevation: 20,
+        borderRadius: 10,
         backgroundColor: 'white',
         borderWidth: 1,
-        borderColor: 'darkgrey',
+        borderColor: 'grey',
         width: '85%',
         alignSelf: 'center',
     },
@@ -313,21 +313,21 @@ const styles = StyleSheet.create({
         fontSize: 17,
     },
     locIcon: {
-        width: 18,
-        height: 18,
-        marginRight: 10,
+        width: 16,
+        height: 16,
+        marginRight: 5,
     },
     winIcon: {
-        width: 20,
-        height: 20,
+        width: 15,
+        height: 15,
         marginRight: 5,
     },
     cityText: {
-        fontSize: 16,
+        fontSize: 15,
         color: 'darkblue',
     },
     winText: {
-        fontSize: 16,
+        fontSize: 15,
         color: '#098f60',
     },
 });

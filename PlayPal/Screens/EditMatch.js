@@ -15,7 +15,7 @@ import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
 
 const EditMatch = ({navigation, route}) => {
-    const {tournamentId, match, teamsData} = route.params;
+    const {data, match, teamsData} = route.params;
     const [matchTitle, setMatchTitle] = useState(match.title);
     const [selectedDate, setSelectedDate] = useState(match.date.toDate());
     const [showPicker1, setShowPicker1] = useState(false);
@@ -27,13 +27,14 @@ const EditMatch = ({navigation, route}) => {
 
     const tournamentTeams = teamsData.map(team => ({
         label: team.name,
-        value: team.id,
+        value: team.teamId,
     }));
 
     const matchTypes = [
         {label: 'Group Stage', value: 'Group Stage'},
         {label: 'Knockout', value: 'Knockout'},
-        {label: 'Semi-Final', value: 'Semi-Final'},
+        {label: 'Semi-Final 1', value: 'Semi-Final 1'},
+        {label: 'Semi-Final 2', value: 'Semi-Final 2'},
         {label: 'Final', value: 'Final'},
     ];
 
@@ -66,7 +67,7 @@ const EditMatch = ({navigation, route}) => {
             setIsLoading(true);
             const tournamentRef = firestore()
                 .collection('tournaments')
-                .doc(tournamentId);
+                .doc(data.id);
             const tournamentDoc = await tournamentRef.get();
 
             if (tournamentDoc.exists) {
@@ -124,7 +125,7 @@ const EditMatch = ({navigation, route}) => {
 
             const tournamentRef = firestore()
                 .collection('tournaments')
-                .doc(tournamentId);
+                .doc(data.id);
 
             const tournamentDoc = await tournamentRef.get();
 
@@ -232,12 +233,15 @@ const EditMatch = ({navigation, route}) => {
 
             <View style={styles.dropView}>
                 <Text style={styles.dropLabel}>Match title:</Text>
+                {console.log(matchTitle)}
                 <Dropdown
                     style={styles.dropdown}
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
                     iconStyle={styles.iconStyle}
                     data={matchTypes}
+                    placeholderStyle={{color: 'grey', fontSize: 15}}
+                    itemTextStyle={{color: 'black'}}
                     maxHeight={300}
                     labelField="label"
                     valueField="value"
@@ -268,6 +272,8 @@ const EditMatch = ({navigation, route}) => {
                     style={styles.dropdown}
                     selectedTextStyle={styles.selectedTextStyle}
                     containerStyle={styles.dropContainer}
+                    placeholderStyle={{color: 'grey', fontSize: 15}}
+                    itemTextStyle={{color: 'black'}}
                     iconStyle={styles.iconStyle}
                     data={filteredTeams(selectedTeam2)}
                     maxHeight={300}
@@ -284,6 +290,8 @@ const EditMatch = ({navigation, route}) => {
                 <Dropdown
                     style={styles.dropdown}
                     selectedTextStyle={styles.selectedTextStyle}
+                    placeholderStyle={{color: 'grey', fontSize: 15}}
+                    itemTextStyle={{color: 'black'}}
                     containerStyle={styles.dropContainer}
                     iconStyle={styles.iconStyle}
                     data={filteredTeams(selectedTeam1)}
@@ -297,7 +305,7 @@ const EditMatch = ({navigation, route}) => {
             </View>
             <View
                 style={{
-                    width: '75%',
+                    width: '70%',
                     flexDirection: 'row',
                     marginTop: 100,
                     justifyContent: 'space-between',
@@ -309,7 +317,7 @@ const EditMatch = ({navigation, route}) => {
                     onPress={() => handleDeleteMatch()}>
                     <Text
                         style={{
-                            fontSize: 18,
+                            fontSize: 16,
                             color: 'white',
                             paddingTop: 1,
                         }}>
@@ -320,15 +328,15 @@ const EditMatch = ({navigation, route}) => {
                 <Button
                     style={{borderRadius: 10, width: 100}}
                     mode="contained"
-                    buttonColor="#22446c"
+                    buttonColor="#0eb36b"
                     onPress={() => handleUpdateMatch()}>
                     <Text
                         style={{
-                            fontSize: 18,
+                            fontSize: 16,
                             color: 'white',
                             paddingTop: 1,
                         }}>
-                        Save
+                        Update
                     </Text>
                 </Button>
             </View>
@@ -356,19 +364,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-around',
     },
     screenTitle: {
-        fontSize: 26,
+        fontSize: 22,
         color: '#4a5a96',
-        fontWeight: '700',
-        marginTop: 30,
+        fontWeight: '600',
+        marginTop: 10,
+        fontStyle: 'italic',
     },
     divider: {
         alignSelf: 'center',
         width: '90%',
         marginTop: 10,
         marginBottom: 10,
-    },
-    inputView1: {
-        marginTop: 20,
     },
     labelText: {
         fontSize: 17,
@@ -387,7 +393,9 @@ const styles = StyleSheet.create({
         marginTop: 15,
         flexDirection: 'row',
         alignItems: 'center',
-        width: 300,
+        justifyContent: 'space-between',
+        width: '70%',
+        alignSelf: 'center',
         marginBottom: 10,
     },
     dateLabel: {
@@ -395,34 +403,33 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         color: 'black',
         textAlignVertical: 'center',
-        marginRight: 40,
     },
     dateBox: {
-        width: 160,
+        width: '55%',
         marginLeft: 10,
-        height: 45,
+        height: 40,
         justifyContent: 'center',
         alignItems: 'center',
     },
     dateText: {
-        fontSize: 17,
+        fontSize: 15,
         fontWeight: '500',
         color: '#4a5a96',
         paddingHorizontal: 0,
     },
     datePlaceholder: {
         paddingHorizontal: 0,
-        fontSize: 16,
-        fontWeight: '500',
-        color: '#4a5a96',
+        fontSize: 15,
+        fontWeight: '400',
+        color: 'grey',
     },
     dropView: {
-        width: 300,
+        width: '70%',
         marginTop: 20,
     },
     dropdown: {
-        height: 50,
-        width: 250,
+        height: 45,
+        width: '100%',
         borderColor: 'grey',
         borderWidth: 1,
         borderRadius: 8,
@@ -442,7 +449,7 @@ const styles = StyleSheet.create({
         borderColor: 'grey',
     },
     selectedTextStyle: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#11867F',
     },
     iconStyle: {

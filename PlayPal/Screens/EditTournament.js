@@ -26,7 +26,7 @@ const EditTournament = ({navigation, route}) => {
     const [tourDetail, setTourDetail] = useState(data.detail);
     const [loading, setLoading] = useState(false);
     const currentDate = new Date();
-    const isStarted = data.start_date <= currentDate;
+    const isStarted = data.start_date.toDate() <= currentDate;
 
     const deleteAlertRef = useRef([]);
     const clashAlertRef = useRef([]);
@@ -363,8 +363,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleScreen: {
-        fontSize: 26,
-        fontWeight: '700',
+        fontSize: 22,
+        fontWeight: '600',
         color: '#4a5a96',
     },
     divider: {

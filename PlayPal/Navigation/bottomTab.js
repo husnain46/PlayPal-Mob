@@ -18,7 +18,7 @@ const BottomTab = ({navigation}) => {
         // Simulating an asynchronous process for header preparation
         setTimeout(() => {
             setIsHeaderReady(true);
-        }, 3000); // Adjust the delay time as needed
+        }, 3100); // Adjust the delay time as needed
     }, []);
 
     if (!isHeaderReady) {

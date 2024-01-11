@@ -593,7 +593,7 @@ const ViewTeam = ({navigation, route}) => {
                 const tournaments = tourRef.docs
                     .filter(doc => {
                         const {status} = doc.data();
-                        return status === 'ended' || status === 'abandoned';
+                        return status === 'Ended' || status === 'Abandoned';
                     })
                     .map(doc => ({
                         id: doc.id,
@@ -793,7 +793,8 @@ const ViewTeam = ({navigation, route}) => {
             <TouchableOpacity
                 onPress={() => gotoViewTournament(item.id, sportName)}>
                 <Card style={styles.card1}>
-                    <Card.Content>
+                    <Card.Content
+                        style={{paddingHorizontal: 10, paddingVertical: 10}}>
                         <View style={{flexWrap: 'wrap'}}>
                             <Text style={styles.title}>{item.name}</Text>
 
@@ -826,10 +827,10 @@ const ViewTeam = ({navigation, route}) => {
                                     }}>
                                     <Image
                                         style={styles.winIcon}
-                                        source={require('../Assets/Icons/medal.png')}
+                                        source={require('../Assets/Icons/winner.png')}
                                     />
                                     <Text style={styles.winText}>
-                                        {item.city}
+                                        {item.winner}
                                     </Text>
                                 </View>
                             </View>
@@ -1233,18 +1234,18 @@ const ViewTeam = ({navigation, route}) => {
                         <View style={styles.reqModalInnerView}>
                             <View style={styles.modelHeaderView}>
                                 <Text style={styles.modelTitle}>
-                                    Tournaments Played
+                                    Previous Tournaments
                                 </Text>
                                 <IconButton
                                     icon="close"
-                                    size={30}
+                                    size={25}
                                     style={{alignSelf: 'flex-end'}}
                                     onPress={() => setTourModal(false)}
                                 />
                             </View>
                             <Divider
                                 style={styles.divider2}
-                                width={1.5}
+                                width={1}
                                 color="grey"
                             />
 

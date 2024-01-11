@@ -292,8 +292,9 @@ const InviteTeams = ({navigation, route}) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Title style={styles.topTitle}>Invite Teams</Title>
-            <Divider width={1} style={styles.divider} color="grey" />
+            <View style={styles.headerView}>
+                <Title style={styles.topTitle}>Invite Teams</Title>
+            </View>
 
             <View style={styles.searchView}>
                 <SearchBar

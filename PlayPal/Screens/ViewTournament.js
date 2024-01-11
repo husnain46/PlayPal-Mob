@@ -795,8 +795,8 @@ const ViewTournament = ({navigation, route}) => {
                             }
                             disabled={isEnded}
                             onPress={() => gotoEditTournament()}>
-                            <Text style={{fontSize: 16, color: '#374c62'}}>
-                                Edit Tournament
+                            <Text style={{fontSize: 15, color: '#374c62'}}>
+                                Edit Details
                             </Text>
                         </Button>
                         <Button
@@ -810,7 +810,7 @@ const ViewTournament = ({navigation, route}) => {
                             onPress={() => gotoInviteTeams()}>
                             <Text
                                 style={{
-                                    fontSize: 16,
+                                    fontSize: 15,
                                     color: isEnded ? '#374c62' : 'white',
                                 }}>
                                 Invite Teams
@@ -922,9 +922,10 @@ const ViewTournament = ({navigation, route}) => {
                             style={{
                                 position: 'absolute',
                                 top: 0,
-                                left: 0,
-                                right: 0,
+                                left: -50,
+                                right: 100,
                                 bottom: 0,
+                                width: 500,
                             }}
                         />
                         <View
@@ -1221,9 +1222,10 @@ const ViewTournament = ({navigation, route}) => {
                                         ? styles.disabledBtn2
                                         : styles.reqBtn
                                 }
-                                icon={'android-messages'}
+                                icon={'mail'}
                                 textColor="white"
                                 buttonColor="#5D5B8E"
+                                labelStyle={{fontSize: 17}}
                                 onPress={() => setReqModal(true)}>
                                 <Text style={{fontSize: 15, color: 'white'}}>
                                     Requests

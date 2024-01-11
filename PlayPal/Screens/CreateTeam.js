@@ -181,12 +181,10 @@ const CreateTeam = ({navigation, route}) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{alignItems: 'center'}}
                 style={{width: '100%'}}>
-                <Text h3 style={styles.title}>
-                    Create your team
-                </Text>
+                <Text style={styles.title}>Create your team</Text>
                 <View
                     style={{
-                        marginTop: 70,
+                        marginTop: 50,
                         width: '100%',
                         alignItems: 'center',
                     }}>
@@ -357,10 +355,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'white',
     },
     title: {
-        marginTop: 20,
+        fontSize: 22,
         color: '#4a5a96',
         textAlign: 'center',
-        left: -5,
+        fontWeight: '700',
+        fontStyle: 'italic',
+        marginTop: 10,
     },
     subtitle: {
         fontSize: 18,
@@ -454,8 +454,9 @@ const styles = StyleSheet.create({
     },
     dropSearch: {
         height: 40,
-        fontSize: 16,
+        fontSize: 14,
         borderColor: 'black',
+        color: 'black',
     },
     imageView: {
         width: 82,

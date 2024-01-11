@@ -290,6 +290,7 @@ const FindArena = ({navigation}) => {
                     onChangeText={handleSearch}
                     value={searchQuery}
                     containerStyle={styles.searchBar}
+                    inputStyle={{fontSize: 16, marginTop: 0, marginLeft: 0}}
                     platform="android"
                     cancelButtonTitle="Cancel"
                     onCancel={() => handleSearch('')}

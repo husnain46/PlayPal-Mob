@@ -118,7 +118,7 @@ const Tournament = ({navigation}) => {
                     setLoading(false);
                 } catch (error) {
                     setLoading(false);
-                    console.log(error);
+
                     Toast.show({
                         type: 'error',
                         text1: 'An error occurred!',
@@ -164,7 +164,7 @@ const Tournament = ({navigation}) => {
         Badminton: require('../Assets/Icons/badminton.png'),
         Tennis: require('../Assets/Icons/tennis.png'),
         'Table Tennis': require('../Assets/Icons/tableTennis.png'),
-        default: require('../Assets/Icons/no image.png'),
+        default: require('../Assets/Icons/no-image.png'),
     };
 
     const gotoViewTournament = (tournamentId, sportName) => {
@@ -209,7 +209,11 @@ const Tournament = ({navigation}) => {
                             <Text style={styles.subtitle}>({sportName}) </Text>
                             <Divider style={styles.divider} />
 
-                            <View style={{flexDirection: 'row'}}>
+                            <View
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                }}>
                                 <Image
                                     style={styles.locIcon}
                                     source={require('../Assets/Icons/location.png')}
@@ -327,6 +331,7 @@ const Tournament = ({navigation}) => {
                             </Text>
                             <Button
                                 title="Organize Tournament"
+                                titleStyle={{fontSize: 14}}
                                 buttonStyle={styles.button}
                                 onPress={() => gotoOrganizeTournament()}
                             />
@@ -346,6 +351,7 @@ const Tournament = ({navigation}) => {
                             </Text>
                             <Button
                                 title="Explore Tournaments"
+                                titleStyle={{fontSize: 14}}
                                 buttonStyle={styles.button}
                                 onPress={() => gotoExploreTournament()}
                             />
@@ -365,12 +371,13 @@ const styles = StyleSheet.create({
     yourTeamView: {
         alignItems: 'center',
         width: '90%',
-        marginTop: 20,
+        marginTop: 15,
     },
     text1: {
         fontSize: 20,
-        fontWeight: '500',
+        fontWeight: '600',
         color: '#4A5B96',
+        fontStyle: 'italic',
     },
     text2: {
         fontSize: 18,
@@ -378,9 +385,9 @@ const styles = StyleSheet.create({
         marginTop: 40,
     },
     divider2: {
-        marginTop: 10,
+        marginTop: 5,
         width: '100%',
-        height: 1.5,
+        height: 1,
         backgroundColor: 'grey',
     },
     listView: {
@@ -392,11 +399,11 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
     sectionHeader: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#164c6b',
+        fontSize: 18,
+        fontWeight: '400',
+        color: '#0071bf',
         textAlign: 'center',
-        letterSpacing: 0.5,
+        letterSpacing: 0.2,
     },
     cardView1: {
         alignItems: 'center',
@@ -406,29 +413,29 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         marginVertical: 10,
         borderRadius: 15,
-        elevation: 25,
         backgroundColor: 'white',
         borderWidth: 1,
         borderColor: 'darkgrey',
     },
     cardContent: {
         flexDirection: 'row',
+        paddingTop: 7,
         justifyContent: 'space-between',
     },
     title: {
-        fontSize: 20,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: '600',
     },
     subtitle: {
-        fontSize: 17,
+        fontSize: 15,
         color: 'grey',
     },
     divider: {
         marginTop: 10,
         width: '100%',
-        height: 1.5,
+        height: 1,
         backgroundColor: 'grey',
-        marginBottom: 10,
+        marginBottom: 5,
     },
     dateText: {
         fontSize: 14,
@@ -443,12 +450,12 @@ const styles = StyleSheet.create({
         color: '#fc3003',
     },
     locIcon: {
-        width: 20,
-        height: 20,
+        width: 16,
+        height: 16,
         marginRight: 15,
     },
     cityText: {
-        fontSize: 16,
+        fontSize: 15,
         color: 'darkblue',
     },
     sportIconView: {

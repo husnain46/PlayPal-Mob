@@ -22,12 +22,12 @@ const styles = StyleSheet.create({
         marginTop: 25,
     },
     searchBar: {
-        width: '85%',
-        height: 50,
+        width: '82%',
+        height: 45,
         justifyContent: 'center',
         backgroundColor: 'white',
-        borderRadius: 10,
-        borderWidth: 2,
+        borderRadius: 8,
+        borderWidth: 1.5,
         borderColor: '#8b8b8b',
     },
     filter: {
@@ -153,11 +153,11 @@ const styles = StyleSheet.create({
         padding: 12,
     },
     cardImage: {
-        height: 150,
+        height: 140,
         borderRadius: 10,
     },
     arenaTitle: {
-        fontSize: 19,
+        fontSize: 17,
         color: 'black',
         fontWeight: '500',
         textAlign: 'center',
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     },
     locationText: {
         marginVertical: 2,
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '400',
         textAlign: 'center',
         color: 'grey',
@@ -184,18 +184,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     starIcon: {
-        width: 16,
-        height: 16,
+        width: 15,
+        height: 15,
+        marginRight: 10,
     },
     rating: {
-        marginLeft: 10,
-        fontSize: 16,
+        marginRight: 7,
+        fontSize: 15,
         fontWeight: '600',
         color: 'darkblue',
     },
     numRating: {
-        marginLeft: 10,
-        fontSize: 13,
+        fontSize: 12,
         color: 'grey',
     },
     priceLabel: {
@@ -211,7 +211,6 @@ const styles = StyleSheet.create({
     sportsView: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        marginTop: 5,
         alignSelf: 'center',
         width: '100%',
     },

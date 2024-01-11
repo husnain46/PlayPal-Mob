@@ -179,10 +179,21 @@ const Home = ({navigation}) => {
                         <Image
                             source={{uri: item.profilePic}}
                             resizeMode="stretch"
-                            style={{width: 55, height: 55, borderRadius: 10}}
+                            style={{
+                                width: 51,
+                                height: 51,
+                                borderWidth: 1.5,
+                                borderColor: 'black',
+                                borderRadius: 10,
+                            }}
                         />
                     </View>
-                    <View>
+                    <View
+                        style={{
+                            justifyContent: 'space-around',
+                            height: 51,
+                            bottom: 2,
+                        }}>
                         <Text style={styles.friendName}>{friendName}</Text>
 
                         <View style={styles.levelView}>
@@ -225,66 +236,72 @@ const Home = ({navigation}) => {
                 style={{flex: 1}}
                 contentContainerStyle={{paddingBottom: 90}}>
                 <View style={styles.cardsContainer}>
-                    <Card containerStyle={styles.card}>
-                        <Card.Title style={{fontSize: 18}}>
-                            My Points
-                        </Card.Title>
+                    <View style={styles.card}>
+                        <Text style={styles.pointsText}>My Points</Text>
 
                         {loading ? (
                             <ActivityIndicator
                                 size={'small'}
-                                style={{alignSelf: 'center'}}
+                                style={{alignSelf: 'center', top: 20}}
                             />
                         ) : (
                             <View
                                 style={{
                                     flexDirection: 'row',
-                                    width: '30%',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     alignSelf: 'center',
+                                    height: '50%',
                                     left: -2,
                                 }}>
                                 <Image
                                     source={require('../Assets/Icons/star.png')}
-                                    style={{width: 16, height: 16}}
+                                    style={{
+                                        width: 15,
+                                        height: 15,
+                                        marginRight: 7,
+                                    }}
                                 />
                                 <Text style={styles.cardText}>
                                     {myData.points}
                                 </Text>
                             </View>
                         )}
-                    </Card>
+                    </View>
 
-                    <Card containerStyle={styles.card}>
-                        <Card.Title style={{fontSize: 18}}>
-                            My Experience
-                        </Card.Title>
+                    <View style={styles.card}>
+                        <Text style={styles.pointsText}>My Experience</Text>
 
                         {loading ? (
                             <ActivityIndicator
                                 size={'small'}
-                                style={{alignSelf: 'center'}}
+                                style={{alignSelf: 'center', top: 20}}
                             />
                         ) : (
                             <View
                                 style={{
                                     flexDirection: 'row',
-                                    width: '75%',
                                     justifyContent: 'space-between',
                                     alignItems: 'center',
                                     alignSelf: 'center',
+                                    height: '50%',
+
+                                    left: -2,
                                 }}>
                                 <Image
                                     source={levelIcon}
-                                    style={{width: 16, height: 16}}
+                                    style={{
+                                        width: 15,
+                                        height: 15,
+                                        marginRight: 7,
+                                    }}
                                 />
                                 <Text style={styles.cardText}>
                                     {myData.skillLevel}
                                 </Text>
                             </View>
                         )}
-                    </Card>
+                    </View>
                 </View>
 
                 <View style={styles.bookingView}>
@@ -327,7 +344,8 @@ const Home = ({navigation}) => {
                 {loading ? (
                     <ActivityIndicator
                         size={'large'}
-                        style={{alignSelf: 'center'}}
+                        color={'darkblue'}
+                        style={{alignSelf: 'center', top: 20}}
                     />
                 ) : (
                     <FlatList
@@ -354,40 +372,51 @@ const styles = StyleSheet.create({
     },
     cardsContainer: {
         flexDirection: 'row',
-        width: '90%',
-        justifyContent: 'center',
-        marginBottom: 30,
+        width: '96%',
+        justifyContent: 'space-between',
+        marginBottom: 15,
         alignSelf: 'center',
+        marginTop: 10,
     },
     card: {
-        width: '50%',
-        height: 100,
+        width: '46%',
+        height: 90,
         borderRadius: 12,
         borderWidth: 1,
         borderColor: 'lightgrey',
+        backgroundColor: 'white',
+    },
+    pointsText: {
+        fontSize: 17,
+        color: 'black',
+        fontWeight: '500',
+        textAlign: 'center',
+        marginTop: 10,
+
+        fontStyle: 'italic',
     },
     cardText: {
         textAlign: 'center',
-        fontSize: 17,
-        color: 'grey',
+        fontSize: 15,
+        color: '#546DDC',
     },
     bookingView: {
         width: '97%',
         height: 60,
         alignSelf: 'center',
-        marginBottom: 40,
+        marginBottom: 25,
         marginTop: 10,
         alignItems: 'center',
         justifyContent: 'space-between',
         flexDirection: 'row',
     },
     bookingBtn: {
-        width: '47%',
+        width: '46%',
         borderRadius: 12,
         elevation: 5,
     },
     reviewBtnView: {
-        width: '46.5%',
+        width: '46%',
         flexDirection: 'row',
     },
     reviewBtn: {
@@ -396,16 +425,18 @@ const styles = StyleSheet.create({
         elevation: 1,
     },
     friendsTitle: {
-        fontSize: 24,
+        fontSize: 20,
         textAlign: 'center',
         fontWeight: '600',
         color: '#4a5a96',
+        fontStyle: 'italic',
     },
     divider: {
-        marginTop: 10,
-        width: '100%',
+        marginTop: 5,
+        width: '98%',
+        alignSelf: 'center',
         backgroundColor: 'grey',
-        marginBottom: 10,
+        marginBottom: 5,
     },
     friendsView: {
         borderBottomWidth: 1,
@@ -417,7 +448,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     friendName: {
-        fontSize: 18,
+        fontSize: 17,
         fontWeight: '500',
         color: 'black',
     },
@@ -425,16 +456,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         width: 100,
         justifyContent: 'flex-start',
-        marginTop: 5,
     },
     friendDetails: {
         fontSize: 15,
         color: '#7d41ab',
-        left: 10,
+        left: 7,
     },
     infoIcons: {
-        width: 20,
-        height: 20,
+        width: 18,
+        height: 18,
     },
     emptyText: {
         fontSize: 17,

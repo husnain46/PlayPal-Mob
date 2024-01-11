@@ -6,7 +6,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
 import {Button, IconButton, Surface} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
@@ -94,6 +94,13 @@ const StartMatch = ({navigation, route}) => {
                 });
 
                 await tournamentRef.update({matches: updatedMatches});
+
+                Toast.show({
+                    type: 'success',
+                    text1: `Score updated! ${
+                        team === team1.teamId ? newScore : scoreT1
+                    } - ${team === team2.teamId ? newScore : scoreT2}`,
+                });
             }
         } catch (error) {
             Toast.show({
@@ -107,12 +114,12 @@ const StartMatch = ({navigation, route}) => {
         try {
             const team1Doc = await firestore()
                 .collection('teams')
-                .doc(team1.id)
+                .doc(team1.teamId)
                 .get();
 
             const team2Doc = await firestore()
                 .collection('teams')
-                .doc(team2.id)
+                .doc(team2.teamId)
                 .get();
 
             if (team1Doc.exists && team2Doc.exists) {
@@ -137,16 +144,22 @@ const StartMatch = ({navigation, route}) => {
 
                 const batch = firestore().batch();
 
-                batch.update(firestore().collection('teams').doc(team1.id), {
-                    wins: winsT1,
-                    draws: drawsT1,
-                    loses: lostT1,
-                });
-                batch.update(firestore().collection('teams').doc(team2.id), {
-                    wins: winsT2,
-                    draws: drawsT2,
-                    loses: lostT2,
-                });
+                batch.update(
+                    firestore().collection('teams').doc(team1.teamId),
+                    {
+                        wins: winsT1,
+                        draws: drawsT1,
+                        loses: lostT1,
+                    },
+                );
+                batch.update(
+                    firestore().collection('teams').doc(team2.teamId),
+                    {
+                        wins: winsT2,
+                        draws: drawsT2,
+                        loses: lostT2,
+                    },
+                );
 
                 let newPoint = 1;
                 isFinal ? (newPoint = 5) : (newPoint = 1);
@@ -184,15 +197,26 @@ const StartMatch = ({navigation, route}) => {
     const handleEndMatch = async () => {
         try {
             setEndLoading(true);
+            alertRefs.current.close();
 
             const tournamentRef = firestore()
                 .collection('tournaments')
                 .doc(tournamentId);
 
             if (match.title === 'Final') {
-                setTieModal(true);
-
-                setEndLoading(false);
+                if (scoreT1 === scoreT2) {
+                    setTieModal(true);
+                } else {
+                    let newWinner;
+                    if (scoreT1 > scoreT2) {
+                        newWinner = team1.name;
+                    } else if (scoreT2 > scoreT1) {
+                        newWinner = team2.name;
+                    }
+                    setSelectedWinner(newWinner);
+                    await handleFinalWinner(newWinner);
+                }
+                // update data if not updated
 
                 return;
             } else {
@@ -251,11 +275,12 @@ const StartMatch = ({navigation, route}) => {
         }
     };
 
-    const handleFinalWinner = async () => {
+    const handleFinalWinner = async newWinner => {
         try {
-            if (selectedWinner === '') {
+            if (selectedWinner === '' && newWinner === '') {
                 setWinnerError('Please select a winner.');
             } else {
+                setWinnerError('');
                 setFinishLoading(true);
 
                 const tournamentRef = firestore()
@@ -299,17 +324,19 @@ const StartMatch = ({navigation, route}) => {
                 await updateTeamData(isFinal);
 
                 await tournamentRef.update({matches: updatedStatus});
-                setFinishLoading(false);
 
                 if (scoreT1 > scoreT2) {
-                    await tournamentRef.update({winner: team1.id});
+                    await tournamentRef.update({winner: team1.name});
                 } else if (scoreT2 > scoreT1) {
-                    await tournamentRef.update({winner: team2.id});
+                    await tournamentRef.update({winner: team2.name});
                 } else if (scoreT1 === scoreT2) {
                     await tournamentRef.update({winner: selectedWinner});
                 }
 
                 setTieModal(false);
+                setFinishLoading(false);
+
+                setEndLoading(false);
 
                 navigation.goBack();
             }
@@ -336,10 +363,10 @@ const StartMatch = ({navigation, route}) => {
                         <Icon
                             name="remove-circle"
                             color={'#c22115'}
-                            size={30}
+                            size={28}
                             type="Icons"
                             onPress={() =>
-                                decreaseScore(team1.id, scoreT1, setScoreT1)
+                                decreaseScore(team1.teamId, scoreT1, setScoreT1)
                             }
                         />
                         <Surface style={styles.surface} elevation={4}>
@@ -348,10 +375,10 @@ const StartMatch = ({navigation, route}) => {
                         <Icon
                             name="add-circle"
                             color={'royalblue'}
-                            size={30}
+                            size={28}
                             type="Icons"
                             onPress={() =>
-                                increaseScore(team1.id, scoreT1, setScoreT1)
+                                increaseScore(team1.teamId, scoreT1, setScoreT1)
                             }
                         />
                     </View>
@@ -368,7 +395,7 @@ const StartMatch = ({navigation, route}) => {
 
                         <Divider
                             style={styles.divider}
-                            width={1.5}
+                            width={1}
                             color="grey"
                         />
 
@@ -381,6 +408,8 @@ const StartMatch = ({navigation, route}) => {
                                 selectedTextStyle={styles.selectedTextStyle}
                                 containerStyle={styles.dropContainer}
                                 iconStyle={styles.iconStyle}
+                                itemTextStyle={{color: 'black'}}
+                                placeholderStyle={{color: 'grey'}}
                                 data={teamsList}
                                 maxHeight={300}
                                 labelField="label"
@@ -408,7 +437,7 @@ const StartMatch = ({navigation, route}) => {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                             }}
-                            onPress={() => handleFinalWinner()}>
+                            onPress={() => handleFinalWinner('')}>
                             {finishLoading ? (
                                 <ActivityIndicator
                                     color={'white'}
@@ -453,10 +482,10 @@ const StartMatch = ({navigation, route}) => {
                         <Icon
                             name="remove-circle"
                             color={'#c22115'}
-                            size={30}
+                            size={28}
                             type="Icons"
                             onPress={() =>
-                                decreaseScore(team2.id, scoreT2, setScoreT2)
+                                decreaseScore(team2.teamId, scoreT2, setScoreT2)
                             }
                         />
                         <Surface style={styles.surface} elevation={4}>
@@ -465,10 +494,10 @@ const StartMatch = ({navigation, route}) => {
                         <Icon
                             name="add-circle"
                             color={'royalblue'}
-                            size={30}
+                            size={28}
                             type="Icons"
                             onPress={() =>
-                                increaseScore(team2.id, scoreT2, setScoreT2)
+                                increaseScore(team2.teamId, scoreT2, setScoreT2)
                             }
                         />
                     </View>
@@ -509,31 +538,35 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     titleScreen: {
-        fontSize: 26,
+        fontSize: 22,
         color: '#4a5a96',
-        fontWeight: '700',
-        marginTop: 30,
+        fontWeight: '600',
+        marginTop: 10,
+        fontStyle: 'italic',
     },
     divider: {
         width: '90%',
         marginTop: 10,
     },
     teamLabel: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: '500',
         color: 'black',
     },
     teamView: {
-        width: '90%',
+        width: '85%',
         height: 130,
         marginTop: 30,
         marginBottom: 10,
     },
     scoreView: {
+        width: '75%',
+
         marginTop: 30,
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'space-between',
     },
     scoreLabel: {
         fontSize: 18,
@@ -542,17 +575,18 @@ const styles = StyleSheet.create({
     },
     subView: {
         flexDirection: 'row',
-        marginLeft: 50,
+        width: '65%',
+
+        justifyContent: 'space-between',
         alignItems: 'center',
     },
     surface: {
         padding: 8,
-        width: 70,
+        width: '45%',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'white',
         borderRadius: 8,
-        marginHorizontal: 15,
     },
     scoreText: {
         fontSize: 18,
@@ -583,11 +617,11 @@ const styles = StyleSheet.create({
         elevation: 20,
     },
     modelTitle: {
-        fontSize: 24,
+        fontSize: 18,
         marginTop: 20,
         textAlign: 'center',
         color: '#4a5a96',
-        fontWeight: '700',
+        fontWeight: '600',
     },
     dropView: {
         width: '75%',
@@ -595,7 +629,7 @@ const styles = StyleSheet.create({
     },
     dropdown: {
         height: 50,
-        width: 250,
+        width: '100%',
         borderColor: 'grey',
         borderWidth: 1,
         borderRadius: 8,

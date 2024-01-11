@@ -66,7 +66,7 @@ const Matches = ({navigation, route}) => {
 
     const gotoEditMatch = match => {
         navigation.navigate('EditMatch', {
-            tournamentId: data.id,
+            data,
             match,
             teamsData,
         });
@@ -160,8 +160,7 @@ const Matches = ({navigation, route}) => {
                         }}>
                         {`Match ${matchNum}:`}
                     </Text>
-                    {(isOrganizer && item.status.includes('Upcoming')) ||
-                    item.status.includes('Started') ? (
+                    {isOrganizer && item.status.includes('Upcoming') ? (
                         <IconButton
                             icon={'square-edit-outline'}
                             size={35}
@@ -259,38 +258,40 @@ const Matches = ({navigation, route}) => {
                             {isOrganizer && timeDifference <= 10 ? (
                                 item.status === 'Upcoming' ||
                                 item.status === 'Started' ? (
-                                    <Button
-                                        disabled={isEnded}
-                                        containerStyle={styles.startButton}
-                                        mode="contained"
-                                        onPress={() => {
-                                            item.status.includes('Upcoming')
-                                                ? alertRefs.current.open()
-                                                : gotoStartMatch(
-                                                      item,
-                                                      index,
-                                                      team1,
-                                                      team2,
-                                                  );
-                                        }}
-                                        color="#28b581"
-                                        title={
-                                            item.status === 'Upcoming'
-                                                ? 'Start'
-                                                : 'Update'
-                                        }
-                                        titleStyle={{
-                                            fontSize: 17,
-                                            margin: -2,
-                                        }}
-                                    />
+                                    <>
+                                        {renderAlert(item, index, team1, team2)}
+                                        <Button
+                                            disabled={isEnded}
+                                            containerStyle={styles.startButton}
+                                            mode="contained"
+                                            onPress={() => {
+                                                item.status.includes('Upcoming')
+                                                    ? alertRefs.current.open()
+                                                    : gotoStartMatch(
+                                                          item,
+                                                          index,
+                                                          team1,
+                                                          team2,
+                                                      );
+                                            }}
+                                            color="#28b581"
+                                            title={
+                                                item.status === 'Upcoming'
+                                                    ? 'Start'
+                                                    : 'Update'
+                                            }
+                                            titleStyle={{
+                                                fontSize: 17,
+                                                margin: -2,
+                                            }}
+                                        />
+                                    </>
                                 ) : (
                                     <></>
                                 )
                             ) : (
                                 <></>
                             )}
-                            {renderAlert(item, index, team1, team2)}
                         </View>
                     </Card.Content>
                 </Card>
@@ -334,7 +335,7 @@ const Matches = ({navigation, route}) => {
 
             <View style={{width: '100%', marginTop: 10}}>
                 <FlatList
-                    contentContainerStyle={{paddingBottom: 100}}
+                    contentContainerStyle={{paddingBottom: 150}}
                     data={matches}
                     keyExtractor={(item, index) => index.toString()}
                     renderItem={renderItem}
