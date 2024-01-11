@@ -9,8 +9,6 @@ import {
     Image,
     StyleSheet,
     Text,
-    ImageBackground,
-    ActivityIndicator,
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';

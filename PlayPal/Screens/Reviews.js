@@ -62,6 +62,20 @@ const Reviews = ({navigation}) => {
                 .update({
                     rating: firestore.FieldValue.arrayUnion(reviewData),
                 });
+
+            // send a notification to arena
+            const arenaNotification = {
+                receiverId: arenaId,
+                message: '🌟 Your arena has got a new review! Check it out.',
+                type: 'arena_review',
+                read: false,
+                timestamp: currentDate,
+            };
+
+            await firestore()
+                .collection('notifications')
+                .add(arenaNotification);
+
             // Toggle the control variable to trigger useEffect
             setRefreshData(prev => !prev);
         } catch (error) {
@@ -194,6 +208,14 @@ const Reviews = ({navigation}) => {
                         Booking#: {item.id}
                     </Text>
                 </View>
+                <Text
+                    style={{
+                        fontSize: 15,
+                        color: 'black',
+                        marginBottom: 10,
+                    }}>
+                    Slot: {item.slotData.game}
+                </Text>
                 <View style={styles.cardFooter}>
                     <View
                         style={{

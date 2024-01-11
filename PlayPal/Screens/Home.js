@@ -285,7 +285,6 @@ const Home = ({navigation}) => {
                                     alignItems: 'center',
                                     alignSelf: 'center',
                                     height: '50%',
-
                                     left: -2,
                                 }}>
                                 <Image
@@ -340,25 +339,36 @@ const Home = ({navigation}) => {
                 </View>
 
                 <Text style={styles.friendsTitle}>Friends</Text>
+
                 <Divider style={styles.divider} width={1} />
+
                 {loading ? (
                     <ActivityIndicator
-                        size={'large'}
-                        color={'darkblue'}
+                        size={35}
                         style={{alignSelf: 'center', top: 20}}
                     />
                 ) : (
-                    <FlatList
-                        data={friends}
-                        keyExtractor={item => item.id}
-                        scrollEnabled={false}
-                        renderItem={renderFriendItem}
-                        ListEmptyComponent={() => (
-                            <Text style={styles.emptyText}>
-                                You did not add any friends yet!
+                    <>
+                        {friends.length > 0 ? (
+                            <Text style={styles.numFriends}>
+                                ({friends.length}{' '}
+                                {friends.length === 1 ? 'friend' : 'friends'})
                             </Text>
+                        ) : (
+                            <></>
                         )}
-                    />
+                        <FlatList
+                            data={friends}
+                            keyExtractor={item => item.id}
+                            scrollEnabled={false}
+                            renderItem={renderFriendItem}
+                            ListEmptyComponent={() => (
+                                <Text style={styles.emptyText}>
+                                    You did not add any friends yet!
+                                </Text>
+                            )}
+                        />
+                    </>
                 )}
             </ScrollView>
         </SafeAreaView>
@@ -426,10 +436,15 @@ const styles = StyleSheet.create({
     },
     friendsTitle: {
         fontSize: 20,
-        textAlign: 'center',
+        left: 10,
+        textAlign: 'left',
         fontWeight: '600',
         color: '#4a5a96',
-        fontStyle: 'italic',
+    },
+    numFriends: {
+        fontSize: 14,
+        textAlign: 'center',
+        color: 'grey',
     },
     divider: {
         marginTop: 5,

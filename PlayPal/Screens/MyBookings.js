@@ -4,7 +4,6 @@ import {
     StyleSheet,
     Text,
     View,
-    FlatList,
     SectionList,
     TouchableOpacity,
     Image,
@@ -13,7 +12,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
 import {ActivityIndicator} from 'react-native';
-import {Tab, TabView, Button, Card, Divider, Icon} from '@rneui/themed';
+import {Tab, TabView, Card, Divider, Icon} from '@rneui/themed';
 
 const MyBookings = ({navigation}) => {
     const [loading, setLoading] = useState(false);
@@ -170,7 +169,7 @@ const MyBookings = ({navigation}) => {
     };
 
     const renderItem = ({item, index}) => {
-        let slotNumber = index + 1;
+        // let slotNumber = index + 1;
         let arena = item.arenaData;
         let arenaRating = getAverageRating(arena.rating);
         let ratingCount = getRatingCount(arena.rating.length);
@@ -179,9 +178,17 @@ const MyBookings = ({navigation}) => {
             <Card containerStyle={styles.cardContainer}>
                 <View style={{marginBottom: 10}}>
                     <Text
-                        style={{fontWeight: '500', fontSize: 15, color: 'grey'}}
+                        style={{fontWeight: '300', fontSize: 15, color: 'grey'}}
                         selectable>
                         Booking# {item.id}
+                    </Text>
+                    <Text
+                        style={{
+                            fontSize: 15,
+                            color: 'black',
+                            marginTop: 5,
+                        }}>
+                        Slot: {item.slotData.game}
                     </Text>
                 </View>
                 <View style={styles.cardHeader}>

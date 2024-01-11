@@ -10,12 +10,11 @@ import {
     Modal,
     ActivityIndicator,
 } from 'react-native';
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Badge, Button, Divider, Icon} from '@rneui/themed';
 import {Card, IconButton, Paragraph} from 'react-native-paper';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
-import {useFocusEffect} from '@react-navigation/native';
 import AlertPro from 'react-native-alert-pro';
 import Toast from 'react-native-toast-message';
 import getSportsByIds from '../Functions/getSportsByIds';

@@ -12,11 +12,11 @@ import {Button, Card, Divider, Icon} from '@rneui/themed';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {useFocusEffect} from '@react-navigation/native';
 import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
+import {Picker} from '@react-native-picker/picker';
 
 const Slots = ({navigation, route}) => {
-    const {arenaId} = route.params;
+    const {arenaId, sportsList} = route.params;
 
     const [selectedDate, setSelectedDate] = useState('');
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -24,6 +24,8 @@ const Slots = ({navigation, route}) => {
     const [dateBool, setDateBool] = useState(false);
     const [loading, setLoading] = useState(false);
     const [bookingData, setBookingData] = useState([]);
+    const [selectedSport, setSelectedSport] = useState(null);
+    const [filteredSlots, setFilteredSlots] = useState([]);
 
     const options = {
         year: 'numeric',
@@ -32,11 +34,11 @@ const Slots = ({navigation, route}) => {
         weekday: 'short',
     };
 
-    const gotoPaymentScreen = (slot_id, slot_price) => {
+    const gotoPaymentScreen = (slot_id, price) => {
         navigation.navigate('PaymentScreen', {
             arena_id: arenaId,
             slot_id,
-            slot_price,
+            slot_price: price * 100,
             slot_date: selectedDate.getTime(),
         });
     };
@@ -82,10 +84,25 @@ const Slots = ({navigation, route}) => {
             setSelectedDate(selected);
             setLoading(true);
             const available = await filterAvailableSlots(selected);
+
+            setFilteredSlots(available);
             setAvailableSlots(available);
             setDateBool(true);
             setLoading(false);
         }
+    };
+
+    const handleSportsFilter = value => {
+        setSelectedSport(value);
+        console.log(value);
+
+        const filtered = availableSlots.filter(slot => {
+            const isSportsMatched = !value || slot.game === value;
+            return isSportsMatched;
+        });
+        console.log(filtered);
+
+        setFilteredSlots(filtered);
     };
 
     const filterAvailableSlots = async dateSelected => {
@@ -103,11 +120,6 @@ const Slots = ({navigation, route}) => {
 
             if (slotsSnapshot.exists) {
                 const slots = slotsSnapshot.data().slots;
-
-                // const bookingRef = await firestore()
-                //     .collection('bookings')
-                //     .where('arenaId', '==', arenaId)
-                //     .get();
 
                 const bookedSlots = bookingData.filter(
                     doc =>
@@ -139,8 +151,11 @@ const Slots = ({navigation, route}) => {
         return (
             <Card containerStyle={styles.cardContainer}>
                 <View style={styles.cardHeader}>
-                    <Text style={styles.slotTitle}>Slot {slotNumber}</Text>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        <Text style={styles.slotTitle}>Slot {slotNumber}</Text>
 
+                        <Text style={styles.sportText}>({item.game})</Text>
+                    </View>
                     <Text style={styles.priceText}>PKR {item.price}</Text>
                 </View>
                 <Divider width={1} color="black" style={styles.divider2} />
@@ -214,6 +229,39 @@ const Slots = ({navigation, route}) => {
                     </View>
                     <Text style={styles.selectText}>Select date</Text>
                 </TouchableOpacity>
+
+                <View style={styles.pickerView}>
+                    <Picker
+                        selectedValue={selectedSport}
+                        onValueChange={handleSportsFilter}
+                        enabled={dateBool}
+                        selectionColor={'#11867F'}
+                        style={
+                            dateBool
+                                ? styles.pickerStyle
+                                : styles.disabledPicker
+                        }
+                        mode="dropdown"
+                        dropdownIconColor={dateBool ? '#143B63' : 'darkgrey'}
+                        dropdownIconRippleColor={'#11867F'}>
+                        <Picker.Item
+                            style={styles.pickerBox}
+                            label="Select sports"
+                            value=""
+                            enabled={false}
+                            color="grey"
+                        />
+                        {sportsList.map((sport, index) => (
+                            <Picker.Item
+                                key={index}
+                                style={styles.pickerBox}
+                                label={sport}
+                                value={sport}
+                                color="black"
+                            />
+                        ))}
+                    </Picker>
+                </View>
             </View>
             {showDatePicker && (
                 <DateTimePicker
@@ -237,7 +285,7 @@ const Slots = ({navigation, route}) => {
                     />
                 ) : (
                     <FlatList
-                        data={availableSlots}
+                        data={filteredSlots}
                         keyExtractor={item => item.slotId}
                         renderItem={renderItem}
                         ListEmptyComponent={() => {
@@ -262,7 +310,7 @@ const styles = StyleSheet.create({
     },
     headerView: {
         width: '100%',
-        height: 150,
+        height: 200,
         backgroundColor: '#385c96',
         borderBottomRightRadius: 20,
         borderBottomLeftRadius: 20,
@@ -277,11 +325,6 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
         fontStyle: 'italic',
     },
-    divider: {
-        width: '91%',
-        marginTop: 5,
-        alignSelf: 'center',
-    },
     dateBtn: {
         width: '80%',
         backgroundColor: 'white',
@@ -291,7 +334,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 30,
+        marginTop: 20,
     },
     dateText: {
         fontSize: 15,
@@ -302,6 +345,30 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '500',
         marginRight: 20,
+    },
+    pickerView: {
+        width: '80%',
+        height: 40,
+        borderRadius: 10,
+        justifyContent: 'center',
+        textAlignVertical: 'center',
+        overflow: 'hidden',
+        marginTop: 25,
+    },
+    pickerStyle: {
+        height: 40,
+        color: 'black',
+        backgroundColor: 'white',
+    },
+    disabledPicker: {
+        height: 40,
+        opacity: 0.6,
+        color: 'darkgrey',
+        backgroundColor: 'white',
+    },
+    pickerBox: {
+        fontSize: 16,
+        backgroundColor: 'white',
     },
     listView: {
         marginTop: 20,
@@ -339,6 +406,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#2d5091',
+    },
+    sportText: {
+        fontSize: 14,
+        color: 'black',
+        left: 5,
     },
     divider2: {
         width: '100%',

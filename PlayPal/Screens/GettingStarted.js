@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {
     SafeAreaView,
     View,
@@ -9,8 +9,6 @@ import {
     ImageBackground,
     Dimensions,
 } from 'react-native';
-import auth from '@react-native-firebase/auth';
-import {StackActions} from '@react-navigation/native';
 
 const {width, height} = Dimensions.get('window');
 

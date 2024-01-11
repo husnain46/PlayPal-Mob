@@ -8,11 +8,10 @@ import {
     TouchableOpacity,
     ActivityIndicator,
     Modal,
-    Dimensions,
 } from 'react-native';
 import React, {useState, useEffect, useCallback} from 'react';
 import {Badge, Divider} from '@rneui/themed';
-import {Button, Card, IconButton, Paragraph} from 'react-native-paper';
+import {Button, Card, IconButton} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import {useFocusEffect} from '@react-navigation/native';

@@ -88,18 +88,18 @@ const PaymentScreen = ({navigation, route}) => {
         }
     };
 
-    const fetchPaymentIntentClientSecret = async amount => {
+    const fetchPaymentIntentClientSecret = async () => {
         try {
+            console.log(slot_price);
             const response = await fetch(
-                'http://192.168.1.8:3000/payment-intent',
+                'http://192.168.1.5:3000/payment-intent',
                 {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        amount: amount,
-                        currency: 'pkr',
+                        amount: slot_price,
                     }),
                 },
             );
@@ -145,9 +145,7 @@ const PaymentScreen = ({navigation, route}) => {
                     return;
                 }
 
-                const clientSecret = await fetchPaymentIntentClientSecret(
-                    slot_price,
-                );
+                const clientSecret = await fetchPaymentIntentClientSecret();
 
                 // Confirm the payment with the card details
                 const {paymentIntent, error} = await confirmPayment(
@@ -222,6 +220,20 @@ const PaymentScreen = ({navigation, route}) => {
                     // Send booking data to Firestore immediately
                     await firestore().collection('bookings').add(bookingData);
 
+                    // send a notification to arena
+                    const arenaNotification = {
+                        receiverId: arena_id,
+                        message:
+                            '🎉 Score! Your arena just bagged a new slot booking!',
+                        type: 'arena_booking',
+                        read: false,
+                        timestamp: currentDate,
+                    };
+
+                    await firestore()
+                        .collection('notifications')
+                        .add(arenaNotification);
+
                     setIsConfirmed(true);
 
                     setLoading(false);
@@ -249,6 +261,7 @@ const PaymentScreen = ({navigation, route}) => {
                                 fontWeight: '600',
                                 color: 'darkblue',
                                 marginTop: 20,
+                                fontStyle: 'italic',
                             }}>
                             Payment
                         </Text>
@@ -257,11 +270,11 @@ const PaymentScreen = ({navigation, route}) => {
                             style={{width: '90%', marginTop: 5}}
                             color={'grey'}
                         />
-                        <View style={{width: '90%', marginTop: 50}}>
+                        <View style={{width: '88%', marginTop: 20}}>
                             <Text
                                 style={{
-                                    fontSize: 18,
-                                    fontWeight: '600',
+                                    fontSize: 16,
+                                    fontWeight: '500',
                                     color: 'black',
                                     marginBottom: 10,
                                 }}>
@@ -373,39 +386,40 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cardDetailsContainer: {
-        marginTop: 20,
+        marginTop: 10,
         width: '90%',
-        paddingHorizontal: 5,
+        height: 60,
+        paddingHorizontal: 15,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingVertical: 10,
+        paddingVertical: 5,
         alignItems: 'center',
         borderRadius: 10,
         backgroundColor: 'white',
         marginBottom: 20,
     },
     cardDetailLabel: {
-        fontWeight: 'bold',
-        marginBottom: 5,
+        fontWeight: '500',
         color: 'black',
         width: '40%',
-        fontSize: 16,
+        fontSize: 15,
     },
     outlinedInput: {
         backgroundColor: '#fff',
         borderWidth: 1,
         borderRadius: 5,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
+        paddingVertical: 7,
+        paddingLeft: 10,
+        right: 10,
         fontSize: 16,
-        width: '60%',
+        width: '65%',
         textAlign: 'justify',
         color: '#0b5187',
     },
     cardForm: {
         marginBottom: 20,
-        height: 55,
+        height: 45,
     },
     emptyText: {
         color: 'red',

@@ -7,7 +7,7 @@ import {
     FlatList,
 } from 'react-native';
 import React, {useCallback, useRef, useState} from 'react';
-import {Button, Divider, Icon} from '@rneui/themed';
+import {Button, Divider} from '@rneui/themed';
 import {useFocusEffect} from '@react-navigation/native';
 import {IconButton, Card} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';

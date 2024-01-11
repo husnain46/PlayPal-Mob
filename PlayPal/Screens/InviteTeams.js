@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, SearchBar, Divider, Card} from '@rneui/themed';
 import styles from '../Styles/inviteTeamsStyles';
 import {

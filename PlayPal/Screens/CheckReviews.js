@@ -7,7 +7,6 @@ import {
     Image,
 } from 'react-native';
 import React from 'react';
-import getPlayerData from '../Functions/getPlayerData';
 import getTimeAgo from '../Functions/getTimeAgo';
 import {Divider} from '@rneui/themed';
 import {Rating} from 'react-native-ratings';
@@ -16,8 +15,6 @@ const CheckReviews = ({route}) => {
     const {reviews, arenaRating, ratingCount} = route.params;
 
     const renderReviewList = ({item}) => {
-        let user = getPlayerData(item.userId);
-
         let reviewTime = getTimeAgo(item.timestamp);
         return (
             <View style={styles.ratingItem}>

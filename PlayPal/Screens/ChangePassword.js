@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {View, Text, StyleSheet, SafeAreaView} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import {Button, Divider} from '@rneui/themed';

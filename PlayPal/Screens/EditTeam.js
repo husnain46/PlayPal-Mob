@@ -20,7 +20,6 @@ import cityData from '../Assets/cityData.json';
 import storage from '@react-native-firebase/storage';
 import Toast from 'react-native-toast-message';
 import {Divider} from '@rneui/themed';
-import {de} from 'date-fns/locale';
 
 const EditTeam = ({navigation, route}) => {
     const {myTeam, playersList} = route.params;

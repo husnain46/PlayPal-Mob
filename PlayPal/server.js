@@ -14,13 +14,11 @@ app.use(cors()); // Add this line to enable CORS
 // POST route for creating payment intent
 app.post('/payment-intent', async (req, res) => {
     try {
-        const {amount, currency} = req.body;
-
-        const amountInPaisa = amount * 100;
+        const {amount} = req.body;
 
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: amountInPaisa,
-            currency: currency,
+            amount: amount,
+            currency: 'pkr',
             payment_method_types: ['card'],
         });
 

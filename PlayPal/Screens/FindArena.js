@@ -1,5 +1,5 @@
 import styles from '../Styles/findArenaStyles';
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {SearchBar, Card, Divider} from '@rneui/themed';
 import {
     SafeAreaView,
@@ -41,6 +41,7 @@ const FindArena = ({navigation}) => {
                     const arenaRef = await firestore()
                         .collection('arenas')
                         .where('holiday', '==', false)
+                        .where('approved', '==', true)
                         .get();
 
                     if (!arenaRef.empty) {
@@ -391,8 +392,8 @@ const FindArena = ({navigation}) => {
             {isLoading ? (
                 <View style={{alignSelf: 'center'}}>
                     <ActivityIndicator
-                        style={{top: 100}}
-                        size={50}
+                        style={{top: 50}}
+                        size={35}
                         color="#11867F"
                     />
                 </View>

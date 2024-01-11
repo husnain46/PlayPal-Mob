@@ -22,7 +22,7 @@ const LogoAnimation = () => {
             }),
             Animated.timing(logoAnim, {
                 toValue: 0,
-                duration: 400,
+                duration: 300,
                 easing: Easing.linear,
                 useNativeDriver: true,
             }),

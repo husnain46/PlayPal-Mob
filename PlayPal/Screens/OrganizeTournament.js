@@ -1,5 +1,5 @@
 import {Picker} from '@react-native-picker/picker';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {
     ActivityIndicator,
     SafeAreaView,
@@ -12,12 +12,10 @@ import {TextInput, Button} from 'react-native-paper';
 import sportsList from '../Assets/sportsList.json';
 import cityData from '../Assets/cityData.json';
 import firestore from '@react-native-firebase/firestore';
-import auth from '@react-native-firebase/auth';
 import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {Divider} from '@rneui/themed';
 import {Dropdown} from 'react-native-element-dropdown';
-import {getDate} from 'date-fns';
 import AlertPro from 'react-native-alert-pro';
 
 const OrganizeTournament = ({navigation, route}) => {

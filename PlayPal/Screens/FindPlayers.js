@@ -2,7 +2,7 @@ import styles from '../Styles/findplayersStyles';
 import React, {useState, useEffect, useCallback} from 'react';
 import {FlatList} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import {ButtonGroup, Divider, SearchBar, Card} from '@rneui/themed';
+import {ButtonGroup, SearchBar, Card} from '@rneui/themed';
 import firestore from '@react-native-firebase/firestore';
 
 import {
@@ -435,8 +435,8 @@ const FindPlayers = ({navigation}) => {
             {isLoading ? (
                 <View style={{alignSelf: 'center'}}>
                     <ActivityIndicator
-                        style={{top: 100}}
-                        size={50}
+                        style={{top: 50}}
+                        size={35}
                         color="#11867F"
                     />
                 </View>

@@ -7,9 +7,7 @@ import {
     Keyboard,
     Image,
     Text,
-    ImageBackground,
     Platform,
-    Dimensions,
 } from 'react-native';
 import {RadioButton, TextInput} from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -17,7 +15,6 @@ import styles from '../Styles/signupStyles';
 import auth from '@react-native-firebase/auth';
 import {Button} from '@rneui/themed';
 import firestore from '@react-native-firebase/firestore';
-import {ActivityIndicator} from 'react-native';
 import Toast from 'react-native-toast-message';
 import {KeyboardAvoidingView} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';

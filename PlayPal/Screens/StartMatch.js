@@ -6,9 +6,9 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {Divider, Icon} from '@rneui/themed';
-import {Button, IconButton, Surface} from 'react-native-paper';
+import {Button, Surface} from 'react-native-paper';
 import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
 import AlertPro from 'react-native-alert-pro';

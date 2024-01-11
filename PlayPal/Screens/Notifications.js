@@ -5,8 +5,6 @@ import auth from '@react-native-firebase/auth';
 import {IconButton} from 'react-native-paper';
 import Toast from 'react-native-toast-message';
 import {ActivityIndicator} from 'react-native';
-import {useFocusEffect} from '@react-navigation/native';
-import {useCallback} from 'react';
 import {Button, Divider} from '@rneui/themed';
 
 const Notifications = ({navigation, route}) => {

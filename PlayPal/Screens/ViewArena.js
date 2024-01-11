@@ -10,6 +10,7 @@ import {
     TouchableOpacity,
     Text,
     FlatList,
+    Linking,
 } from 'react-native';
 import {Button, Chip} from 'react-native-paper';
 import {Divider, Icon} from '@rneui/themed';
@@ -17,6 +18,7 @@ import Carousel, {Pagination} from 'react-native-snap-carousel';
 import getTimeAgo from '../Functions/getTimeAgo';
 import getSportsByIds from '../Functions/getSportsByIds';
 import {Rating} from 'react-native-ratings';
+import Toast from 'react-native-toast-message';
 
 const ViewArena = ({navigation, route}) => {
     const {arena, arenaRating, ratingCount, arenaId} = route.params;
@@ -24,6 +26,25 @@ const ViewArena = ({navigation, route}) => {
     const [activeSlide, setActiveSlide] = useState(0);
 
     let sportsList = getSportsByIds(arena.sports);
+
+    const openGoogleMaps = location => {
+        const url = `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+
+        Linking.canOpenURL(url)
+            .then(supported => {
+                if (!supported) {
+                    console.error('Google Maps is not installed.');
+                } else {
+                    return Linking.openURL(url);
+                }
+            })
+            .catch(err => {
+                Toast.show({
+                    type: 'error',
+                    text2: 'Location could not be loaded!',
+                });
+            });
+    };
 
     const gotoCheckReviews = () => {
         navigation.navigate('CheckReviews', {
@@ -34,7 +55,7 @@ const ViewArena = ({navigation, route}) => {
     };
 
     const gotoSlots = () => {
-        navigation.navigate('Slots', {slots: arena.slots, arenaId});
+        navigation.navigate('Slots', {arenaId, sportsList});
     };
 
     const getSportIcon = sport => {
@@ -196,7 +217,9 @@ const ViewArena = ({navigation, route}) => {
                         />
                         <Text style={styles.detailText}>{arena.phone}</Text>
                     </View>
-                    <TouchableOpacity style={styles.mapBtn}>
+                    <TouchableOpacity
+                        style={styles.mapBtn}
+                        onPress={() => openGoogleMaps(arena.location)}>
                         <Text style={styles.mapText}>Maps</Text>
                         <Icon
                             name="location"

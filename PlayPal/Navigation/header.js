@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     StyleSheet,
     View,
@@ -10,8 +10,6 @@ import {
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import {Badge} from '@rneui/themed';
-import {useFocusEffect} from '@react-navigation/native';
-import Toast from 'react-native-toast-message';
 
 export default function Header({navigation}) {
     const [userData, setUserData] = useState();
@@ -121,12 +119,7 @@ export default function Header({navigation}) {
                     let isCaptain = team.captainId === myId;
 
                     const tournamentSnapshot = await tournamentRef.get();
-                    // console.log(
-                    //     tournamentSnapshot.docs[1]
-                    //         .data()
-                    //         .end_date.toDate()
-                    //         .toDateString(),
-                    // );
+
                     tournamentSnapshot.forEach(async doc => {
                         const tournamentData = doc.data();
                         const startDate = tournamentData.start_date.toDate();
