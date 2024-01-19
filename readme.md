@@ -1,6 +1,6 @@
 # PlayPal
 
-PlayPal, your go-to sports companion, is a React Native mobile application designed to bring together sports enthusiasts, making it easy to connect, create teams, organize tournaments, and reserve sports arenas. With a focus on fostering community building, PlayPal simplifies the sports engagement process, making it accessible for individuals with varied interests and skill levels.
+PlayPal, your go-to sports companion, is a React Native mobile application with firebase integration, designed to bring together sports enthusiasts, making it easy to connect, create teams, organize tournaments, and reserve sports arenas. With a focus on fostering community building, PlayPal simplifies the sports engagement process, making it accessible for individuals with varied interests and skill levels.
 
 ## Features
 
