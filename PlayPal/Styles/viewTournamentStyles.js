@@ -185,8 +185,8 @@ const styles = StyleSheet.create({
     },
     playerLabel: {
         marginLeft: 5,
-        fontSize: 17,
-        fontWeight: '700',
+        fontSize: 16,
+        fontWeight: '600',
         color: 'black',
     },
     teamReqView: {

@@ -98,9 +98,10 @@ const OrganizeTournament = ({navigation, route}) => {
             const tourQuery = await firestore().collection('tournaments').get();
 
             // Check if a team with the same name (case-insensitive) already exists
+
             const matchName = tourQuery.docs.find(doc => {
                 const tData = doc.data();
-                const existingName = tData.name.trim().toLowerCase();
+                const existingName = tData.name?.trim().toLowerCase();
                 return existingName === tName;
             });
 
@@ -174,7 +175,7 @@ const OrganizeTournament = ({navigation, route}) => {
             }
         } catch (error) {
             setLoading(false);
-
+            console.log(error);
             Toast.show({
                 type: 'error',
                 text1: 'Error creating team!',

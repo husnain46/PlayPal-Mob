@@ -166,9 +166,12 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     emptyListText: {
-        fontSize: 18,
-        color: '#124163',
+        fontSize: 15,
+        color: '#c73804',
         textAlign: 'center',
+        marginTop: 20,
+        width: '75%',
+        alignSelf: 'center',
     },
     card: {
         width: '85%',

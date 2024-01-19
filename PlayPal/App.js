@@ -62,10 +62,11 @@ const toastConfig = {
         <ErrorToast
             {...props}
             text1Style={{
-                fontSize: 17,
+                fontSize: 15,
+                fontWeight: '500',
             }}
             text2Style={{
-                fontSize: 15,
+                fontSize: 13,
             }}
         />
     ),

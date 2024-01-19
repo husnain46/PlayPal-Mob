@@ -118,6 +118,7 @@ const Tournament = ({navigation}) => {
                     setLoading(false);
                 } catch (error) {
                     setLoading(false);
+                    console.log(error);
 
                     Toast.show({
                         type: 'error',

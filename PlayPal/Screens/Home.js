@@ -20,15 +20,14 @@ import {useCallback} from 'react';
 import {useFocusEffect} from '@react-navigation/native';
 
 const Home = ({navigation}) => {
-    const [friends, setFriends] = useState();
+    const [friends, setFriends] = useState([]);
     const [myData, setMyData] = useState();
-    const [loading, setLoading] = useState(true);
     const [badgeCount, setBadgeCount] = useState(0);
+    const [loading, setLoading] = useState(true);
 
     const myId = auth().currentUser.uid;
 
     const gotoChat = async (user, chatId) => {
-        // friends[user.id].unreadMsg = 0;
         navigation.navigate('ChatScreen', {
             user,
             chatId: chatId,
@@ -48,14 +47,15 @@ const Home = ({navigation}) => {
         navigation.navigate('Reviews');
     };
 
-    useFocusEffect(
-        useCallback(() => {
-            const fetchFriends = async () => {
-                try {
-                    const usersRef = firestore().collection('users').doc(myId);
-                    const querySnapshot = await usersRef.get();
+    useEffect(() => {
+        const fetchFriends = async () => {
+            try {
+                const usersRef = firestore().collection('users').doc(myId);
 
-                    const userData = querySnapshot.data();
+                const unsubscribeUser = usersRef.onSnapshot(async snapshot => {
+                    const userData = snapshot.data();
+
+                    setMyData(userData);
 
                     if (userData.points >= 15 && userData.points < 30) {
                         await usersRef.update({skillLevel: 'Amateur'});
@@ -67,8 +67,6 @@ const Home = ({navigation}) => {
                         await usersRef.update({skillLevel: 'Beginner'});
                         userData.skillLevel = 'Beginner';
                     }
-
-                    setMyData(userData);
 
                     const friendsId = userData.friends;
 
@@ -85,7 +83,6 @@ const Home = ({navigation}) => {
                             const fData = friendSnapshot.data();
                             fData.id = fId;
 
-                            // Fetch chatId for friend
                             const chatSnapshot = await firestore()
                                 .collection('chats')
                                 .where('participants', 'array-contains', myId)
@@ -97,17 +94,17 @@ const Home = ({navigation}) => {
                                 )
                                 .map(doc => doc.id)[0];
 
-                            // Fetch messages without senderId == receiverId and myId in readBy array
                             let unreadCount = 0;
 
                             if (!chatId) {
-                                // No chat found, create a new chat
                                 const newChat = await firestore()
                                     .collection('chats')
                                     .add({
-                                        participants: [senderId, receiverId],
+                                        participants: [myId, fId],
                                         messages: [],
                                     });
+
+                                fData.chatId = newChat.id;
                             } else {
                                 const chatData = await firestore()
                                     .collection('chats')
@@ -115,38 +112,42 @@ const Home = ({navigation}) => {
                                     .get();
 
                                 const messages = chatData.data().messages || [];
-                                unreadCount = messages.filter(message => {
-                                    return (
-                                        message.sender !== fId && // Not sent by friend
-                                        (!message.readBy ||
-                                            !message.readBy.includes(myId)) // Not read by me
-                                    );
-                                }).length;
+                                unreadCount = messages.filter(
+                                    message =>
+                                        message.sender === fId &&
+                                        !message.readBy?.includes(myId),
+                                ).length;
+
+                                fData.chatId = chatId;
                             }
 
-                            fData.chatId = chatId;
                             fData.unreadMsg = unreadCount;
-
                             friendsData.push(fData);
                         }
+
                         setFriends(friendsData);
                         setLoading(false);
                     } else {
                         setFriends([]);
                         setLoading(false);
                     }
-                } catch (error) {
-                    setLoading(false);
-                    Toast.show({
-                        type: 'error',
-                        text2: error.message,
-                    });
-                }
-            };
+                });
 
-            fetchFriends();
-        }, [myId]),
-    );
+                return () => {
+                    unsubscribeUser();
+                    // You may need to add additional cleanup logic for chat-related subscriptions
+                };
+            } catch (error) {
+                setLoading(true);
+                Toast.show({
+                    type: 'error',
+                    text2: 'Error loading data, Reload app!',
+                });
+            }
+        };
+
+        fetchFriends();
+    }, [myId]);
 
     useEffect(() => {
         const unsubscribe = firestore()
@@ -156,8 +157,10 @@ const Home = ({navigation}) => {
             .where('reviewed', '==', false)
             .where('type', '==', 'inApp')
             .onSnapshot(snapshot => {
-                const numReviews = snapshot.docs.length;
-                setBadgeCount(numReviews);
+                if (snapshot) {
+                    const numReviews = snapshot.docs.length;
+                    setBadgeCount(numReviews);
+                }
             });
 
         // Unsubscribe from the snapshot listener when component unmounts
@@ -239,67 +242,53 @@ const Home = ({navigation}) => {
                     <View style={styles.card}>
                         <Text style={styles.pointsText}>My Points</Text>
 
-                        {loading ? (
-                            <ActivityIndicator
-                                size={'small'}
-                                style={{alignSelf: 'center', top: 20}}
-                            />
-                        ) : (
-                            <View
+                        <View
+                            style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                alignSelf: 'center',
+                                height: '50%',
+                                left: -2,
+                            }}>
+                            <Image
+                                source={require('../Assets/Icons/star.png')}
                                 style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    alignSelf: 'center',
-                                    height: '50%',
-                                    left: -2,
-                                }}>
-                                <Image
-                                    source={require('../Assets/Icons/star.png')}
-                                    style={{
-                                        width: 15,
-                                        height: 15,
-                                        marginRight: 7,
-                                    }}
-                                />
-                                <Text style={styles.cardText}>
-                                    {myData.points}
-                                </Text>
-                            </View>
-                        )}
+                                    width: 15,
+                                    height: 15,
+                                    marginRight: 7,
+                                }}
+                            />
+                            <Text style={styles.cardText}>
+                                {myData?.points}
+                            </Text>
+                        </View>
                     </View>
 
                     <View style={styles.card}>
                         <Text style={styles.pointsText}>My Experience</Text>
 
-                        {loading ? (
-                            <ActivityIndicator
-                                size={'small'}
-                                style={{alignSelf: 'center', top: 20}}
-                            />
-                        ) : (
-                            <View
+                        <View
+                            style={{
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                alignSelf: 'center',
+                                height: '50%',
+                                left: -2,
+                            }}>
+                            <Image
+                                source={levelIcon}
                                 style={{
-                                    flexDirection: 'row',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    alignSelf: 'center',
-                                    height: '50%',
-                                    left: -2,
-                                }}>
-                                <Image
-                                    source={levelIcon}
-                                    style={{
-                                        width: 15,
-                                        height: 15,
-                                        marginRight: 7,
-                                    }}
-                                />
-                                <Text style={styles.cardText}>
-                                    {myData.skillLevel}
-                                </Text>
-                            </View>
-                        )}
+                                    width: 15,
+                                    height: 15,
+                                    marginRight: 7,
+                                }}
+                            />
+                            <Text style={styles.cardText}>
+                                {myData?.skillLevel}
+                            </Text>
+                        </View>
                     </View>
                 </View>
 
@@ -349,7 +338,7 @@ const Home = ({navigation}) => {
                     />
                 ) : (
                     <>
-                        {friends.length > 0 ? (
+                        {friends?.length > 0 ? (
                             <Text style={styles.numFriends}>
                                 ({friends.length}{' '}
                                 {friends.length === 1 ? 'friend' : 'friends'})
@@ -482,9 +471,10 @@ const styles = StyleSheet.create({
         height: 18,
     },
     emptyText: {
-        fontSize: 17,
+        fontSize: 15,
         color: 'grey',
         textAlign: 'center',
+        marginTop: 20,
     },
 });
 

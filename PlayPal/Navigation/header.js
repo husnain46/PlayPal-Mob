@@ -12,8 +12,6 @@ import firestore from '@react-native-firebase/firestore';
 import {Badge} from '@rneui/themed';
 
 export default function Header({navigation}) {
-    const [userData, setUserData] = useState();
-
     const [badgeCount, setBadgeCount] = useState(0);
     const myId = auth().currentUser.uid;
 
@@ -40,56 +38,6 @@ export default function Header({navigation}) {
 
     useEffect(() => {
         // Fetch user data from Firestore
-
-        const fetchUserData = async () => {
-            try {
-                const userDoc = await firestore()
-                    .collection('users')
-                    .doc(myId)
-                    .get();
-
-                if (userDoc.exists) {
-                    const myData = userDoc.data();
-                    myData.id = userDoc.id;
-                    setUserData(myData);
-                } else {
-                    // User data not found, display an error message
-                    Alert.alert(
-                        'User Data Not Found',
-                        'User data not found. Please try again later.',
-                        [
-                            {
-                                text: 'Reload',
-                                onPress: () => {
-                                    // Reload the app
-                                    navigation.navigate('BottomTab', {
-                                        screen: 'Home',
-                                    });
-                                },
-                            },
-                        ],
-                    );
-                }
-            } catch (error) {
-                // Handle the error and display an error message
-                Alert.alert(
-                    'Error',
-                    'An error occurred while fetching user data. Please try again later.',
-                    [
-                        {
-                            text: 'Reload',
-                            onPress: () => {
-                                // Reload the app
-                                navigation.navigate('BottomTab', {
-                                    screen: 'Home',
-                                });
-                            },
-                        },
-                    ],
-                );
-                console.error('Error fetching user data: ', error.message);
-            }
-        };
 
         const getNotifications = async () => {
             try {
@@ -288,8 +236,6 @@ export default function Header({navigation}) {
         };
 
         getNotifications();
-
-        fetchUserData();
     }, []);
 
     return (
@@ -304,9 +250,7 @@ export default function Header({navigation}) {
 
             <View style={styles.rightView}>
                 <TouchableOpacity
-                    onPress={() =>
-                        navigation.navigate('Notifications', {user: userData})
-                    }
+                    onPress={() => navigation.navigate('Notifications')}
                     style={{flexDirection: 'row-reverse'}}>
                     <Image
                         source={require('../Assets/Icons/bell.png')}
@@ -329,9 +273,7 @@ export default function Header({navigation}) {
                 <View style={styles.divider} />
 
                 <TouchableOpacity
-                    onPress={() =>
-                        navigation.navigate('MyProfile', {user: userData})
-                    }>
+                    onPress={() => navigation.navigate('MyProfile')}>
                     <Image
                         source={require('../Assets/Icons/account.png')}
                         style={styles.account}

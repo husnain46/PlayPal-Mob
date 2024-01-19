@@ -28,18 +28,19 @@ import AlertPro from 'react-native-alert-pro';
 import Toast from 'react-native-toast-message';
 import firestore from '@react-native-firebase/firestore';
 
-const MyProfile = ({navigation, route}) => {
-    const {user} = route.params;
+const MyProfile = ({navigation}) => {
+    const [user, setUser] = useState([]);
+    const [myAge, setMyAge] = useState('');
 
-    const myAge = getAge(user.DOB);
-    const sports = getSportsByIds(user.preferredSports);
+    const [mySports, setMySports] = useState();
     const [loading, setLoading] = useState(false);
     const [badgeCount, setBadgeCount] = useState(0);
     const [reqModal, setReqModal] = useState(false);
     const [inviteLoading, setInviteLoading] = useState(false);
-    const [teamInvites, setTeamInvites] = useState(user.teamReq);
+    const [teamInvites, setTeamInvites] = useState([]);
     const [teamsData, setTeamsData] = useState(false);
     const [sportMatched, setSportMatched] = useState(false);
+    const [userLoading, setUserLoading] = useState(true);
 
     const alertRef = useRef();
 
@@ -77,6 +78,8 @@ const MyProfile = ({navigation, route}) => {
 
     const handleAcceptInvite = async (tId, tName, isFull, tSport) => {
         try {
+            const myId = auth().currentUser.uid;
+
             if (isFull) {
                 setSportMatched(false);
                 inviteAlertRef.current.open();
@@ -85,7 +88,7 @@ const MyProfile = ({navigation, route}) => {
 
                 const myTeamRef = await firestore()
                     .collection('teams')
-                    .where('playersId', 'array-contains', user.id)
+                    .where('playersId', 'array-contains', myId)
                     .where('sportId', '==', tSport)
                     .get();
 
@@ -102,10 +105,10 @@ const MyProfile = ({navigation, route}) => {
 
                 const teamRef = firestore().collection('teams').doc(tId);
 
-                const userRef = firestore().collection('users').doc(user.id);
+                const userRef = firestore().collection('users').doc(myId);
 
                 await teamRef.update({
-                    playersId: firestore.FieldValue.arrayUnion(user.id),
+                    playersId: firestore.FieldValue.arrayUnion(myId),
                 });
 
                 await userRef.update({
@@ -114,7 +117,7 @@ const MyProfile = ({navigation, route}) => {
 
                 const notifyRef = await firestore()
                     .collection('notifications')
-                    .where('receiverId', '==', user.id)
+                    .where('receiverId', '==', myId)
                     .where('teamId', '==', tId)
                     .where('type', '==', 'team_invite')
                     .get();
@@ -141,6 +144,8 @@ const MyProfile = ({navigation, route}) => {
 
     const handleRemoveInvite = async tId => {
         try {
+            const myId = auth().currentUser.uid;
+
             setInviteLoading(true);
 
             setTeamsData(prevTeams =>
@@ -149,12 +154,12 @@ const MyProfile = ({navigation, route}) => {
 
             await firestore()
                 .collection('users')
-                .doc(user.id)
+                .doc(myId)
                 .update({teamReq: firestore.FieldValue.arrayRemove(tId)});
 
             const notifyRef = await firestore()
                 .collection('notifications')
-                .where('receiverId', '==', user.id)
+                .where('receiverId', '==', myId)
                 .where('teamId', '==', tId)
                 .where('type', '==', 'team_invite')
                 .get();
@@ -190,7 +195,10 @@ const MyProfile = ({navigation, route}) => {
                 }),
             );
         } catch (error) {
-            Alert.alert('Could not logout!', error.message);
+            Toast.show({
+                type: 'error',
+                text2: 'Could not logout!',
+            });
         } finally {
             setLoading(false);
         }
@@ -232,9 +240,11 @@ const MyProfile = ({navigation, route}) => {
     }, [teamInvites]);
 
     useEffect(() => {
+        const myId = auth().currentUser.uid;
+
         const fetchTeamReq = firestore()
             .collection('users')
-            .doc(user.id)
+            .doc(myId)
             .onSnapshot(snapshot => {
                 if (snapshot.exists) {
                     const myData = snapshot.data();
@@ -252,6 +262,31 @@ const MyProfile = ({navigation, route}) => {
 
         return () => fetchTeamReq();
     }, [reqModal]);
+
+    useEffect(() => {
+        const myId = auth().currentUser.uid;
+
+        const userRef = firestore().collection('users').doc(myId);
+
+        const unsubscribe = userRef.onSnapshot(userDoc => {
+            if (userDoc.exists) {
+                const myData = userDoc.data();
+                myData.id = userDoc.id;
+                setUser(myData);
+                setTeamInvites(myData.teamReq);
+                setMySports(getSportsByIds(myData.preferredSports));
+                setMyAge(getAge(myData.DOB));
+                setUserLoading(false);
+            } else {
+                Toast.show({
+                    type: 'error',
+                    text2: 'Error loading user data!',
+                });
+            }
+        });
+
+        return () => unsubscribe();
+    }, [navigation]);
 
     const renderInvites = ({item, index}) => {
         let num = index + 1;
@@ -307,6 +342,15 @@ const MyProfile = ({navigation, route}) => {
         );
     };
 
+    if (userLoading) {
+        // Render a loading state or return null
+        return (
+            <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#0000ff" />
+            </View>
+        );
+    }
+
     return (
         <ScrollView style={styles.container}>
             <AlertPro
@@ -342,11 +386,13 @@ const MyProfile = ({navigation, route}) => {
 
             <Card style={styles.card} mode="elevated">
                 <Card.Content>
-                    <Avatar.Image
-                        size={170}
-                        source={{uri: user.profilePic}}
-                        style={styles.avatar}
-                    />
+                    {user.profilePic && (
+                        <Avatar.Image
+                            size={170}
+                            source={{uri: user.profilePic}}
+                            style={styles.avatar}
+                        />
+                    )}
                     <Text
                         style={
                             styles.fullName
@@ -435,13 +481,19 @@ const MyProfile = ({navigation, route}) => {
                         flexWrap: 'wrap',
                         marginLeft: 2,
                     }}>
-                    {sports.map((sport, index) => (
-                        <Text
-                            key={index}
-                            style={{fontSize: 18, marginRight: 40, width: 125}}>
-                            {`●  ${sport}`}
-                        </Text>
-                    ))}
+                    {mySports &&
+                        Array.isArray(mySports) &&
+                        mySports.map((sport, index) => (
+                            <Text
+                                key={index}
+                                style={{
+                                    fontSize: 18,
+                                    marginRight: 40,
+                                    width: 125,
+                                }}>
+                                {`● ${sport}`}
+                            </Text>
+                        ))}
                 </View>
             </View>
 

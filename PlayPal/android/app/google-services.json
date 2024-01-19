@@ -1,39 +1,39 @@
 {
-    "project_info": {
-        "project_number": "114746221695",
-        "project_id": "playpal-10854",
-        "storage_bucket": "playpal-10854.appspot.com"
-    },
-    "client": [
-        {
-            "client_info": {
-                "mobilesdk_app_id": "1:114746221695:android:54c03fe1a93d5511d8cb4a",
-                "android_client_info": {
-                    "package_name": "com.playpal"
-                }
-            },
-            "oauth_client": [
-                {
-                    "client_id": "114746221695-kssdd7tsmoldf66t77iqqugmuffobu0p.apps.googleusercontent.com",
-                    "client_type": 3
-                }
-            ],
-            "api_key": [
-                {
-                    "current_key": "AIzaSyCDR3QJqVRFo7-ckyNzWc_g1pea3bizI68"
-                }
-            ],
-            "services": {
-                "appinvite_service": {
-                    "other_platform_oauth_client": [
-                        {
-                            "client_id": "114746221695-kssdd7tsmoldf66t77iqqugmuffobu0p.apps.googleusercontent.com",
-                            "client_type": 3
-                        }
-                    ]
-                }
-            }
+  "project_info": {
+    "project_number": "114746221695",
+    "project_id": "playpal-10854",
+    "storage_bucket": "playpal-10854.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:114746221695:android:54c03fe1a93d5511d8cb4a",
+        "android_client_info": {
+          "package_name": "com.playpal"
         }
-    ],
-    "configuration_version": "1"
+      },
+      "oauth_client": [
+        {
+          "client_id": "114746221695-kssdd7tsmoldf66t77iqqugmuffobu0p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDR3QJqVRFo7-ckyNzWc_g1pea3bizI68"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "114746221695-kssdd7tsmoldf66t77iqqugmuffobu0p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
 }

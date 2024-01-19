@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
-import {StackActions} from '@react-navigation/native';
+import {CommonActions} from '@react-navigation/native';
 import {Button} from '@rneui/themed';
 import Toast from 'react-native-toast-message';
 import {TextInput} from 'react-native-paper';
@@ -89,9 +89,19 @@ const Login = ({navigation}) => {
                     const userData = docSnapshot.data();
 
                     if (!userData.city) {
-                        navigation.dispatch(StackActions.replace('Welcome'));
+                        navigation.dispatch(
+                            CommonActions.reset({
+                                index: 0,
+                                routes: [{name: 'Welcome'}],
+                            }),
+                        );
                     } else {
-                        navigation.dispatch(StackActions.replace('BottomTab'));
+                        navigation.dispatch(
+                            CommonActions.reset({
+                                index: 0,
+                                routes: [{name: 'BottomTab'}],
+                            }),
+                        );
                     }
                 }
             })

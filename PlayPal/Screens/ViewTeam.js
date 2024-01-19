@@ -57,7 +57,7 @@ const ViewTeam = ({navigation, route}) => {
         setReqModal(false);
         const {id, ...newUser} = user;
         user.id === myId
-            ? navigation.navigate('MyProfile', {user})
+            ? navigation.navigate('MyProfile')
             : navigation.navigate('ViewProfile', {user});
     };
 
@@ -323,8 +323,7 @@ const ViewTeam = ({navigation, route}) => {
 
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: error.message,
+                text1: 'An unexpected error occurred!',
             });
         }
     };
@@ -335,10 +334,6 @@ const ViewTeam = ({navigation, route}) => {
         } else {
             try {
                 setReqLoading(true);
-
-                setReqUsers(prevUsers =>
-                    prevUsers.filter(user => user.id !== uid),
-                );
 
                 const tournament_ref = await firestore()
                     .collection('tournaments')
@@ -397,12 +392,18 @@ const ViewTeam = ({navigation, route}) => {
                         timestamp: currentDate,
                     };
 
+                    team.playersId.push(uid);
+
                     await firestore()
                         .collection('notifications')
                         .add(notification);
 
+                    setReqUsers(prevUsers =>
+                        prevUsers.filter(user => user.id !== uid),
+                    );
+                    setTeamRequests(prev => prev.filter(req => req !== uid));
+
                     setReqLoading(false);
-                    team.playersId.push(uid);
 
                     Toast.show({
                         type: 'success',
@@ -411,12 +412,10 @@ const ViewTeam = ({navigation, route}) => {
                 }
             } catch (error) {
                 setReqLoading(false);
-                console.log(error);
 
                 Toast.show({
                     type: 'error',
-                    text1: 'Error',
-                    text2: error.message,
+                    text1: 'An unexpected error occurred!',
                 });
             }
         }
@@ -427,6 +426,8 @@ const ViewTeam = ({navigation, route}) => {
             setReqLoading(true);
 
             setReqUsers(prevUsers => prevUsers.filter(user => user.id !== uid));
+
+            setTeamRequests(prev => prev.filter(req => req !== uid));
 
             await firestore()
                 .collection('teams')
@@ -500,8 +501,7 @@ const ViewTeam = ({navigation, route}) => {
                 } catch (error) {
                     Toast.show({
                         type: 'error',
-                        text1: 'Error',
-                        text2: error.message,
+                        text1: 'An unexpected error occurred!',
                     });
                 }
             }
@@ -532,8 +532,7 @@ const ViewTeam = ({navigation, route}) => {
             } catch (error) {
                 Toast.show({
                     type: 'error',
-                    text1: 'Error',
-                    text2: error.message,
+                    text1: 'An unexpected error occurred!',
                 });
             }
         }
@@ -640,8 +639,7 @@ const ViewTeam = ({navigation, route}) => {
                 setReqLoading(false);
                 Toast.show({
                     type: 'error',
-                    text1: 'Error',
-                    text2: error.message,
+                    text1: 'Error fetching players request data!',
                 });
             }
         };
@@ -652,58 +650,42 @@ const ViewTeam = ({navigation, route}) => {
         const fetchTeamData = async () => {
             try {
                 // Fetch captain data
-                const querySnapshot = await firestore()
+                const capDocRef = firestore()
                     .collection('users')
-                    .doc(team.captainId)
-                    .get();
+                    .doc(team.captainId);
 
-                if (!team.playersId.includes(myId)) {
-                    const myDataRef = await firestore()
-                        .collection('users')
-                        .doc(myId)
-                        .get();
+                const capUnsubscribe = capDocRef.onSnapshot(capSnapshot => {
+                    if (capSnapshot.exists) {
+                        const capData = capSnapshot.data();
 
-                    if (myDataRef.exists) {
-                        const invite = myDataRef
-                            .data()
-                            .teamReq.includes(team.teamId);
-                        setIsInvited(invite);
-                    }
-                }
-
-                if (!querySnapshot.empty) {
-                    const capData = querySnapshot.data();
-                    const captainName = `${capData.firstName} ${capData.lastName}`;
-                    setCapName(captainName);
-                }
-
-                // Fetch player data
-                const promises = team.playersId.map(async pid => {
-                    const docSnapshot = await firestore()
-                        .collection('users')
-                        .doc(pid)
-                        .get();
-
-                    if (docSnapshot.exists) {
-                        const pData = docSnapshot.data();
-                        pData.id = pid;
-                        return pData;
-                    } else {
-                        return null;
+                        const captainName = `${capData.firstName} ${capData.lastName}`;
+                        setCapName(captainName);
                     }
                 });
 
-                const playerDataArray = await Promise.all(promises);
-                const playerInfo = playerDataArray.filter(
-                    playerData => playerData !== null,
-                );
+                const teamDocRef = firestore()
+                    .collection('teams')
+                    .doc(team.teamId);
 
-                setPlayersData(playerInfo);
+                let teamPlayers = [];
+
+                const teamUnsubscribe = teamDocRef.onSnapshot(doc => {
+                    if (doc.exists) {
+                        teamPlayers = doc.data().playersId;
+
+                        fetchPlayersId(teamPlayers);
+                    }
+                });
+
+                return () => {
+                    // Unsubscribe from snapshot listeners when component unmounts
+                    capUnsubscribe();
+                    teamUnsubscribe();
+                };
             } catch (error) {
                 Toast.show({
                     type: 'error',
                     text1: 'Error loading data!',
-                    text2: error.message,
                 });
             } finally {
                 setIsLoading(false);
@@ -711,7 +693,45 @@ const ViewTeam = ({navigation, route}) => {
         };
 
         fetchTeamData();
-    }, [teamRequests]);
+    }, [teamRequests, navigation]);
+
+    const fetchPlayersId = async teamPlayers => {
+        if (!teamPlayers.includes(myId)) {
+            const myDataRef = await firestore()
+                .collection('users')
+                .doc(myId)
+                .get();
+
+            if (myDataRef.exists) {
+                const invite = myDataRef.data().teamReq.includes(team.teamId);
+                setIsInvited(invite);
+            }
+        }
+
+        // Fetch player data
+
+        const promises = teamPlayers.map(async pid => {
+            const docSnapshot = await firestore()
+                .collection('users')
+                .doc(pid)
+                .get();
+
+            if (docSnapshot.exists) {
+                const pData = docSnapshot.data();
+                pData.id = pid;
+                return pData;
+            } else {
+                return null;
+            }
+        });
+
+        const playerDataArray = await Promise.all(promises);
+        const playerInfo = playerDataArray.filter(
+            playerData => playerData !== null,
+        );
+
+        setPlayersData(playerInfo);
+    };
 
     useEffect(() => {
         const unsubscribe = firestore()
@@ -736,7 +756,6 @@ const ViewTeam = ({navigation, route}) => {
                     Toast.show({
                         type: 'error',
                         text1: 'Requests loading error!',
-                        text2: error.message,
                     });
                     setReqLoading(false);
                 },
@@ -824,13 +843,21 @@ const ViewTeam = ({navigation, route}) => {
                                         flexDirection: 'row',
                                         alignItems: 'center',
                                     }}>
-                                    <Image
-                                        style={styles.winIcon}
-                                        source={require('../Assets/Icons/winner.png')}
-                                    />
-                                    <Text style={styles.winText}>
-                                        {item.winner}
-                                    </Text>
+                                    {item.winner === '' ? (
+                                        <Text style={styles.abandonedText}>
+                                            Abandoned!
+                                        </Text>
+                                    ) : (
+                                        <>
+                                            <Image
+                                                style={styles.winIcon}
+                                                source={require('../Assets/Icons/winner.png')}
+                                            />
+                                            <Text style={styles.winText}>
+                                                {item.winner}
+                                            </Text>
+                                        </>
+                                    )}
                                 </View>
                             </View>
                         </View>
@@ -849,33 +876,46 @@ const ViewTeam = ({navigation, route}) => {
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        width: '100%',
                     }}>
-                    <TouchableOpacity onPress={() => gotoViewProfile(item)}>
-                        <View
-                            style={{
-                                flexDirection: 'row',
-                            }}>
-                            <Text style={styles.playerLabel}>
-                                {`${num})  ${item.firstName} ${item.lastName}`}
-                            </Text>
-                        </View>
+                    <TouchableOpacity
+                        style={{
+                            flexDirection: 'row',
+                            width: '64%',
+                        }}
+                        onPress={() => gotoViewProfile(item)}>
+                        <Text style={styles.playerLabel}>
+                            {`${num})  ${item.firstName} ${item.lastName}`}
+                        </Text>
                     </TouchableOpacity>
                     <View
                         style={{
                             flexDirection: 'row',
                             alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '36%',
                         }}>
                         <IconButton
-                            icon={'close-thick'}
+                            icon={'close'}
                             iconColor="red"
-                            size={28}
+                            style={{width: 20}}
+                            size={23}
                             onPress={() => handleRemoveRequest(item.id)}
                         />
-                        <Text style={{fontSize: 25, top: -1}}>|</Text>
+                        <Text
+                            style={{
+                                fontSize: 22,
+                                top: -2,
+                                left: 1,
+                                color: 'lightgrey',
+                            }}>
+                            |
+                        </Text>
                         <IconButton
-                            icon={'check-bold'}
+                            icon={'check'}
                             iconColor="#26a65b"
-                            size={28}
+                            style={{width: 20, marginRight: 5}}
+                            size={23}
                             onPress={() => handleAcceptRequest(item.id)}
                         />
                     </View>
@@ -1062,7 +1102,7 @@ const ViewTeam = ({navigation, route}) => {
                     <></>
                 )}
 
-                <Divider style={styles.divider} width={1.5} color="grey" />
+                <Divider style={styles.divider} width={1} color="grey" />
                 <Paragraph style={styles.bio}>{team.description}</Paragraph>
 
                 {isCaptain ? (
@@ -1330,12 +1370,19 @@ const ViewTeam = ({navigation, route}) => {
                         </TouchableOpacity>
 
                         {isCaptain ? (
-                            <TouchableOpacity
-                                style={styles.teamReqBtn}
-                                onPress={() => setReqModal(true)}>
-                                <Text style={styles.teamReqText}>
-                                    Team requests
-                                </Text>
+                            <View
+                                style={{
+                                    width: '45%',
+                                    alignItems: 'center',
+                                    flexDirection: 'row-reverse',
+                                }}>
+                                <TouchableOpacity
+                                    style={styles.teamReqBtn}
+                                    onPress={() => setReqModal(true)}>
+                                    <Text style={styles.teamReqText}>
+                                        Player requests
+                                    </Text>
+                                </TouchableOpacity>
                                 {badgeCount > 0 && (
                                     <Badge
                                         status="error"
@@ -1343,7 +1390,7 @@ const ViewTeam = ({navigation, route}) => {
                                         containerStyle={styles.badge}
                                     />
                                 )}
-                            </TouchableOpacity>
+                            </View>
                         ) : (
                             <></>
                         )}
@@ -1351,7 +1398,7 @@ const ViewTeam = ({navigation, route}) => {
                 ) : (
                     <></>
                 )}
-                <Divider style={styles.divider3} width={1.5} color="grey" />
+                <Divider style={styles.divider3} width={1} color="grey" />
                 <View style={styles.playersView}>
                     <Text style={styles.playerTitle}>Players:</Text>
 

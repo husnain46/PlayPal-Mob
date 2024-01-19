@@ -185,6 +185,7 @@ const Slots = ({navigation, route}) => {
                     </View>
                     <Button
                         title={'Book'}
+                        disabled={true}
                         titleStyle={styles.bookBtnText}
                         color={'#19bd89'}
                         style={{alignItems: 'center'}}

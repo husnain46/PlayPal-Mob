@@ -7,8 +7,7 @@ import Toast from 'react-native-toast-message';
 import {ActivityIndicator} from 'react-native';
 import {Button, Divider} from '@rneui/themed';
 
-const Notifications = ({navigation, route}) => {
-    const {user} = route.params;
+const Notifications = ({navigation}) => {
     const [notifications, setNotifications] = useState([]);
     const [userData, setUserData] = useState([]);
     const myId = auth().currentUser.uid;
@@ -23,7 +22,7 @@ const Notifications = ({navigation, route}) => {
     };
 
     const gotoMyProfile = () => {
-        navigation.navigate('MyProfile', {user});
+        navigation.navigate('MyProfile');
     };
 
     const gotoTournament = tournamentId => {
@@ -86,16 +85,6 @@ const Notifications = ({navigation, route}) => {
                     .where('receiverId', '==', myId)
                     .orderBy('timestamp', 'desc')
                     .get();
-
-                // const tourQuery = await firestore()
-                //     .collection('notifications')
-                //     .where('receiverId', 'array-contains', myId)
-                //     .orderBy('timestamp', 'desc')
-                //     .get();
-
-                // const mergedNotifications = querySnapshot.docs.concat(
-                //     tourQuery.docs,
-                // );
 
                 const notificationsData = await Promise.all(
                     querySnapshot.docs.map(async doc => {
@@ -234,7 +223,7 @@ const Notifications = ({navigation, route}) => {
                 setLoading(false);
             } catch (error) {
                 setLoading(false);
-
+                console.log(error);
                 Toast.show({
                     type: 'error',
                     text2: error.message,
@@ -275,7 +264,10 @@ const Notifications = ({navigation, route}) => {
                                 item.type === 'friend_accepted'
                             ) {
                                 checkNotification(senderUserData);
-                            } else if (item.type === 'team_request') {
+                            } else if (
+                                item.type === 'team_request' ||
+                                item.type === 'team_accept_request'
+                            ) {
                                 gotoTeams();
                             } else if (item.type === 'team_invite') {
                                 gotoMyProfile();

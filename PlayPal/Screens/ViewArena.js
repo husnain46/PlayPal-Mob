@@ -33,7 +33,10 @@ const ViewArena = ({navigation, route}) => {
         Linking.canOpenURL(url)
             .then(supported => {
                 if (!supported) {
-                    console.error('Google Maps is not installed.');
+                    Toast.show({
+                        type: 'error',
+                        text1: 'Google Maps is not installed.',
+                    });
                 } else {
                     return Linking.openURL(url);
                 }
@@ -205,7 +208,9 @@ const ViewArena = ({navigation, route}) => {
                             type="FontAwesome5"
                             style={styles.contactIcons}
                         />
-                        <Text style={styles.detailText}>{arena.email}</Text>
+                        <Text selectable={true} style={styles.detailText}>
+                            {arena.email}
+                        </Text>
                     </View>
                     <View style={styles.subView}>
                         <Icon
@@ -215,7 +220,9 @@ const ViewArena = ({navigation, route}) => {
                             type="FontAwesome5"
                             style={styles.contactIcons}
                         />
-                        <Text style={styles.detailText}>{arena.phone}</Text>
+                        <Text selectable={true} style={styles.detailText}>
+                            {arena.phone}
+                        </Text>
                     </View>
                     <TouchableOpacity
                         style={styles.mapBtn}

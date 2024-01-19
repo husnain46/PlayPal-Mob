@@ -41,8 +41,10 @@ const ForgotPassword = ({navigation}) => {
                 style={{width: '90%', marginTop: 5}}
             />
             <TextInput
-                placeholder="Email"
+                placeholder="Your email"
                 style={styles.input}
+                placeholderTextColor={'grey'}
+                cursorColor={'blue'}
                 onChangeText={text => setEmail(text)}
             />
             <Button
@@ -62,16 +64,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: 26,
-        fontWeight: 'bold',
-        marginTop: 30,
+        fontSize: 20,
+        fontWeight: '700',
+        marginTop: 20,
         color: '#4a5a96',
+        fontStyle: 'italic',
     },
     input: {
         width: '70%',
+        color: 'black',
         height: 50,
         borderWidth: 1,
-        fontSize: 17,
+        fontSize: 16,
         borderColor: 'gray',
         paddingHorizontal: 10,
         marginBottom: 20,

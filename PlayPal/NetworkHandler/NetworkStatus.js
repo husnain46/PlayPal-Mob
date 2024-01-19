@@ -12,9 +12,11 @@ const NetworkStatus = ({children}) => {
             const docRef = firestore().collection('ping').doc('connection');
             // Attempting to fetch data from Firestore
             await docRef.get();
+
             setIsConnected(true);
             setFirestoreError(false); // Reset Firestore error if successful
         } catch (error) {
+            console.log(error);
             setIsConnected(false);
             setFirestoreError(true);
         }
@@ -36,24 +38,6 @@ const NetworkStatus = ({children}) => {
         };
     }, []);
 
-    if (!isConnected) {
-        return (
-            <View
-                style={{
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                }}>
-                <Image
-                    source={require('../Assets/Icons/no-internet.png')}
-                    resizeMode="contain"
-                    style={{width: 100, height: 100, marginBottom: 30}}
-                />
-                <Text>No internet connection</Text>
-            </View>
-        );
-    }
-
     if (firestoreError) {
         return (
             <View
@@ -72,6 +56,24 @@ const NetworkStatus = ({children}) => {
                         textAlign: 'center',
                         width: '90%',
                     }}>{`Error connecting to server!\nTry reloading the app or open the app after sometime.`}</Text>
+            </View>
+        );
+    }
+
+    if (!isConnected) {
+        return (
+            <View
+                style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}>
+                <Image
+                    source={require('../Assets/Icons/no-internet.png')}
+                    resizeMode="contain"
+                    style={{width: 100, height: 100, marginBottom: 30}}
+                />
+                <Text>No internet connection</Text>
             </View>
         );
     }

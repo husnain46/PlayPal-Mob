@@ -62,11 +62,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 15,
         width: '90%',
+        marginBottom: 10,
     },
     divider: {
         alignSelf: 'center',
-        width: '90%',
-        marginTop: 10,
+        width: '92%',
+        marginTop: 5,
     },
     divider2: {
         alignSelf: 'center',
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
     },
     divider3: {
         alignSelf: 'center',
-        width: '90%',
+        width: '92%',
         marginTop: 15,
     },
     invitesBtn: {
@@ -162,39 +163,42 @@ const styles = StyleSheet.create({
     teamInfoBtnView: {
         flexDirection: 'row',
         justifyContent: 'space-evenly',
+        alignItems: 'center',
         marginTop: 15,
-        width: '100%',
+        width: '95%',
     },
     tournamentBtn: {
         backgroundColor: '#eba421',
         borderRadius: 12,
         height: 40,
         justifyContent: 'center',
+        width: '45%',
     },
     tournamentBtnText: {
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: '500',
         color: 'white',
-        paddingHorizontal: 10,
+        textAlign: 'center',
     },
     teamReqBtn: {
         height: 40,
         flexDirection: 'row',
         backgroundColor: '#4a5a96',
         alignItems: 'center',
-        justifyContent: 'space-evenly',
+        justifyContent: 'center',
+        alignSelf: 'center',
         borderRadius: 12,
+        width: '100%',
     },
     teamReqText: {
-        fontSize: 15,
+        fontSize: 14,
         color: 'white',
         fontWeight: '600',
-        paddingHorizontal: 10,
+        textAlign: 'center',
     },
     badge: {
-        marginRight: -30,
-        right: 10,
-        marginBottom: 40,
+        bottom: 20,
+        position: 'absolute',
     },
     playersView: {
         flexDirection: 'row',
@@ -234,7 +238,7 @@ const styles = StyleSheet.create({
     },
     playerLabel: {
         marginLeft: 5,
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '500',
         color: 'black',
     },
@@ -253,7 +257,7 @@ const styles = StyleSheet.create({
         height: 50,
         marginTop: 20,
         justifyContent: 'center',
-        borderWidth: 2,
+        borderWidth: 1.5,
         borderColor: 'grey',
         borderRadius: 10,
         padding: 5,
@@ -329,6 +333,10 @@ const styles = StyleSheet.create({
     winText: {
         fontSize: 15,
         color: '#098f60',
+    },
+    abandonedText: {
+        fontSize: 15,
+        color: 'red',
     },
 });
 

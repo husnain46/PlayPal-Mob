@@ -1,52 +1,48 @@
-import React, {useEffect, useState} from 'react';
-import {View, Text, StyleSheet, AppState} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {View, Text, StyleSheet, AppState, SafeAreaView} from 'react-native';
 import auth from '@react-native-firebase/auth';
 import {Button} from '@rneui/themed';
-import {BackHandler} from 'react-native';
+
 import Toast from 'react-native-toast-message';
+import {useFocusEffect} from '@react-navigation/native';
 
 const VerifyMail = ({navigation}) => {
     const [reloadKey, setReloadKey] = useState(0);
+    const [isVerified, setIsVerified] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const disableBackButton = () => {
-        return true; // Returning true will prevent the default back button behavior
-    };
+    useFocusEffect(
+        useCallback(() => {
+            const subscribe = auth().onAuthStateChanged(async newUser => {
+                if (newUser) {
+                    await newUser.reload();
+                    newUser.getIdToken(true);
+                    const isEmailVerified = auth().currentUser.emailVerified;
 
-    useEffect(() => {
-        BackHandler.addEventListener('hardwareBackPress', disableBackButton);
+                    setIsVerified(isEmailVerified);
 
-        return () => {
-            // Remove the listener when the component unmounts
-            BackHandler.removeEventListener(
-                'hardwareBackPress',
-                disableBackButton,
-            );
-        };
-    }, []);
-
-    useEffect(() => {
-        const subscribe = auth().onAuthStateChanged(async newUser => {
-            if (newUser) {
-                await newUser.reload();
-                newUser.getIdToken(true);
-                const isEmailVerified = auth().currentUser.emailVerified;
-                if (!isEmailVerified) {
-                    Toast.show({
-                        type: 'info',
-                        text1: 'Email verification has been sent. Please check your email and verify!',
-                    });
+                    if (!isEmailVerified) {
+                        Toast.show({
+                            type: 'info',
+                            text1: 'Email verification has been sent. Please check your email and verify!',
+                        });
+                    }
                 }
-            }
-        });
+            });
 
-        return subscribe;
-    }, []);
+            return subscribe;
+        }, []),
+    );
 
     useEffect(() => {
         const handleAppStateChange = async nextAppState => {
             if (nextAppState === 'active') {
                 // The app is back in the foreground, trigger a screen reload
                 const newUser = auth().currentUser;
+
+                const isEmailVerified = auth().currentUser.emailVerified;
+
+                setIsVerified(isEmailVerified);
 
                 await newUser.reload();
                 newUser.getIdToken(true);
@@ -65,30 +61,39 @@ const VerifyMail = ({navigation}) => {
     }, []);
 
     const handleResendVerification = async () => {
-        await user.sendEmailVerification();
+        setLoading(true);
+
+        await auth().currentUser.sendEmailVerification();
+
         Toast.show({
             type: 'success',
-            text1: 'Email verification sent. Please check your email and verify!',
+            text2: 'Email verification sent. Please check your email and verify!',
         });
+
+        setLoading(false);
     };
 
     const gotoLogin = async () => {
+        setLoading(true);
+
         navigation.navigate('Login');
+        setLoading(false);
     };
 
     return (
-        <View style={styles.container} key={reloadKey}>
+        <SafeAreaView style={styles.container} key={reloadKey}>
             <Text style={styles.title}>Email Verification</Text>
-            {auth().currentUser.emailVerified ? (
+            {isVerified ? (
                 <>
                     <Text style={styles.message2}>
                         Your email is verified!{'\n'}You can login to your
                         account now.
                     </Text>
                     <Button
-                        title={'Login'}
-                        titleStyle={{fontSize: 18}}
-                        containerStyle={{width: 100, borderRadius: 10}}
+                        title={'Go to Login'}
+                        loading={loading}
+                        titleStyle={{fontSize: 16}}
+                        containerStyle={{width: '45%', borderRadius: 10}}
                         color={'primary'}
                         onPress={gotoLogin}
                     />
@@ -98,16 +103,34 @@ const VerifyMail = ({navigation}) => {
                     <Text style={styles.message1}>
                         Check your email and verify to activate your account.
                     </Text>
-                    <Button
-                        title={'Resend Verification'}
-                        titleStyle={{fontSize: 18}}
-                        containerStyle={{width: 200, borderRadius: 10}}
-                        color={'warning'}
-                        onPress={handleResendVerification}
-                    />
+                    <View
+                        style={{
+                            width: '100%',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginTop: 10,
+                            paddingHorizontal: 10,
+                            justifyContent: 'space-between',
+                        }}>
+                        <Button
+                            title={'Go to Login'}
+                            titleStyle={{fontSize: 16}}
+                            containerStyle={{width: '45%', borderRadius: 10}}
+                            color={'primary'}
+                            onPress={gotoLogin}
+                        />
+                        <Button
+                            title={'Resend Mail'}
+                            loading={loading}
+                            titleStyle={{fontSize: 16}}
+                            containerStyle={{width: '45%', borderRadius: 10}}
+                            color={'warning'}
+                            onPress={handleResendVerification}
+                        />
+                    </View>
                 </>
             )}
-        </View>
+        </SafeAreaView>
     );
 };
 
@@ -119,30 +142,25 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 20,
+        fontWeight: '600',
         bottom: 40,
         color: 'black',
+        fontStyle: 'italic',
     },
     message1: {
-        fontSize: 18,
+        fontSize: 16,
         textAlign: 'center',
         marginBottom: 30,
         color: 'red',
         width: 330,
     },
     message2: {
-        fontSize: 18,
+        fontSize: 16,
         textAlign: 'center',
         marginBottom: 30,
         color: 'green',
         width: 330,
-    },
-    resendButton: {
-        fontSize: 18,
-        color: 'blue',
-        textDecorationLine: 'underline',
-        marginBottom: 20,
     },
 });
 

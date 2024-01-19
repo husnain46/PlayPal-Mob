@@ -92,7 +92,7 @@ const PaymentScreen = ({navigation, route}) => {
         try {
             console.log(slot_price);
             const response = await fetch(
-                'http://192.168.1.5:3000/payment-intent',
+                'http://10.135.16.107:3000/payment-intent',
                 {
                     method: 'POST',
                     headers: {

@@ -17,7 +17,7 @@ import firestore from '@react-native-firebase/firestore';
 import auth from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
 import sportsList from '../Assets/sportsList.json';
-import {StackActions} from '@react-navigation/native';
+import {CommonActions, StackActions} from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 
 const Welcome = ({navigation}) => {
@@ -47,7 +47,6 @@ const Welcome = ({navigation}) => {
             Toast.show({
                 type: 'error',
                 text1: 'Error loading user data!',
-                text2: error.message,
             });
         }
     };
@@ -126,13 +125,17 @@ const Welcome = ({navigation}) => {
                 text1: 'Profile completed!',
             });
 
-            navigation.dispatch(StackActions.replace('BottomTab'));
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{name: 'BottomTab'}],
+                }),
+            );
         } catch (error) {
             setIsLoading(false);
             Toast.show({
                 type: 'error',
                 text1: 'An error occurred!',
-                text2: error.message,
             });
         }
     };
@@ -159,9 +162,6 @@ const Welcome = ({navigation}) => {
 
             if (!image.didCancel && image.path) {
                 setImageSelected(image.path);
-                console.log(imageSelected);
-            } else if (image.didCancel) {
-                throw new Error('Image upload cancelled');
             }
         } catch (error) {
             let errorMessage = 'Failed to upload the image. Please try again.';
@@ -177,7 +177,6 @@ const Welcome = ({navigation}) => {
 
             Toast.show({
                 type: 'error',
-                text1: 'Error loading user data!',
                 text2: errorMessage,
             });
         }

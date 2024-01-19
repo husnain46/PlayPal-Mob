@@ -80,7 +80,7 @@ const ViewProfile = ({navigation, route}) => {
                             const messages = chatData.data().messages || [];
                             const unreadMsg = messages.filter(message => {
                                 return (
-                                    message.sender === receiverId && // Not sent by receiver
+                                    message.sender === receiverId && // sent by receiver
                                     (!message.readBy ||
                                         !message.readBy.includes(senderId)) // Not read by me
                                 );
@@ -92,7 +92,6 @@ const ViewProfile = ({navigation, route}) => {
                         Toast.show({
                             type: 'error',
                             text1: 'Error initiating chat!',
-                            text2: error.message,
                         });
                     }
                 };
@@ -183,8 +182,7 @@ const ViewProfile = ({navigation, route}) => {
 
                 Toast.show({
                     type: 'error',
-                    text1: 'Error',
-                    text2: error.message,
+                    text1: 'An unexpected error occurred!',
                 });
             }
         };
@@ -254,8 +252,7 @@ const ViewProfile = ({navigation, route}) => {
         } catch (error) {
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: error.message,
+                text1: 'An unexpected error occurred!',
             });
         }
     };
@@ -293,8 +290,7 @@ const ViewProfile = ({navigation, route}) => {
         } catch (error) {
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: error.message,
+                text1: 'An unexpected error occurred!',
             });
         }
     };
@@ -334,8 +330,7 @@ const ViewProfile = ({navigation, route}) => {
         } catch (error) {
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: error.message,
+                text1: 'An error occurred!',
             });
         }
     };
@@ -408,8 +403,7 @@ const ViewProfile = ({navigation, route}) => {
         } catch (error) {
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: error.message,
+                text1: 'An unexpected error occurred!',
             });
         }
     };
@@ -478,8 +472,7 @@ const ViewProfile = ({navigation, route}) => {
         } catch (error) {
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: error.message,
+                text1: 'An unexpected error occurred!',
             });
         }
     };

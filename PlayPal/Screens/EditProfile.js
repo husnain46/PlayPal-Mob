@@ -25,11 +25,7 @@ const EditProfile = ({navigation, route}) => {
     const {
         firstName,
         lastName,
-        gender,
-        DOB,
         phone,
-        username,
-        email,
         area,
         bio,
         city,
@@ -99,7 +95,7 @@ const EditProfile = ({navigation, route}) => {
                 text1: 'Your profile updated successfully!',
             });
 
-            navigation.dispatch(StackActions.replace('BottomTab'));
+            navigation.goBack();
 
             setIsLoading(false);
         } catch (error) {

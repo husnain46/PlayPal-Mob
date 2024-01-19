@@ -243,7 +243,7 @@ const EditTeam = ({navigation, route}) => {
                 .doc(myTeam.teamId)
                 .update(teamData);
 
-            navigation.navigate('BottomTab', {screen: 'Team'});
+            navigation.goBack();
 
             Toast.show({
                 type: 'success',

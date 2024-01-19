@@ -1,6 +1,6 @@
 import styles from '../Styles/findplayersStyles';
 import React, {useState, useEffect, useCallback} from 'react';
-import {FlatList} from 'react-native';
+import {FlatList, RefreshControl} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import {ButtonGroup, SearchBar, Card} from '@rneui/themed';
 import firestore from '@react-native-firebase/firestore';
@@ -38,6 +38,7 @@ const FindPlayers = ({navigation}) => {
     const [cityFilter, setCityFilter] = useState('');
     const [isFocus, setIsFocus] = useState(false);
     const [myCity, setMyCity] = useState('');
+    const [refreshPlayers, setRefreshPlayers] = useState(false);
 
     const cityList = cityData.map(item => ({
         label: item.city,
@@ -85,11 +86,57 @@ const FindPlayers = ({navigation}) => {
         }
     };
 
-    useFocusEffect(
-        useCallback(() => {
-            fetchUserDataFromFirestore();
-        }, []),
-    );
+    const fetchNewDataFromFirestore = async () => {
+        try {
+            const myId = auth().currentUser.uid;
+
+            const usersCollection = firestore()
+                .collection('users')
+                .where('city', '!=', '');
+
+            const snapshot = await usersCollection.get();
+            if (!snapshot.empty) {
+                let cityName;
+                const userData = snapshot.docs.map(doc => {
+                    if (doc.id == myId) {
+                        cityName = doc.data().city;
+                        setMyCity(cityName);
+                    }
+                    return {...doc.data(), id: doc.id};
+                });
+
+                const newUsersData = userData.filter(user => user.id !== myId);
+
+                const filterData = newUsersData.filter(
+                    user => user.city === cityFilter,
+                );
+                setFilteredUsers(filterData);
+                setPlayersData(newUsersData);
+                applyFilters();
+
+                setIsLoading(false);
+                setRefreshPlayers(false);
+            }
+        } catch (error) {
+            setIsLoading(false);
+
+            Toast.show({
+                type: 'error',
+                text1: 'Error loading players data!',
+                text2: error.message,
+            });
+        }
+    };
+
+    useEffect(() => {
+        fetchUserDataFromFirestore();
+    }, []);
+
+    const toggleRefresh = () => {
+        setRefreshPlayers(prevState => !prevState);
+
+        fetchNewDataFromFirestore();
+    };
 
     const gotoViewProfile = user => {
         navigation.navigate('ViewProfile', {user});
@@ -116,6 +163,7 @@ const FindPlayers = ({navigation}) => {
     };
 
     const resetFilters = () => {
+        setCityFilter(myCity);
         setSportsFilter(null);
         setAgeFilter(null);
         setLevelFilter(null);
@@ -448,9 +496,29 @@ const FindPlayers = ({navigation}) => {
                         renderItem={renderItem}
                         keyExtractor={item => item.username}
                         contentContainerStyle={{paddingBottom: 200}}
+                        refreshControl={
+                            <RefreshControl
+                                refreshing={refreshPlayers}
+                                onRefresh={toggleRefresh}
+                            />
+                        }
+                        onScroll={event => {
+                            const offsetY = event.nativeEvent.contentOffset.y;
+                            if (
+                                offsetY === 0 &&
+                                event.nativeEvent.velocity.y > 0
+                            ) {
+                                setRefreshPlayers(false);
+                            }
+                        }}
                         ListEmptyComponent={() => (
                             <Text style={styles.emptyListText}>
-                                No player found!
+                                No player found in{' '}
+                                {cityFilter ? cityFilter : ''}
+                                {sportsFilter
+                                    ? ' for the selected filters'
+                                    : ''}
+                                !
                             </Text>
                         )}
                     />

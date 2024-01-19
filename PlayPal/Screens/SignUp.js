@@ -18,6 +18,7 @@ import firestore from '@react-native-firebase/firestore';
 import Toast from 'react-native-toast-message';
 import {KeyboardAvoidingView} from 'react-native';
 import {ScrollView} from 'react-native-gesture-handler';
+import {CommonActions} from '@react-navigation/native';
 
 const SignUp = ({navigation}) => {
     const [backDate, setBackDate] = useState(new Date());
@@ -51,7 +52,12 @@ const SignUp = ({navigation}) => {
     }, []);
 
     const gotoVerify = () => {
-        navigation.navigate('VerifyMail');
+        navigation.dispatch(
+            CommonActions.reset({
+                index: 0,
+                routes: [{name: 'VerifyMail'}],
+            }),
+        );
     };
 
     const checkUsername = async username => {
@@ -174,11 +180,18 @@ const SignUp = ({navigation}) => {
                     }
                 })
                 .catch(error => {
-                    Toast.show({
-                        type: 'error',
-                        text1: 'Error',
-                        text2: error.message,
-                    });
+                    if (error.code === 'auth/email-already-in-use') {
+                        Toast.show({
+                            type: 'error',
+                            text1: 'The email is already in use!',
+                            text2: 'Try another email for signup.',
+                        });
+                    } else {
+                        Toast.show({
+                            type: 'error',
+                            text1: 'An error occurred! Please try again later.',
+                        });
+                    }
                 })
                 .finally(() => {
                     // Set loading to false when the signup process is complete
@@ -305,11 +318,12 @@ const SignUp = ({navigation}) => {
                                 />
                             )}
                         </View>
+
                         <KeyboardAvoidingView
-                            behavior={'position'}
+                            behavior={'height'}
                             style={{width: '100%'}}
                             keyboardVerticalOffset={
-                                Platform.OS === 'ios' ? 40 : 70
+                                Platform.OS === 'ios' ? 40 : 50
                             }>
                             <View style={styles.inputView}>
                                 <TextInput

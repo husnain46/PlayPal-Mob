@@ -184,7 +184,7 @@ const ViewTournament = ({navigation, route}) => {
 
                                         // if requested already by my team
                                         const isRequest =
-                                            tData.requests.includes(myTeam);
+                                            tData.requests.includes(id);
 
                                         setIsRequested(isRequest);
                                     } else {
@@ -265,8 +265,7 @@ const ViewTournament = ({navigation, route}) => {
                                 navigation.goBack();
                                 Toast.show({
                                     type: 'error',
-                                    text1: 'Error',
-                                    text2: error.message,
+                                    text2: 'An unexpected error occurred!',
                                 });
                             }
                         };
@@ -282,7 +281,6 @@ const ViewTournament = ({navigation, route}) => {
                     Toast.show({
                         type: 'error',
                         text1: 'Error fetching data!',
-                        text2: error.message,
                     });
                 },
             );
@@ -319,8 +317,7 @@ const ViewTournament = ({navigation, route}) => {
                 setReqLoading(false);
                 Toast.show({
                     type: 'error',
-                    text1: 'Error',
-                    text2: error.message,
+                    text1: 'Error fetching teams request data!',
                 });
             }
         };
@@ -503,8 +500,7 @@ const ViewTournament = ({navigation, route}) => {
                 setReqLoading(false);
                 Toast.show({
                     type: 'error',
-                    text1: 'Error',
-                    text2: error.message,
+                    text1: 'An unexpected error occurred!',
                 });
             }
         }
@@ -526,8 +522,7 @@ const ViewTournament = ({navigation, route}) => {
             setReqLoading(false);
             Toast.show({
                 type: 'error',
-                text1: 'Error',
-                text2: error.message,
+                text1: 'An unexpected error occurred!',
             });
         }
     };
@@ -595,7 +590,6 @@ const ViewTournament = ({navigation, route}) => {
                     Toast.show({
                         type: 'error',
                         text1: 'An error occurred!',
-                        text2: error.message,
                     });
                 }
             }
@@ -618,7 +612,6 @@ const ViewTournament = ({navigation, route}) => {
                 Toast.show({
                     type: 'error',
                     text1: 'An error occurred!',
-                    text2: error.message,
                 });
             }
         }
@@ -671,33 +664,46 @@ const ViewTournament = ({navigation, route}) => {
                         flexDirection: 'row',
                         justifyContent: 'space-between',
                         alignItems: 'center',
+                        width: '100%',
                     }}>
-                    <TouchableOpacity onPress={() => gotoViewProfile(item)}>
-                        <View
-                            style={{
-                                flexDirection: 'row',
-                            }}>
-                            <Text style={styles.playerLabel}>
-                                {`${num})  ${item.name}`}
-                            </Text>
-                        </View>
+                    <TouchableOpacity
+                        style={{
+                            flexDirection: 'row',
+                            width: '65%',
+                        }}
+                        onPress={() => gotoViewProfile(item)}>
+                        <Text style={styles.playerLabel}>
+                            {`${num})  ${item.name}`}
+                        </Text>
                     </TouchableOpacity>
                     <View
                         style={{
                             flexDirection: 'row',
                             alignItems: 'center',
+                            justifyContent: 'space-between',
+                            width: '35%',
                         }}>
                         <IconButton
-                            icon={'close-thick'}
+                            icon={'close'}
                             iconColor="red"
-                            size={28}
+                            size={23}
+                            style={{width: 20}}
                             onPress={() => handleRemoveRequest(item.id)}
                         />
-                        <Text style={{fontSize: 25, top: -1}}>|</Text>
+                        <Text
+                            style={{
+                                fontSize: 22,
+                                top: -2,
+                                left: 1,
+                                color: 'lightgrey',
+                            }}>
+                            |
+                        </Text>
                         <IconButton
-                            icon={'check-bold'}
+                            icon={'check'}
                             iconColor="#26a65b"
-                            size={28}
+                            size={23}
+                            style={{width: 20}}
                             onPress={() => handleAcceptRequest(item.id)}
                         />
                     </View>
