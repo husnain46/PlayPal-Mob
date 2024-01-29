@@ -13,6 +13,11 @@ PlayPal, your go-to sports companion, is a React Native mobile application with 
 -   Security Measures: Ensure user data protection through authentication.
 -   Testing: Rigorous testing for exception handling and overall functionality.
 
+## App Screenshots
+
+
+
+
 ## Installation
 
 1. Navigate to the project folder:
