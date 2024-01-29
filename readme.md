@@ -18,9 +18,9 @@ PlayPal, your go-to sports companion, is a React Native mobile application with 
 <img src="https://github.com/husnain46/PlayPal-Mob/assets/138667026/32925144-225a-407b-b81d-e37cb7e81c87" width="210" height="440">
 
 
-<img src="https://github.com/husnain46/PlayPal-Mob/assets/138667026/c8a43fb4-e23e-40f1-8ca7-e90a00688927" width="210" height="440" marginLeft="30px">
+<img src="https://github.com/husnain46/PlayPal-Mob/assets/138667026/c8a43fb4-e23e-40f1-8ca7-e90a00688927" width="210" height="440" style="margin-left: 20px">
 
-<img src="https://github.com/husnain46/PlayPal-Mob/assets/138667026/f36eb613-bfdd-4c17-89f5-3f3197e5550c" width="210" height="440" marginLeft="30px">
+<img src="https://github.com/husnain46/PlayPal-Mob/assets/138667026/f36eb613-bfdd-4c17-89f5-3f3197e5550c" width="210" height="440" style="margin-left: 20px">
 
 
 
